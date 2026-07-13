@@ -1,0 +1,219 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ profileUser.fullName }} | {{ parent() }}{% endblock %}
+
+{% block body %}
+    {# ── calculs utiles ─────────────────────────────────────────────────────── #}
+    {% set bikePoints = (stats.km_bike  * cityEdition.pointsPerKmBike)|round(1) %}
+    {% set walkPoints = (stats.km_walk  * cityEdition.pointsPerKmWalk)|round(1) %}
+    {% set dayPoints  = (stats.active_days * cityEdition.pointsPerDay)|round(1) %}
+    {% set totalDays  = cityEdition.edition.getDurationDays() %}
+
+    {# mode de déplacement par date : 'bike', 'walk' ou 'both' #}
+    {% set dayModes = {} %}
+    {% for trip in trips %}
+        {% set d = trip.tripDate|date('Y-m-d') %}
+        {% set cur = dayModes[d] ?? '' %}
+        {% if trip.mode.value == 'bike' %}
+            {% set dayModes = dayModes|merge({(d): (cur == 'walk' ? 'both' : 'bike')}) %}
+        {% else %}
+            {% set dayModes = dayModes|merge({(d): (cur == 'bike' ? 'both' : 'walk')}) %}
+        {% endif %}
+    {% endfor %}
+
+    <div class="pub-layout">
+        {# ════════════════════════════ BARRE LATÉRALE ════════════════════════ #}
+        <aside class="pub-sidebar">
+            {# Identité #}
+            <div class="pub-identity">
+                {% if profileUser.avatar %}
+                    <img src="{{ asset('uploads/avatars/' ~ profileUser.avatar) }}" class="pub-avatar pub-avatar--photo" alt="Photo de {{ profileUser.fullName }}">
+                {% else %}
+                    <div class="pub-avatar">{{ profileUser.initials }}</div>
+                {% endif %}
+                <div class="pub-name">{{ profileUser.fullName }}</div>
+                <div class="pub-username">@{{ profileUser.username }}</div>
+            </div>
+
+            {# Infos profil #}
+            <div class="pub-info-table">
+                {% if profileUser.cyclistProfile %}
+                <div class="pub-info-row">
+                    <span class="pub-info-label">Profil cycliste</span>
+                    <span class="pub-info-val">{{ profileUser.cyclistProfile.label() }}</span>
+                </div>
+                {% endif %}
+                {% if profileUser.bikeType %}
+                <div class="pub-info-row">
+                    <span class="pub-info-label">Type de vélo</span>
+                    <span class="pub-info-val">{{ profileUser.bikeType.label() }}</span>
+                </div>
+                {% endif %}
+                {% if profileUser.gender %}
+                <div class="pub-info-row">
+                    <span class="pub-info-label">Genre</span>
+                    <span class="pub-info-val">{{ profileUser.gender.label() }}</span>
+                </div>
+                {% endif %}
+                {% if profileUser.age %}
+                <div class="pub-info-row">
+                    <span class="pub-info-label">Âge</span>
+                    <span class="pub-info-val">{{ profileUser.age }} ans</span>
+                </div>
+                {% endif %}
+            </div>
+
+            {# Boutons (propre profil) #}
+            {% if isSelf %}
+                <div class="pub-actions">
+                    <a href="{{ path('app_profile', {citySlug: city.slug}) }}" class="btn btn--outline btn--sm flex-1-center">
+                        <i class="fas fa-pen fa-sm"></i> Modifier mon profil
+                    </a>
+                </div>
+            {% endif %}
+
+            {# Mes équipes #}
+            {% set cityTeams = [] %}
+            {% for team in profileUser.teams %}
+                {% if team.city.id == city.id %}
+                    {% set cityTeams = cityTeams|merge([team]) %}
+                {% endif %}
+            {% endfor %}
+
+            {% if cityTeams is not empty %}
+                <div class="pub-teams-section">
+                    <div class="pub-section-label">Mes équipes</div>
+                    {% for team in cityTeams %}
+                        <a href="{{ path('app_team_show', {citySlug: city.slug, slug: team.slug}) }}" class="pub-team-card">
+                            <span class="rk-team-badge rk-badge--{{ team.id % 8 }}">{{ team.initials }}</span>
+                            <span class="pub-team-name">{{ team.name }}</span>
+                        </a>
+                    {% endfor %}
+                    {% if isSelf %}
+                        <a href="{{ path('app_team_create', {citySlug: city.slug}) }}" class="btn btn--outline btn--sm mt-2 w-100 text-center">
+                            + Rejoindre une équipe
+                        </a>
+                    {% endif %}
+                </div>
+            {% elseif not isSelf %}
+                <div class="pub-teams-section">
+                    <a href="{{ path('app_team_create', {citySlug: city.slug}) }}" class="btn btn--outline btn--sm w-100 text-center">
+                        + Rejoindre une équipe
+                    </a>
+                </div>
+            {% endif %}
+        </aside>
+
+        {# ════════════════════════════ CONTENU PRINCIPAL ════════════════════ #}
+        <main class="pub-main">
+            {# ── Titre + sélecteur édition ─────────────────────────────────── #}
+            <div class="pub-main-header">
+                <h2 class="pub-main-title">Statistiques de participation</h2>
+                <div class="pub-edition-tabs">
+                    <span class="pub-edition-tab pub-edition-tab--active">{{ cityEdition.edition.year }}</span>
+                </div>
+            </div>
+
+            {# ── 3 stat cards ──────────────────────────────────────────────── #}
+            <div class="pub-stats-grid">
+                <div class="pub-stat-card">
+                    <div class="pub-stat-val pub-stat-val--teal">{{ stats.active_days }}</div>
+                    <div class="pub-stat-lbl">jours actifs</div>
+                    <div class="pub-stat-sub">sur {{ totalDays }} jours de challenge</div>
+                </div>
+                <div class="pub-stat-card">
+                    <div class="pub-stat-val pub-stat-val--teal">{{ stats.km_total }} km</div>
+                    <div class="pub-stat-lbl">distance totale</div>
+                    <div class="pub-stat-sub d-flex gap-1 justify-content-center flex-wrap mt-1">
+                        {% if stats.km_bike > 0 %}
+                            <span class="tag tag-velo"><i class="fas fa-bicycle fa-xs"></i> {{ stats.km_bike }} km</span>
+                        {% endif %}
+                        {% if stats.km_walk > 0 %}
+                            <span class="tag tag-marche"><i class="fas fa-person-walking fa-xs"></i> {{ stats.km_walk }} km</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="pub-stat-card">
+                    <div class="pub-stat-val pub-stat-val--orange">{{ stats.total_points }}</div>
+                    <div class="pub-stat-lbl">points</div>
+                    <div class="pub-stat-sub">
+                        {{ dayPoints }} jours
+                        {% if stats.km_bike > 0 %} + {{ bikePoints }} vélo{% endif %}
+                        {% if stats.km_walk > 0 %} + {{ walkPoints }} marche{% endif %}
+                        {% if stats.bonus_points > 0 %} + {{ stats.bonus_points }} bonus{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {# ── Heatmap ───────────────────────────────────────────────────── #}
+            <div class="pub-section-block">
+                <div class="pub-section-label">
+                    Jours de participation depuis
+                    {% if cityEdition.edition.startDate %}
+                        {{ cityEdition.edition.startDate|format_datetime(pattern: 'MMMM Y') }}
+                    {% endif %}
+                </div>
+                <div class="heatmap mt-2">
+                    {% if cityEdition.edition.startDate and cityEdition.edition.endDate %}
+                        {% set startTs  = cityEdition.edition.startDate|date('U') %}
+                        {% set endTs    = cityEdition.edition.endDate|date('U') %}
+                        {% set nowTs    = 'now'|date('U') %}
+                        {% set dayCount = (((endTs - startTs) / 86400)|round) + 1 %}
+                        {% for i in 0..(dayCount - 1) %}
+                            {% set dayTs  = startTs + (i * 86400) %}
+                            {% set dayKey = dayTs|date('Y-m-d') %}
+                            {% set mode   = dayModes[dayKey] ?? '' %}
+                            {% set isPast = dayTs <= nowTs %}
+                            {% if not isPast %}
+                                <div class="heatmap-day heatmap-day--future" title="{{ dayKey }}"></div>
+                            {% elseif mode == '' %}
+                                <div class="heatmap-day" title="{{ dayKey }}"></div>
+                            {% else %}
+                                <div class="heatmap-day" data-mode="{{ mode }}" title="{{ dayKey }}"></div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="pub-heatmap-legend">
+                    <span class="pub-legend-dot pub-legend-dot--both"></span> Vélo + marche &nbsp;
+                    <span class="pub-legend-dot pub-legend-dot--bike"></span> Vélo seulement &nbsp;
+                    <span class="pub-legend-dot pub-legend-dot--walk"></span> Marche seulement &nbsp;
+                    <span class="pub-legend-dot pub-legend-dot--none"></span> Pas de trajet
+                </div>
+            </div>
+
+            {# ── Trajets saisis ────────────────────────────────────────────── #}
+            <div class="pub-section-block">
+                <div class="pub-section-label">Trajets saisis</div>
+                {% if trips is empty %}
+                    <p class="pub-empty">Aucun trajet saisi pour cette édition.</p>
+                {% else %}
+                    {% set maxTripsAtStartup = 6 %}
+                    <div class="pub-trips">
+                        {% for trip in trips %}
+                            <div class="pub-trip-row {% if loop.index > maxTripsAtStartup %}d-none{% endif %}">
+                                <span class="pub-trip-icon">
+                                    {% if trip.mode.value == 'bike' %}
+                                        <i class="fas fa-bicycle text-primary"></i>
+                                    {% else %}
+                                        <i class="fas fa-person-walking text-orange"></i>
+                                    {% endif %}
+                                </span>
+                                <span class="pub-trip-date">{{ trip.tripDate|format_datetime(pattern: 'd MMMM Y') }}</span>
+                                <span class="pub-trip-km">{{ trip.distanceKm|number_format(0) }} km</span>
+                                <span class="pub-trip-pts">+{{ trip.pointsGenerated|number_format(1) }} pts</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if trips|length > 6 %}
+                        <div class="pub-trips-more" data-reveal-target=".pub-trip-row.d-none">
+                            <i class="fas fa-chevron-down fa-xs"></i>
+                            Voir les {{ trips|length - maxTripsAtStartup }} trajets précédents
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </main>
+    </div>
+{% endblock %}
+

@@ -1,0 +1,114 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Configuration | {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="home-wrap">
+
+    <div class="adm-page-header">
+        <div>
+            <h1 class="adm-page-title">Configuration</h1>
+            <div class="adm-page-sub">{{ city.name }} &middot; Édition {{ cityEdition.edition.year }}</div>
+        </div>
+    </div>
+
+    {% include 'city_admin/_nav.html.twig' %}
+
+    <div class="adm-color-grid align-items-start">
+
+        {# ── Paramètres de l'édition ── #}
+        <div class="card card--flat">
+            <div class="adm-section-label mb-14px">
+                <i class="fas fa-sliders fa-xs me-1"></i>Paramètres de l'édition
+            </div>
+            <div class="adm-param-list">
+                <div class="adm-param-row">
+                    <span class="adm-param-label">Inscriptions</span>
+                    <span>
+                        {% if cityEdition.registrationsOpen %}
+                            <span class="badge badge--green">Ouvertes</span>
+                        {% else %}
+                            <span class="badge badge--yellow">Fermées</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="adm-param-row">
+                    <span class="adm-param-label">Saisie des trajets</span>
+                    <span>
+                        {% if cityEdition.tripsEntryOpen %}
+                            <span class="badge badge--green">Ouverte</span>
+                        {% else %}
+                            <span class="badge badge--yellow">Fermée</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="adm-param-row">
+                    <span class="adm-param-label">Défis photo</span>
+                    <span>
+                        {% if cityEdition.photoChallengesEnabled %}
+                            <span class="badge badge--teal">Activés</span>
+                        {% else %}
+                            <span class="badge badge--yellow">Désactivés</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="adm-param-row">
+                    <span class="adm-param-label">Classements publics</span>
+                    <span>
+                        {% if cityEdition.rankingsPublic %}
+                            <span class="badge badge--green">Oui</span>
+                        {% else %}
+                            <span class="badge badge--yellow">Non</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="adm-param-row">
+                    <span class="adm-param-label">Points / jour actif</span>
+                    <span class="font-bold">{{ cityEdition.pointsPerDay }}</span>
+                </div>
+                <div class="adm-param-row">
+                    <span class="adm-param-label">Points / km vélo</span>
+                    <span class="font-bold">{{ cityEdition.pointsPerKmBike }}</span>
+                </div>
+                <div class="adm-param-row">
+                    <span class="adm-param-label">Points / km marche</span>
+                    <span class="font-bold">{{ cityEdition.pointsPerKmWalk }}</span>
+                </div>
+            </div>
+            <p class="text-muted fs-080rem mt-14px mb-0">
+                Pour modifier ces paramètres, contactez l'administrateur global.
+            </p>
+        </div>
+
+        {# ── Points par défi photo ── #}
+        <div class="card card--flat">
+            <div class="adm-section-label mb-14px">
+                <i class="fas fa-camera fa-xs me-1"></i>Points par défi photo
+            </div>
+            {% if cityEdition.bonusPhotoConfigs is not empty %}
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>Défi</th><th>Points</th></tr></thead>
+                        <tbody>
+                            {% for config in cityEdition.bonusPhotoConfigs %}
+                            <tr>
+                                <td>
+                                    {{ config.challenge.label() }}
+                                    <div class="text-xs text-muted mt-2px">{{ config.challenge.description() }}</div>
+                                </td>
+                                <td class="font-bold text-nowrap">{{ config.points }} pts</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted fs-090rem">Aucun défi photo configuré.</p>
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

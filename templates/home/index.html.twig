@@ -1,0 +1,188 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil | Challenge à Pied et à Vélo{% endblock %}
+
+{% block body %}
+<div class="home-wrap">
+    {# ── Hero global ───────────────────────────────────────────────────── #}
+    <section class="global-hero">
+        <div class="hero-eyebrow justify-content-center">
+            <i class="fas fa-bicycle"></i> Challenge à Pied et à Vélo
+        </div>
+        <h1 class="global-hero__title">
+            À Pied ou à Vélo,<br>
+            <span class="text-primary">participez</span>
+            et faites bouger <span class="text-orange">votre ville</span>&nbsp;!
+        </h1>
+        <p class="global-hero__desc">
+            Un challenge annuel pour encourager tous les déplacements utilitaires à vélo et à pied.
+            Rejoignez votre ville, enregistrez vos trajets et grimpez au classement.
+        </p>
+        <div class="hero-cta justify-content-center">
+            <a href="#villes" class="btn btn--primary btn--lg">
+                <i class="fas fa-map-location-dot"></i> Découvrir les villes
+            </a>
+            {% if not app.user %}
+            <a href="{{ path('app_register') }}" class="btn btn--outline btn--lg">
+                <i class="fas fa-user-plus"></i> M'inscrire
+            </a>
+            {% endif %}
+        </div>
+        <div class="hero-cta-note justify-content-center mt-14px">
+            <span><i class="fas fa-check"></i></span> Gratuit
+            <span><i class="fas fa-check"></i></span> Ouvert à tous
+            <span><i class="fas fa-check"></i></span> VAE acceptés
+        </div>
+    </section>
+
+    {# ── Villes participantes ──────────────────────────────────────────── #}
+    <section id="villes" class="mb-40px">
+        <h2 class="section-title">
+            <i class="fas fa-map me-2 text-primary"></i>Villes participantes
+        </h2>
+        <p class="section-sub">
+            Retrouvez les villes qui participent, ont participé ou participeront au challenge.
+        </p>
+
+        <ul class="nav nav-tabs" id="villes-tabs" role="tablist">
+            {% for tab in cityTabs %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {{ tab.active ? 'active' }}" id="tab-{{ tab.key }}"
+                        data-bs-toggle="tab" data-bs-target="#pane-{{ tab.key }}"
+                        type="button" role="tab" aria-controls="pane-{{ tab.key }}"
+                        aria-selected="{{ tab.active ? 'true' : 'false' }}">
+                    {{ tab.label }} <span class="badge rounded-pill text-bg-light ms-1">{{ tab.cities|length }}</span>
+                </button>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <div class="tab-content" id="villes-tabs-content">
+            {% for tab in cityTabs %}
+            <div class="tab-pane fade {{ tab.active ? 'show active' }}" id="pane-{{ tab.key }}"
+                 role="tabpanel" aria-labelledby="tab-{{ tab.key }}">
+                {% if tab.cities is empty %}
+                    <div class="alert alert-info mt-3">{{ tab.emptyMessage }}</div>
+                {% else %}
+                <div class="city-grid mt-3">
+                    {% for entry in tab.cities %}
+                    {% set ce = entry.cityEdition %}
+                    {% set city = ce.city %}
+                    {% set status = entry.status %}
+                    <div class="city-card">
+                        <div class="city-card__body">
+                            {% if city.organizationLogo %}
+                                <img src="{{ asset('uploads/logos/' ~ city.organizationLogo) }}"
+                                     alt="{{ city.name }}"
+                                     class="city-logo">
+                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-center gap-2">
+                                <div class="city-name-heading">{{ city.name }}</div>
+                                {% if status == 'current' %}
+                                    <span class="city-badge city-badge--active">En cours</span>
+                                {% elseif status == 'upcoming' %}
+                                    <span class="city-badge city-badge--upcoming">À venir</span>
+                                {% else %}
+                                    <span class="city-badge city-badge--finished">Terminée</span>
+                                {% endif %}
+                            </div>
+                            {% if city.organizationName %}
+                                <div class="adm-hint-text mt-3px">{{ city.organizationName }}</div>
+                            {% endif %}
+                            <div class="adm-hint-text mt-10px flex-col-gap-4">
+                                <span><i class="fas fa-calendar-days fa-xs me-1"></i>{{ ce.edition.startDate|date('d/m/Y') }} – {{ ce.edition.endDate|date('d/m/Y') }}</span>
+                                <span><i class="fas fa-users fa-xs me-1"></i>{{ ce.participants.count() }} participant{{ ce.participants.count() > 1 ? 's' }}</span>
+                            </div>
+                        </div>
+                        <div class="city-card__footer">
+                            <a href="{{ path('app_city_home', {citySlug: city.slug}) }}"
+                               class="btn btn--sm {{ status == 'current' ? 'btn--primary' : 'btn--outline' }} w-100 justify-content-center">
+                                {% if status == 'current' %}
+                                    <i class="fas fa-arrow-right"></i> Participer
+                                {% elseif status == 'upcoming' %}
+                                    <i class="fas fa-info-circle"></i> En savoir plus
+                                {% else %}
+                                    <i class="fas fa-chart-bar"></i> Voir les résultats
+                                {% endif %}
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    {# ── Classement inter-villes ───────────────────────────────────────── #}
+    {% if interCityRanking is not empty %}
+        <section class="mb-40px">
+            <h2 class="section-title">
+                <i class="fas fa-ranking-star me-2 text-orange"></i>Classement inter-villes
+            </h2>
+            <p class="section-sub">Éditions en cours classées par distance totale parcourue.</p>
+            <div class="card card--flat p-0 overflow-hidden">
+                <table class="ic-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Ville</th>
+                            <th class="text-end">Participants</th>
+                            <th class="text-end">Km parcourus</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in interCityRanking %}
+                        <tr>
+                            <td class="ic-rank-cell">
+                                {% if loop.index == 1 %}<i class="fas fa-medal rank-icon text-gold"></i>
+                                {% elseif loop.index == 2 %}<i class="fas fa-medal rank-icon text-silver"></i>
+                                {% elseif loop.index == 3 %}<i class="fas fa-medal rank-icon text-bronze"></i>
+                                {% else %}<span class="ic-rank-num">{{ loop.index }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="ic-city-name">{{ entry.city.name }}</td>
+                            <td class="text-end ic-participants">{{ entry.participantCount }}</td>
+                            <td class="text-end">
+                                <span class="ic-km-val">
+                                    {{ entry.totalKm|number_format(0, '.', ' ') }} km
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ path('app_city_home', {citySlug: entry.city.slug}) }}" class="btn btn--sm btn--outline">
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    {% endif %}
+
+    {# ── Comment ça marche ─────────────────────────────────────────────── #}
+    {% include 'components/_how.html.twig' %}
+
+    {# ── CTA inscription ───────────────────────────────────────────────── #}
+    {% if not app.user %}
+        <div class="cta-band">
+            <div>
+                <div class="cta-band-title">Rejoignez l'aventure, c'est gratuit&nbsp;!</div>
+                <div class="cta-band-sub">Inscrivez-vous et commencez à compter vos trajets dès aujourd'hui.</div>
+            </div>
+            <div class="flex-gap-12">
+                <a href="{{ path('app_register') }}" class="btn-white">
+                    <i class="fas fa-user-plus"></i> Je m'inscris maintenant
+                </a>
+                <a href="#villes" class="btn-white btn-white--ghost">
+                    Voir les villes
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

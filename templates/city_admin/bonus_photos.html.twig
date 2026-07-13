@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Défis photo | {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="home-wrap">
+        <div class="adm-page-header">
+            <div>
+                <h1 class="adm-page-title">Défis photo en attente</h1>
+                <div class="adm-page-sub">{{ city.name }} &middot; Édition {{ cityEdition.edition.year }}</div>
+            </div>
+            {% if pending is not empty %}
+                <span class="badge badge--orange badge--lg">
+                    {{ pending|length }} à traiter
+                </span>
+            {% endif %}
+        </div>
+
+        {% include 'city_admin/_nav.html.twig' %}
+
+        {% if pending is empty %}
+            <div class="alert--success">
+                <i class="fas fa-circle-check me-1"></i> Aucun défi photo en attente de validation.
+            </div>
+        {% else %}
+            <div class="flex-col-gap-12">
+                {% for photo in pending %}
+                    <div class="card card--flat">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <span class="badge badge--yellow me-2">{{ photo.challenge.label() }}</span>
+                                <span class="text-sm text-muted">par {{ photo.user.fullName }}</span>
+                            </div>
+                            <span class="text-xs text-muted">{{ photo.submittedAt|date('d/m/Y H:i') }}</span>
+                        </div>
+                        {% if photo.photo %}
+                            <div class="bp-admin-photo mb-3">
+                                <img src="{{ asset('uploads/bonus_photos/' ~ photo.photo) }}"
+                                     alt="Photo défi"
+                                     class="js-lightbox">
+                            </div>
+                        {% endif %}
+                        {% if photo.comment %}
+                            <p class="text-sm text-ink-2 mb-14px">{{ photo.comment }}</p>
+                        {% endif %}
+                        <div class="d-flex gap-2">
+                            <form method="post" action="{{ path('app_city_admin_bonus_photo_approve', {citySlug: city.slug, id: photo.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('approve_bonus_photo_' ~ photo.id) }}">
+                                <button class="btn btn--primary btn--sm" type="submit">
+                                    <i class="fas fa-check fa-xs me-1"></i> Valider
+                                </button>
+                            </form>
+                            <form method="post" action="{{ path('app_city_admin_bonus_photo_reject', {citySlug: city.slug, id: photo.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('reject_bonus_photo_' ~ photo.id) }}">
+                                <button class="btn btn--danger btn--sm" type="submit">
+                                    <i class="fas fa-times fa-xs me-1"></i> Rejeter
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

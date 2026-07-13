@@ -1,0 +1,278 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Équipes & Participants | {{ city.name }} | Challenge à Pied et à Vélo{% endblock %}
+
+{% block body %}
+    <div class="home-wrap">
+        {# ── En-tête ──────────────────────────────────────────────────────── #}
+        <div class="rk-page-header d-flex justify-content-between">
+            <div>
+                <h1 class="rk-page-title">Équipes & Participants</h1>
+                <div class="rk-page-sub">
+                    Édition {{ cityEdition.edition.year }} à {{ city.name }}
+                    -
+                    mise à jour en temps réel
+                </div>
+            </div>
+            {% if app.user %}
+                <div>
+                    <a href="{{ path('app_team_create', {citySlug: city.slug}) }}" class="btn btn--outline btn--sm">
+                        <i class="fas fa-users-line fa-sm"></i> Créer une équipe
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="rk-layout">
+            {# ════════════════════════ CONTENU PRINCIPAL ═════════════════════ #}
+            <div class="rk-main">
+                {# ── Filtres ────────────────────────────────────────────────── #}
+                <div class="rk-filters">
+                    <div class="rk-mode-tabs">
+                        <a href="{{ path('app_participants', {citySlug: city.slug, view: view}) }}"
+                           class="rk-mode-tab {{ mode is null ? 'active' : '' }}">
+                            Tous les modes
+                        </a>
+                        <a href="{{ path('app_participants', {citySlug: city.slug, view: view, mode: 'bike'}) }}"
+                           class="rk-mode-tab {{ mode is not null and mode.value == 'bike' ? 'active' : '' }}">
+                            <i class="fas fa-bicycle fa-xs"></i> Vélo
+                        </a>
+                        <a href="{{ path('app_participants', {citySlug: city.slug, view: view, mode: 'walk'}) }}"
+                           class="rk-mode-tab {{ mode is not null and mode.value == 'walk' ? 'active' : '' }}">
+                            <i class="fas fa-person-walking fa-xs"></i> Marche
+                        </a>
+                    </div>
+                </div>
+
+                {# ── Bascule vue ────────────────────────────────────────────── #}
+                <div class="rk-view-toggle">
+                    <a href="{{ path('app_participants', {citySlug: city.slug, view: 'team', mode: mode ? mode.value : null}) }}"
+                       class="rk-view-btn {{ view == 'team' ? 'active' : '' }}">
+                        <i class="fas fa-users-line fa-sm"></i> Par équipe
+                    </a>
+                    <a href="{{ path('app_participants', {citySlug: city.slug, view: 'individual', mode: mode ? mode.value : null}) }}"
+                       class="rk-view-btn {{ view == 'individual' ? 'active' : '' }}">
+                        <i class="fas fa-user fa-sm"></i> Individuel
+                    </a>
+                </div>
+
+                {# ── Tableau équipes ────────────────────────────────────────── #}
+                {% if view == 'team' %}
+                    <div class="rk-table-wrap" id="rk-table-wrap">
+                        {% if teamRanking is empty %}
+                            <div class="rk-empty">
+                                <i class="fas fa-users fa-2x text-ink-3"></i>
+                                <p>Aucune équipe classée pour le moment.<br>
+                                <small>Seules les équipes avec au moins 2 participants actifs sont classées.</small></p>
+                            </div>
+                        {% else %}
+                            <div class="rk-table-scroll">
+                            <table class="rk-table" id="rk-table">
+                                <thead>
+                                    <tr>
+                                        <th class="rk-th rk-th--rank">#</th>
+                                        <th class="rk-th">Équipe</th>
+                                        <th class="rk-th rk-th--num">Participants</th>
+                                        <th class="rk-th rk-th--num">Jours</th>
+                                        <th class="rk-th rk-th--num">Distance</th>
+                                        <th class="rk-th rk-th--num">Points</th>
+                                        <th class="rk-th rk-th--pts">Pts / participant</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry in teamRanking %}
+                                        {% set rank = loop.index %}
+                                        {% set colorIdx = (entry.team.id % 8) %}
+                                        <tr class="rk-row rk-row--searchable rk-row--link {{ myTeamPosition and myTeamPosition.team.id == entry.team.id ? 'rk-row--mine' : '' }}"
+                                            data-search="{{ entry.team.name|lower }}"
+                                            data-href="{{ path('app_team_show', {citySlug: city.slug, slug: entry.team.slug}) }}">
+                                            <td class="rk-td rk-td--rank">
+                                                {% if rank == 1 %}
+                                                    <i class="fas fa-medal rank-icon text-gold"></i>
+                                                {% elseif rank == 2 %}
+                                                    <i class="fas fa-medal rank-icon text-silver"></i>
+                                                {% elseif rank == 3 %}
+                                                    <i class="fas fa-medal rank-icon text-bronze"></i>
+                                                {% else %}
+                                                    <span class="rk-rank-num">{{ rank }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="rk-td rk-td--team">
+                                                <span class="rk-team-badge rk-badge--{{ colorIdx }}">
+                                                    {{ entry.team.initials }}
+                                                </span>
+                                                <span class="rk-team-name">{{ entry.team.name }}</span>
+                                            </td>
+                                            <td class="rk-td rk-td--num">{{ entry.participants }}</td>
+                                            <td class="rk-td rk-td--num">{{ entry.activeDays }}</td>
+                                            <td class="rk-td rk-td--num">{{ entry.km|number_format(0, '.', ' ') }} km</td>
+                                            <td class="rk-td rk-td--num">{{ entry.points|number_format(0, '.', ' ') }}</td>
+                                            <td class="rk-td rk-td--pts">
+                                                <span class="rk-pts-badge">{{ entry.ptsPerParticipant|number_format(1) }}</span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            </div>
+                            <div class="rk-table-footer">
+                                {{ teamRanking|length }} équipe{{ teamRanking|length > 1 ? 's' }} au total
+                                &nbsp;&middot;&nbsp; seules les équipes avec ≥&nbsp;2 participants sont classées
+                            </div>
+                        {% endif %}
+                    </div>
+                {# ── Tableau individuel ─────────────────────────────────────── #}
+                {% else %}
+                    <div class="rk-table-wrap" id="rk-table-wrap">
+                        {% if individualRanking is empty %}
+                            <div class="rk-empty">
+                                <i class="fas fa-user fa-2x text-ink-3"></i>
+                                <p>Aucun participant classé pour le moment.</p>
+                            </div>
+                        {% else %}
+                            <div class="rk-table-scroll">
+                            <table class="rk-table" id="rk-table">
+                                <thead>
+                                    <tr>
+                                        <th class="rk-th rk-th--rank">#</th>
+                                        <th class="rk-th">Participant</th>
+                                        <th class="rk-th rk-th--num">Jours actifs</th>
+                                        <th class="rk-th rk-th--num">Distance</th>
+                                        <th class="rk-th rk-th--pts">Points</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry in individualRanking %}
+                                        {% set rank = loop.index %}
+                                        <tr class="rk-row rk-row--searchable {{ entry.user.publicProfile ? 'rk-row--link' : '' }} {{ app.user and app.user.id == entry.user.id ? 'rk-row--mine' : '' }}"
+                                            data-search="{{ (entry.user.firstName ~ ' ' ~ entry.user.lastName ~ ' ' ~ entry.user.username)|lower }}"
+                                            {% if entry.user.publicProfile %}data-href="{{ path('app_profile_public', {citySlug: city.slug, username: entry.user.username}) }}"{% endif %}>
+                                            <td class="rk-td rk-td--rank">
+                                                {% if rank == 1 %}
+                                                    <i class="fas fa-medal rank-icon text-gold"></i>
+                                                {% elseif rank == 2 %}
+                                                    <i class="fas fa-medal rank-icon text-silver"></i>
+                                                {% elseif rank == 3 %}
+                                                    <i class="fas fa-medal rank-icon text-bronze"></i>
+                                                {% else %}
+                                                    <span class="rk-rank-num">{{ rank }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="rk-td rk-td--team">
+                                                {% if entry.user.avatar %}
+                                                    <img src="{{ asset('uploads/avatars/' ~ entry.user.avatar) }}" class="rk-user-avatar" alt="{{ entry.user.initials }}">
+                                                {% else %}
+                                                    <span class="rk-team-badge rk-badge--{{ loop.index0 % 8 }} rk-team-badge--plain">
+                                                        {{ entry.user.initials }}
+                                                    </span>
+                                                {% endif %}
+                                                <span class="rk-team-name">
+                                                    {{ entry.user.firstName }} {{ entry.user.lastName|slice(0,1) }}.
+                                                    {% if not cityEdition.profilesPublic and not app.user %}
+                                                    {% else %}
+                                                        <span class="fs-12 text-ink-3">&nbsp;@{{ entry.user.username }}</span>
+                                                    {% endif %}
+                                                </span>
+                                            </td>
+                                            <td class="rk-td rk-td--num">{{ entry.activeDays }}</td>
+                                            <td class="rk-td rk-td--num">{{ entry.km|number_format(1) }} km</td>
+                                            <td class="rk-td rk-td--pts">
+                                                <span class="rk-pts-badge">{{ entry.points|number_format(1) }}</span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            </div>
+                            <div class="rk-table-footer">
+                                {{ individualRanking|length }} participant{{ individualRanking|length > 1 ? 's' }} classé{{ individualRanking|length > 1 ? 's' }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>{# /rk-main #}
+
+            {# ════════════════════════════ BARRE LATÉRALE ════════════════════ #}
+            <div class="rk-sidebar">
+                {# Ma position #}
+                {% if app.user and myPosition %}
+                    <div class="rk-my-position">
+                        <div class="rk-sidebar-label">Ma position</div>
+                        <div class="rk-my-rank">
+                            {{ myPosition.rank }}<sup>e</sup>
+                            <span class="rk-my-rank-sub">sur {{ myPosition.total }} participants</span>
+                        </div>
+                        {% if myTeamPosition %}
+                            <div class="rk-my-stat-row">
+                                <span>Mon équipe ({{ myTeamPosition.team.name }})</span>
+                                <span class="rk-my-stat-val">{{ myTeamPosition.rank }}e / {{ myTeamPosition.total }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="rk-my-stat-row">
+                            <span>Mes points</span>
+                            <span class="rk-my-stat-val">{{ myPosition.points|number_format(1) }} pts</span>
+                        </div>
+                        {% if myPosition.diff is not null and myPosition.diff < 0 %}
+                            <div class="rk-my-stat-row">
+                                <span>Écart avec {{ myPosition.rank - 1 }}e</span>
+                                <span class="rk-my-stat-val text-red">{{ myPosition.diff|number_format(1) }} pts</span>
+                            </div>
+                        {% elseif myPosition.rank == 1 %}
+                            <div class="rk-my-stat-row">
+                                <span class="text-gold fs-12">
+                                    <i class="fas fa-medal"></i> En tête du classement !
+                                </span>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% elseif not app.user %}
+                    <div class="rk-my-position text-center">
+                        <div class="rk-sidebar-label">Ma position</div>
+                        <p class="fs-13 text-ink-3 my-12px">
+                            Connectez-vous pour voir votre position.
+                        </p>
+                        <a href="{{ path('app_login') }}" class="btn btn--sm btn--outline w-100 justify-content-center">
+                            <i class="fas fa-right-to-bracket"></i> Se connecter
+                        </a>
+                    </div>
+                {% endif %}
+
+                {# Stats de l'édition #}
+                <div class="card card--flat rk-edition-stats">
+                    <div class="rk-sidebar-label">Stats de l'édition</div>
+                    <div class="rk-edition-row">
+                        <span>Équipes classées</span>
+                        <span class="rk-edition-val">{{ editionStats.teamCount }}</span>
+                    </div>
+                    <div class="rk-edition-row">
+                        <span>Participants</span>
+                        <span class="rk-edition-val">{{ editionStats.participantCount }}</span>
+                    </div>
+                    <div class="rk-edition-row">
+                        <span>Meilleur individuel</span>
+                        <span class="rk-edition-val">{{ editionStats.bestIndividual|number_format(1) }} pts</span>
+                    </div>
+                    <div class="rk-edition-row">
+                        <span>Meilleure équipe</span>
+                        <span class="rk-edition-val">{{ editionStats.bestTeam|number_format(1) }} pts/p</span>
+                    </div>
+                    <div class="rk-edition-row rk-edition-row--bar">
+                        <span>Participation vélo</span>
+                        <div class="rk-edition-bar-wrap">
+                            <div class="rk-edition-bar rk-edition-bar--teal pct-fill" style="--pct:{{ editionStats.veloRate }}%"></div>
+                        </div>
+                        <span class="rk-edition-pct rk-edition-pct--teal">{{ editionStats.veloRate }}%</span>
+                    </div>
+                    <div class="rk-edition-row rk-edition-row--bar">
+                        <span>Participation marche</span>
+                        <div class="rk-edition-bar-wrap">
+                            <div class="rk-edition-bar rk-edition-bar--orange pct-fill" style="--pct:{{ editionStats.marcheRate }}%"></div>
+                        </div>
+                        <span class="rk-edition-pct rk-edition-pct--orange">{{ editionStats.marcheRate }}%</span>
+                    </div>
+                </div>
+            </div>{# /rk-sidebar #}
+        </div>{# /rk-layout #}
+    </div>{# /home-wrap #}
+{% endblock %}
+

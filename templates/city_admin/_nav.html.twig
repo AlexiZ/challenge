@@ -1,0 +1,34 @@
+{% set currentRoute = app.request.attributes.get('_route') %}
+{% if not cityEdition.active %}
+<div class="edition-status-banner">
+    <i class="fas fa-triangle-exclamation"></i>
+    Édition <strong>{{ cityEdition.edition.name }}</strong> - hors période active
+    ({{ cityEdition.edition.startDate|date('d/m/Y') }} - {{ cityEdition.edition.endDate|date('d/m/Y') }})
+</div>
+{% endif %}
+<div class="d-flex gap-2 flex-wrap mb-4">
+    <a href="{{ path('app_city_admin_dashboard', {citySlug: city.slug}) }}"
+       class="btn btn--sm {{ currentRoute == 'app_city_admin_dashboard' ? 'btn--primary' : 'btn--outline' }}">
+        <i class="fas fa-gauge fa-xs"></i> Dashboard
+    </a>
+    <a href="{{ path('app_city_admin_city_edit', {citySlug: city.slug}) }}"
+       class="btn btn--sm {{ currentRoute == 'app_city_admin_city_edit' ? 'btn--primary' : 'btn--outline' }}">
+        <i class="fas fa-city fa-xs"></i> Ma ville
+    </a>
+    <a href="{{ path('app_city_admin_participants', {citySlug: city.slug}) }}"
+       class="btn btn--sm {{ currentRoute == 'app_city_admin_participants' or currentRoute == 'app_city_admin_participant_edit' ? 'btn--primary' : 'btn--outline' }}">
+        <i class="fas fa-users fa-xs"></i> Participants
+    </a>
+    <a href="{{ path('app_city_admin_bonus_photos', {citySlug: city.slug}) }}"
+       class="btn btn--sm {{ currentRoute == 'app_city_admin_bonus_photos' ? 'btn--primary' : 'btn--outline' }}">
+        <i class="fas fa-camera fa-xs"></i> Défis photo
+    </a>
+    <a href="{{ path('app_city_admin_suspicious_trips', {citySlug: city.slug}) }}"
+       class="btn btn--sm {{ currentRoute == 'app_city_admin_suspicious_trips' ? 'btn--primary' : 'btn--outline' }}">
+        <i class="fas fa-flag fa-xs"></i> Trajets suspects
+    </a>
+    <a href="{{ path('app_city_admin_config', {citySlug: city.slug}) }}"
+       class="btn btn--sm {{ currentRoute == 'app_city_admin_config' ? 'btn--primary' : 'btn--outline' }}">
+        <i class="fas fa-sliders fa-xs"></i> Configuration
+    </a>
+</div>

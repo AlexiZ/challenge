@@ -1,0 +1,101 @@
+{% set route = app.request.attributes.get('_route') %}
+<nav class="navbar">
+    <div class="navbar__inner">
+        {# ── Brand ── #}
+        <a href="{{ city is defined ? path('app_city_home', {citySlug: city.slug}) : path('app_home') }}" class="navbar__brand">
+            <i class="fas fa-bicycle"></i> <span class="d-flex flex-column"><span>Challenge</span> <span>à Pied et à Vélo</span></span>
+        </a>
+
+        {# ── Burger (mobile only) ── #}
+        <button type="button" class="navbar__toggle" id="navbar-toggle" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="navbar-collapse">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <div class="navbar__collapse" id="navbar-collapse">
+        {# ── Main nav (city context) ── #}
+        <ul class="navbar__nav">
+            {% if city is defined %}
+                <li>
+                    <a href="{{ path('app_city_home', {citySlug: city.slug}) }}" class="{{ route == 'app_city_home' ? 'active' }}">Accueil</a>
+                </li>
+                <li>
+                    <a href="{{ path('app_challenge_info', {citySlug: city.slug}) }}" class="{{ route == 'app_challenge_info' ? 'active' }}">Le challenge</a>
+                </li>
+                <li>
+                    <a href="{{ path('app_participants', {citySlug: city.slug}) }}" class="{{ route == 'app_participants' or route starts with 'app_team' ? 'active' }}">Équipes & Participants</a>
+                </li>
+                {% if app.user %}
+                    <li>
+                        <a href="{{ path('app_my_challenge', {citySlug: city.slug}) }}" class="{{ route == 'app_my_challenge' ? 'active' }}">Mon challenge</a>
+                    </li>
+                    <li>
+                        <a href="{{ path('app_trip_entry', {citySlug: city.slug}) }}" class="{{ route starts with 'app_trip' ? 'active' }}">Saisir trajet</a>
+                    </li>
+                    <li>
+                        <a href="{{ path('app_bonus_photo_list', {citySlug: city.slug}) }}" class="{{ route starts with 'app_bonus_photo' ? 'active' }}">Défis photo</a>
+                    </li>
+                {% endif %}
+            {% endif %}
+        </ul>
+
+        {# ── User menu / actions ── #}
+        <div class="navbar__actions">
+            {% if app.user %}
+                <details class="user-menu">
+                    <summary class="btn btn--sm btn--outline">
+                        <span class="avatar avatar--sm" aria-hidden="true">{{ app.user.initials }}</span>
+                        {{ app.user.firstName }}
+                        <i class="fas fa-chevron-down fa-xs ms-1 opacity-60"></i>
+                    </summary>
+                    <div class="user-menu__dropdown">
+                        <span class="user-menu__label">{{ app.user.fullName }}</span>
+                        {% if city is defined %}
+                            <a href="{{ path('app_profile', {citySlug: city.slug}) }}" class="user-menu__item">
+                                <i class="fas fa-user fa-fw me-1"></i> Mon profil
+                            </a>
+                        {% endif %}
+
+                        {% if is_granted('ROLE_ADMIN_CITY') and city is defined %}
+                            <div class="user-menu__divider"></div>
+                            <span class="user-menu__label">Administration</span>
+                            <a href="{{ path('app_city_admin_dashboard', {citySlug: city.slug}) }}" class="user-menu__item">
+                                <i class="fas fa-gauge fa-fw me-1"></i> Tableau de bord
+                            </a>
+                        {% endif %}
+
+                        {% if is_granted('ROLE_SUPER_ADMIN') %}
+                            <div class="user-menu__divider"></div>
+                            <span class="user-menu__label">Super-admin</span>
+                            <a href="{{ path('app_super_admin_dashboard') }}" class="user-menu__item">
+                                <i class="fas fa-gear fa-fw me-1"></i> Dashboard
+                            </a>
+                            <a href="{{ path('app_super_admin_users') }}" class="user-menu__item">
+                                <i class="fas fa-users-gear fa-fw me-1"></i> Utilisateurs
+                            </a>
+                        {% endif %}
+
+                        <div class="user-menu__divider"></div>
+
+                        <a href="{{ path('app_logout') }}" class="user-menu__item user-menu__item--danger">
+                            <i class="fas fa-right-from-bracket fa-fw me-1"></i> Déconnexion
+                        </a>
+
+                        {% if is_granted('IS_IMPERSONATOR') %}
+                            <a href="{{ impersonation_exit_path(path('app_super_admin_users')) }}" class="user-menu__item">
+                                <i class="fas fa-right-from-bracket fa-fw me-1"></i> Quitter la connexion en tant que
+                            </a>
+                        {% endif %}
+                    </div>
+                </details>
+            {% else %}
+                <a href="{{ path('app_login') }}" class="btn btn--sm btn--outline">
+                    <i class="fas fa-right-to-bracket"></i> Connexion
+                </a>
+                <a href="{{ path('app_register') }}" class="btn btn--sm btn--primary">
+                    <i class="fas fa-user-plus"></i> Inscription
+                </a>
+            {% endif %}
+        </div>
+        </div>
+    </div>
+</nav>

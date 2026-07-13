@@ -1,0 +1,284 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Le challenge | {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="info-page">
+        <div class="info-page__header">
+            <h1 class="info-page__title">Le challenge à <span class="or">{{ city.name }}</span></h1>
+            <p class="info-page__sub">Tout ce qu'il faut savoir pour participer à l'édition {{ cityEdition.edition.year }}.</p>
+        </div>
+
+        {% if not cityEdition.active %}
+            <div class="edition-status-banner mb-4">
+                ⚠️ Cette édition n'est pas en cours
+                ({{ cityEdition.edition.startDate|date('d/m/Y') }} – {{ cityEdition.edition.endDate|date('d/m/Y') }})
+            </div>
+        {% endif %}
+
+        {# Message organisateurs #}
+        {% if cityEdition.organizerMessage %}
+            <div class="mc-org-msg">
+                <div class="mc-section-label">
+                    <i class="fas fa-bullhorn me-1"></i>Message des organisateurs
+                </div>
+                <p class="mc-org-text">{{ cityEdition.organizerMessage }}</p>
+            </div>
+        {% endif %}
+
+        {# Informations clés #}
+        <details class="info-section">
+            <summary class="info-section__header">
+                <span class="info-section__icon">📅</span>
+                <div class="info-section__heading">
+                    <div class="info-section__title">Informations clés</div>
+                    <div class="info-section__sub">Dates, durée et objectifs de l'édition</div>
+                </div>
+                <span class="info-section__arrow"><i class="fa-solid fa-chevron-down"></i></span>
+            </summary>
+            <div class="info-section__body">
+                <div class="info-stats">
+                    <div class="info-stat">
+                        <div class="info-stat__val">{{ cityEdition.edition.startDate|format_datetime(pattern: 'd MMMM Y') }}</div>
+                        <div class="info-stat__lbl">Début</div>
+                    </div>
+                    <div class="info-stat">
+                        <div class="info-stat__val">{{ cityEdition.edition.endDate|format_datetime(pattern: 'd MMMM Y') }}</div>
+                        <div class="info-stat__lbl">Fin</div>
+                    </div>
+                    <div class="info-stat">
+                        <div class="info-stat__val">{{ cityEdition.edition.getDurationDays() }}</div>
+                        <div class="info-stat__lbl">Jours</div>
+                    </div>
+                    <div class="info-stat">
+                        <div class="info-stat__val">{{ cityEdition.targetParticipants }}</div>
+                        <div class="info-stat__lbl">Objectif participants</div>
+                    </div>
+                    <div class="info-stat">
+                        <div class="info-stat__val">{{ cityEdition.targetDistanceKm|number_format(0, '.', ' ') }}</div>
+                        <div class="info-stat__lbl">Objectif km</div>
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        {# Système de points #}
+        <details class="info-section">
+            <summary class="info-section__header">
+                <span class="info-section__icon">⭐</span>
+                <div class="info-section__heading">
+                    <div class="info-section__title">Calcul des points</div>
+                    <div class="info-section__sub">Comment les points sont attribués</div>
+                </div>
+                <span class="info-section__arrow"><i class="fa-solid fa-chevron-down"></i></span>
+            </summary>
+            <div class="info-section__body">
+                <div class="formula-box">
+                    Points = <span class="pts">{{ cityEdition.pointsPerDay }} pt</span> × jours actifs
+                    + <span class="pts">{{ cityEdition.pointsPerKmBike }} pt</span> × km vélo
+                    + <span class="pts-orange">{{ cityEdition.pointsPerKmWalk }} pt</span> × km marche
+                    + bonus photo
+                </div>
+                <dl class="formula-dl">
+                    <dt class="text-ink-3">Par jour actif</dt>
+                    <dd class="fw-semibold">{{ cityEdition.pointsPerDay }} pts</dd>
+                    <dt class="text-ink-3">Par km à vélo</dt>
+                    <dd class="fw-semibold">{{ cityEdition.pointsPerKmBike }} pts</dd>
+                    <dt class="text-ink-3">Par km à pied</dt>
+                    <dd class="fw-semibold">{{ cityEdition.pointsPerKmWalk }} pts</dd>
+                </dl>
+            </div>
+        </details>
+
+        {# Échauffement #}
+        {% if cityEdition.edition.warmupStartDate and cityEdition.edition.warmupEndDate %}
+            <details class="info-section">
+                <summary class="info-section__header">
+                    <span class="info-section__icon">🏃</span>
+                    <div class="info-section__heading">
+                        <div class="info-section__title">Période d'échauffement</div>
+                        <div class="info-section__sub">Avant le lancement officiel</div>
+                    </div>
+                    <span class="info-section__arrow"><i class="fa-solid fa-chevron-down"></i></span>
+                </summary>
+                <div class="info-section__body">
+                    <p class="mb-0 fs-088rem text-ink-2">
+                        Du {{ cityEdition.edition.warmupStartDate|format_datetime(pattern: 'd MMMM') }}
+                        au {{ cityEdition.edition.warmupEndDate|format_datetime(pattern: 'd MMMM Y') }},
+                        profitez de cette période pour tester l'application avant le lancement officiel.
+                    </p>
+                </div>
+            </details>
+        {% endif %}
+
+        {# Questions fréquentes #}
+        <details class="info-section">
+            <summary class="info-section__header">
+                <span class="info-section__icon">❓</span>
+                <div class="info-section__heading">
+                    <div class="info-section__title">Questions fréquentes</div>
+                    <div class="info-section__sub">Les cas particuliers les plus souvent posés</div>
+                </div>
+                <span class="info-section__arrow"><i class="fa-solid fa-chevron-down"></i></span>
+            </summary>
+            <div class="info-section__body py-2">
+                <details class="sub-accordion">
+                    <summary class="sub-accordion__header">
+                        Si je rentre manger chez moi le midi, ça compte pour deux A/R ?
+                        <span class="sub-accordion__arrow"><i class="fa-solid fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="sub-accordion__body">
+                        Oui. Les points sont attribués par <strong>nombre de jours actifs</strong>, et chaque aller-retour dans la journée fait bien un jour actif complet.
+                    </div>
+                </details>
+
+                <details class="sub-accordion">
+                    <summary class="sub-accordion__header">
+                        Est-ce que je peux saisir mes sorties cyclosportives du dimanche ?
+                        <span class="sub-accordion__arrow"><i class="fa-solid fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="sub-accordion__body">
+                        Non. Le challenge valorise les <strong>déplacements utilitaires</strong> (travail, courses, école, rendez-vous…). Les balades sportives du dimanche et les sorties VTT ou cyclosport ne sont pas comptabilisées.
+                    </div>
+                </details>
+
+                <details class="sub-accordion">
+                    <summary class="sub-accordion__header">
+                        Un VAE, est-ce que ça compte ?
+                        <span class="sub-accordion__arrow"><i class="fa-solid fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="sub-accordion__body">
+                        Oui, les <strong>vélos à assistance électrique</strong> (VAE) sont pleinement acceptés. Les kilomètres et jours actifs sont comptabilisés exactement comme avec un vélo classique.
+                    </div>
+                </details>
+
+                <details class="sub-accordion">
+                    <summary class="sub-accordion__header">
+                        J'ai oublié de saisir un trajet d'il y a 2 jours, c'est encore possible ?
+                        <span class="sub-accordion__arrow"><i class="fa-solid fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="sub-accordion__body">
+                        Oui. Vous pouvez saisir des trajets passés depuis le début du challenge, mais pas des trajets futurs. Il suffit de choisir la bonne date lors de la saisie.
+                    </div>
+                </details>
+
+                <details class="sub-accordion">
+                    <summary class="sub-accordion__header">
+                        Dois-je faire une saisie unique avec le cumul de la journée, ou plusieurs ?
+                        <span class="sub-accordion__arrow"><i class="fa-solid fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="sub-accordion__body">
+                        Les deux fonctionnent. Vous pouvez saisir chaque trajet séparément ou les regrouper en un seul. Dans tous les cas, la journée ne compte que pour <strong>1 jour actif</strong>.
+                    </div>
+                </details>
+
+                <details class="sub-accordion">
+                    <summary class="sub-accordion__header">
+                        Puis-je être dans plusieurs équipes ?
+                        <span class="sub-accordion__arrow"><i class="fa-solid fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="sub-accordion__body">
+                        Non, chaque participant ne peut appartenir qu'à une seule équipe à la fois. Si vous souhaitez changer d'équipe, quittez la première avant d'en rejoindre une autre.
+                    </div>
+                </details>
+
+                <details class="sub-accordion">
+                    <summary class="sub-accordion__header">
+                        J'étais en déplacement professionnel et j'ai utilisé un Vélib', ça compte ?
+                        <span class="sub-accordion__arrow"><i class="fa-solid fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="sub-accordion__body">
+                        Oui, à condition que le trajet soit un <strong>déplacement utilitaire</strong> (pas une livraison à titre professionnel). Les vélos en libre-service et les vélos de location sont acceptés.
+                    </div>
+                </details>
+
+            </div>
+        </details>
+
+        {# Défis photo #}
+        {% if cityEdition.photoChallengesEnabled %}
+            <details class="info-section">
+                <summary class="info-section__header">
+                    <span class="info-section__icon">📸</span>
+                    <div class="info-section__heading">
+                        <div class="info-section__title">Défis photo bonus</div>
+                        <div class="info-section__sub">Gagnez des points supplémentaires en partageant des photos</div>
+                    </div>
+                    <span class="info-section__arrow"><i class="fa-solid fa-chevron-down"></i></span>
+                </summary>
+                <div class="info-section__body">
+                    <p class="fs-088rem text-ink-2 mb-3">
+                        Pour remporter des points bonus, relevez un des défis ci-dessous, prenez une photo et partagez-la depuis votre profil. Les photos sont publiées sur le site avec votre accord.
+                    </p>
+                    {% if cityEdition.bonusPhotoConfigs is not empty %}
+                        <div class="challenge-grid mb-3">
+                            {% for config in cityEdition.bonusPhotoConfigs %}
+                                <div class="challenge-card d-flex justify-content-between">
+                                    <div>
+                                        <div class="challenge-card__title">{{ config.challenge.label() }}</div>
+                                        <div class="challenge-card__desc">{{ config.challenge.description() }}</div>
+                                    </div>
+                                    <div class="my-auto">
+                                        <div class="challenge-card__badge">+{{ config.points|number_format(0) }} pts</div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if app.user %}
+                        <a href="{{ path('app_bonus_photo_list', {citySlug: city.slug}) }}" class="btn btn--orange btn--sm">
+                            <i class="fa-solid fa-camera me-1"></i> Partager une photo bonus
+                        </a>
+                    {% endif %}
+                </div>
+            </details>
+        {% endif %}
+
+        {# Organisation & contact #}
+        {% if city.organizationName or city.organizationDescription %}
+            <details class="info-section">
+                <summary class="info-section__header">
+                    <span class="info-section__icon">🏙️</span>
+                    <div class="info-section__heading">
+                        <div class="info-section__title">Organisation &amp; contact</div>
+                        <div class="info-section__sub">Qui organise le challenge, comment nous joindre</div>
+                    </div>
+                    <span class="info-section__arrow"><i class="fa-solid fa-chevron-down"></i></span>
+                </summary>
+                <div class="info-section__body">
+                    <p class="fw-semibold mb-1 fs-092rem">{{ city.organizationName }}</p>
+                    {% if city.organizationDescription %}
+                        <p class="fs-085rem text-ink-2 mb-075rem">{{ city.organizationDescription }}</p>
+                    {% endif %}
+                    {% if city.contactEmail %}
+                        <p class="fs-085rem mb-075rem">
+                            Contact : <a href="mailto:{{ city.contactEmail }}">{{ city.contactEmail }}</a>
+                        </p>
+                    {% endif %}
+                    <div class="d-flex gap-2 flex-wrap">
+                        {% for i in [1, 2] %}
+                            {% set type = attribute(city, 'socialLink' ~ i ~ 'Type') %}
+                            {% set url  = attribute(city, 'socialLink' ~ i ~ 'Url') %}
+                            {% if type and url %}
+                                <a href="{{ url }}" target="_blank" rel="noopener" class="btn btn--outline btn--sm">
+                                    {{ type.icon() }} {{ type.label() }}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </details>
+        {% endif %}
+
+        {# Actions #}
+        <div class="d-flex gap-3 flex-wrap mt-4">
+            {% if not app.user %}
+                <a href="{{ path('app_register') }}" class="btn btn--primary btn--lg">S'inscrire pour participer</a>
+            {% else %}
+                <a href="{{ path('app_trip_entry', {citySlug: city.slug}) }}" class="btn btn--primary btn--lg">Saisir un trajet</a>
+            {% endif %}
+            <a href="{{ path('app_city_home', {citySlug: city.slug}) }}" class="btn btn--outline btn--lg">← Retour à l'accueil</a>
+        </div>
+
+    </div>
+{% endblock %}

@@ -1,0 +1,251 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Défis photo | {{ parent() }}{% endblock %}
+
+{# ── Couleurs et icônes par défi ──────────────────────────────────────────── #}
+{% set challengeMeta = {
+    'le_parrain':       {bg: '#fce7f3', color: '#9d174d', icon: 'fa-handshake'},
+    'panier_garni':     {bg: '#ede9fe', color: '#7c3aed', icon: 'fa-basket-shopping'},
+    'classe_a_plach':   {bg: '#e0f2fe', color: '#0284c7', icon: 'fa-school'},
+    'pour_le_plaisir':  {bg: '#ccfbf1', color: '#0f766e', icon: 'fa-bicycle'},
+    'famille_nombreuse':{bg: '#ffedd5', color: '#c2410c', icon: 'fa-people-group'},
+    'tshirt_mouille':   {bg: '#dbeafe', color: '#1d4ed8', icon: 'fa-shirt'},
+    'esprit_equipe':    {bg: '#dcfce7', color: '#15803d', icon: 'fa-users'},
+    'panoramacyclette': {bg: '#ecfccb', color: '#4d7c0f', icon: 'fa-mountain-sun'}
+} %}
+
+{% block body %}
+<div class="home-wrap">
+    <div class="bp-page-header">
+        <h1 class="bp-page-title">Défis photo</h1>
+        <p class="bp-page-sub">Partagez vos photos et gagnez des points bonus pour votre équipe.</p>
+    </div>
+
+    <div class="bp-layout">
+        {# ════════════════════════ MAIN ════════════════════════ #}
+        <div class="bp-main">
+            {# ── Formulaire de soumission ─────────────────────── #}
+            {% if submitForm %}
+                <div class="bp-form-card">
+                    <div class="bp-form-header">
+                        <span><i class="fas fa-camera me-1"></i> Soumettre une photo</span>
+                        <span class="bp-form-hint">Formats acceptés : JPG, PNG &middot; Taille max : 5 Mo</span>
+                    </div>
+                    <div class="bp-form-body">
+                        {{ form_start(submitForm) }}
+
+                        {# Dropzone #}
+                        <div class="bp-dropzone">
+                            {{ form_widget(submitForm.photoFile, {attr: {class: 'bp-photo-input', style: 'position:absolute;left:-9999px;opacity:0;'}}) }}
+                            <div class="bp-dropzone-idle">
+                                <i class="fas fa-image bp-dropzone-icon"></i>
+                                <p class="bp-dropzone-text">Glissez votre photo ici</p>
+                                <p class="bp-dropzone-sub">ou cliquez pour parcourir vos fichiers</p>
+                                <span class="bp-dropzone-btn">Choisir un fichier</span>
+                            </div>
+                            <div class="bp-dropzone-preview">
+                                <img class="bp-preview-img" src="" alt="Aperçu">
+                                <div class="bp-preview-info">
+                                    <span class="bp-preview-name"></span>
+                                    <button type="button" class="bp-preview-reset">
+                                        <i class="fas fa-xmark"></i> Changer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {{ form_errors(submitForm.photoFile) }}
+
+                        {# Sélection du défi #}
+                        <div class="bp-challenge-section my-2">
+                            <div class="bp-challenge-label">
+                                Quel défi relevez-vous&nbsp;? <span class="bp-required">*</span>
+                            </div>
+                            <div class="bp-challenge-grid" data-radio-group data-active-class="is-checked">
+                                {% for child in submitForm.challenge %}
+                                    {% set val = child.vars.value %}
+                                    {% set pts = challengePointsMap[val] ?? 0 %}
+                                    {% set desc = challengeDescriptionMap[val] ?? '' %}
+                                    <label class="bp-challenge-opt js-radio-toggle-option{{ child.vars.checked ? ' is-checked' : '' }}"
+                                           for="{{ child.vars.id }}">
+                                        {{ form_widget(child) }}
+                                        <span class="bp-opt-pts">+{{ pts }}pt{{ pts > 1 ? 's' }}</span>
+                                        <span class="bp-opt-name">
+                                            {{ child.vars.label }}
+                                            <span class="bp-opt-tip" title="{{ desc }}">
+                                                <i class="fa-regular fa-circle-question"></i>
+                                            </span>
+                                        </span>
+                                        <span class="bp-opt-radio"></span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                            {{ form_errors(submitForm.challenge) }}
+                        </div>
+
+                        {# Commentaire #}
+                        <div class="bp-field-group my-2">
+                            <label class="bp-field-label">
+                                Un petit commentaire&nbsp;? <em class="bp-optional">(optionnel)</em>
+                            </label>
+                            {{ form_widget(submitForm.comment, {attr: {
+                                class: 'bp-textarea',
+                                placeholder: 'Décrivez votre photo en quelques mots...'
+                            }}) }}
+                        </div>
+
+                        {# Consentement #}
+                        <div class="bp-consent my-2">
+                            {{ form_widget(submitForm.consentToPublish, {attr: {class: 'bp-consent-check'}}) }}
+                            {{ form_label(submitForm.consentToPublish, null, {label_attr: {class: 'bp-consent-label'}}) }}
+                        </div>
+
+                        <button type="submit" class="bp-submit-btn">Envoyer ma photo →</button>
+
+                        {{ form_end(submitForm) }}
+                    </div>
+                </div>
+            {% elseif not app.user %}
+                <div class="bp-form-card">
+                    <div class="bp-form-header">
+                        <span><i class="fas fa-camera me-1"></i> Soumettre une photo</span>
+                    </div>
+                    <div class="bp-form-body text-center p-2rem">
+                        <p class="text-ink-3 fs-14 mb-14px">
+                            Connectez-vous pour soumettre un défi photo.
+                        </p>
+                        <a href="{{ path('app_login') }}" class="btn btn--primary btn--sm">Se connecter</a>
+                    </div>
+                </div>
+            {% endif %}
+
+            {# ── Galerie publique ─────────────────────────────── #}
+            {% if publicPhotos is not empty %}
+                <div class="bp-gallery">
+                    <div class="bp-gallery-head">
+                        <h2 class="bp-gallery-title">
+                            L'album {{ cityEdition.edition.year }}
+                            <span class="bp-gallery-count">({{ publicPhotos|length }} photo{{ publicPhotos|length > 1 ? 's' }})</span>
+                        </h2>
+                        <div class="bp-filter-tabs">
+                            <button class="bp-filter-tab active" data-filter="all">Tous les défis</button>
+                            {% set seenChallenges = [] %}
+                            {% for photo in publicPhotos %}
+                                {% if photo.challenge.value not in seenChallenges %}
+                                    {% set seenChallenges = seenChallenges|merge([photo.challenge.value]) %}
+                                    <button class="bp-filter-tab" data-filter="{{ photo.challenge.value }}">
+                                        {{ photo.challenge.label() }}
+                                    </button>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="bp-photos-grid">
+                        {% for photo in publicPhotos %}
+                            {% set meta = challengeMeta[photo.challenge.value] ?? {bg: '#f3f4f6', color: '#6b7280', icon: 'fa-image'} %}
+                            <div class="bp-photo-card" data-challenge="{{ photo.challenge.value }}">
+                                <div class="bp-photo-img dyn-bg" style="--dyn-bg:{{ meta.bg }}">
+                                    {% if photo.photo %}
+                                        <img src="{{ asset('uploads/bonus_photos/' ~ photo.photo) }}"
+                                             alt="{{ photo.challenge.label() }}"
+                                             class="js-lightbox">
+                                    {% else %}
+                                        <i class="fas {{ meta.icon }} fs-240rem dyn-color" style="--dyn-color:{{ meta.color }}"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="bp-photo-footer">
+                                    <div class="bp-photo-left">
+                                        <span class="bp-photo-author">
+                                            {{ photo.user.firstName }} {{ photo.user.lastName|slice(0,1) }}.
+                                        </span>
+                                        <span class="bp-photo-tag dyn-bg dyn-color" style="--dyn-bg:{{ meta.bg }};--dyn-color:{{ meta.color }}">
+                                            {{ photo.challenge.label() }}
+                                        </span>
+                                    </div>
+                                    <span class="bp-photo-pts">
+                                        +{{ challengePointsMap[photo.challenge.value] ?? '?' }} pts
+                                    </span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if publicPhotos|length > 6 %}
+                        <div class="bp-see-more">
+                            <button class="bp-see-more-btn">
+                                ↓ Voir les {{ publicPhotos|length - 6 }} autres photos
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>{# /bp-main #}
+
+        {# ════════════════════════ SIDEBAR ════════════════════════ #}
+        <div class="bp-sidebar">
+            {# Mes soumissions #}
+            {% if myPhotos is not empty %}
+                <div class="card card--flat bp-my-card">
+                    <div class="bp-sidebar-label">MES PHOTOS SOUMISES</div>
+                    {% for photo in myPhotos %}
+                        {% set meta = challengeMeta[photo.challenge.value] ?? {bg: '#f3f4f6', color: '#6b7280', icon: 'fa-image'} %}
+                        <div class="bp-my-row">
+                            <span class="bp-my-icon dyn-bg dyn-color" style="--dyn-bg:{{ meta.bg }};--dyn-color:{{ meta.color }}">
+                                <i class="fas {{ meta.icon }} fa-xs"></i>
+                            </span>
+                            <span class="bp-my-name">{{ photo.challenge.label() }}</span>
+                            <span class="bp-status-badge bp-status--{{ photo.status.value }}">
+                                {{ photo.status.label() }}
+                            </span>
+                            <span class="bp-my-pts">
+                                +{{ photo.status.value == 'approved' and photo.pointsAwarded is not null
+                                    ? photo.pointsAwarded|number_format(0)
+                                    : challengePointsMap[photo.challenge.value] ?? '?' }}
+                            </span>
+                        </div>
+                    {% endfor %}
+
+                    <div class="bp-my-total">
+                        Total bonus photo&nbsp;: <strong>+{{ myTotalBonusPoints|number_format(0) }} pts</strong>
+                    </div>
+
+                    {% set pendingPhotos = myPhotos|filter(p => p.status.value == 'pending') %}
+                    {% if pendingPhotos|length > 0 %}
+                        <p class="bp-my-note">
+                            {% for p in pendingPhotos %}
+                                Le défi « {{ p.challenge.label() }} » est en cours de validation par les organisateurs.
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {# Points à gagner #}
+            <div class="card card--flat bp-pts-card">
+                <div class="bp-sidebar-label">POINTS À GAGNER</div>
+                {% set configs = cityEdition.bonusPhotoConfigs %}
+                {% if configs is not empty %}
+                    {% for config in configs|sort((a, b) => b.points > a.points ? 1 : -1) %}
+                        <div class="bp-pts-row">
+                            <span class="bp-pts-name">
+                                {{ config.challenge.label() }}
+                                <span class="bp-pts-tip" title="{{ challengeDescriptionMap[config.challenge.value] ?? '' }}">
+                                    <i class="fa-regular fa-circle-question"></i>
+                                </span>
+                            </span>
+                            <span class="bp-pts-badge">+{{ config.points|number_format(0) }} pts</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {% for case in challengePointsMap|keys %}
+                        <div class="bp-pts-row">
+                            <span class="bp-pts-name">{{ case }}</span>
+                            <span class="bp-pts-badge">+{{ challengePointsMap[case] }} pts</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>{# /bp-sidebar #}
+    </div>{# /bp-layout #}
+</div>{# /home-wrap #}
+{% endblock %}

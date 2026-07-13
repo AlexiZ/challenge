@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Participants | {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="home-wrap">
+
+    <div class="adm-page-header">
+        <div>
+            <h1 class="adm-page-title">Participants</h1>
+            <div class="adm-page-sub">{{ city.name }} &middot; Édition {{ cityEdition.edition.year }}</div>
+        </div>
+    </div>
+
+    {% include 'city_admin/_nav.html.twig' %}
+
+    <div class="card card--flat">
+        {% if participants is empty %}
+            <p class="text-muted fs-090rem">Aucun participant inscrit pour cette édition.</p>
+        {% else %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Email</th>
+                            <th>Pseudo</th>
+                            <th>Rôle</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for participant in participants %}
+                        <tr>
+                            <td class="font-semibold">{{ participant.fullName }}</td>
+                            <td class="text-sm text-muted">{{ participant.email }}</td>
+                            <td class="text-sm text-muted"><code>{{ participant.username }}</code></td>
+                            <td>
+                                {% if 'ROLE_ADMIN_CITY' in participant.roles %}
+                                    <span class="badge badge--teal">Admin ville</span>
+                                {% else %}
+                                    <span class="badge badge--green">Participant</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-nowrap">
+                                <a href="{{ path('app_city_admin_participant_edit', {citySlug: city.slug, id: participant.id}) }}"
+                                   class="btn btn--sm btn--outline">Modifier</a>
+                                <form method="post" class="d-inline"
+                                      action="{{ path('app_city_admin_participant_remove', {citySlug: city.slug, id: participant.id}) }}"
+                                      data-confirm="Retirer {{ participant.fullName|e('html_attr') }} de cette édition ?">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('remove_participant_' ~ participant.id) }}">
+                                    <button type="submit" class="btn btn--sm btn--danger">Retirer</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

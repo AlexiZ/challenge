@@ -1,0 +1,109 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ city.id ? 'Modifier' : 'Nouvelle' }} ville | {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="home-wrap">
+    <div class="adm-page-header">
+        <div>
+            <h1 class="adm-page-title">{{ city.id ? 'Modifier la ville' : 'Nouvelle ville' }}</h1>
+            {% if city.id %}
+                <div class="adm-page-sub">{{ city.name }} &middot; <code>{{ city.slug }}</code></div>
+            {% endif %}
+        </div>
+        <a href="{{ path('app_super_admin_dashboard') }}" class="btn btn--sm btn--outline">
+            <i class="fas fa-arrow-left fa-xs me-1"></i> Dashboard
+        </a>
+    </div>
+
+    {{ form_start(form) }}
+
+    {# ── Identité ── #}
+    <div class="card card--flat adm-card-gap">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-city me-1"></i>Identité de la ville
+        </div>
+        <div class="form-group">
+            {{ form_label(form.name) }}
+            {{ form_widget(form.name, {attr: {class: 'form-control'}}) }}
+            {{ form_errors(form.name) }}
+        </div>
+        <div class="form-group mb-0">
+            {{ form_label(form.slug) }}
+            {{ form_widget(form.slug, {attr: {class: 'form-control', placeholder: 'ex: bordeaux'}}) }}
+            {{ form_errors(form.slug) }}
+        </div>
+    </div>
+
+    {# ── Organisme ── #}
+    <div class="card card--flat adm-card-gap">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-building me-1"></i>Organisme organisateur
+        </div>
+        <div class="form-group">
+            {{ form_label(form.organizationName) }}
+            {{ form_widget(form.organizationName, {attr: {class: 'form-control'}}) }}
+            {{ form_errors(form.organizationName) }}
+        </div>
+        <div class="form-group">
+            {{ form_label(form.organizationDescription) }}
+            {{ form_widget(form.organizationDescription, {attr: {class: 'form-control'}}) }}
+            {{ form_errors(form.organizationDescription) }}
+        </div>
+        <div class="form-group mb-0">
+            {{ form_label(form.contactEmail) }}
+            {{ form_widget(form.contactEmail, {attr: {class: 'form-control', placeholder: 'contact@exemple.fr'}}) }}
+            {{ form_errors(form.contactEmail) }}
+        </div>
+    </div>
+
+    {# ── Réseaux sociaux ── #}
+    <div class="card card--flat mb-4">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-share-nodes me-1"></i>Réseaux sociaux
+        </div>
+        <div class="form-group adm-social-field-row">
+            <div>
+                {{ form_label(form.socialLink1Type) }}
+                {{ form_widget(form.socialLink1Type, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.socialLink1Type) }}
+            </div>
+            <div>
+                {{ form_label(form.socialLink1Url) }}
+                {{ form_widget(form.socialLink1Url, {attr: {class: 'form-control', placeholder: 'https://…'}}) }}
+                {{ form_errors(form.socialLink1Url) }}
+            </div>
+        </div>
+        <div class="form-group adm-social-field-row mb-0">
+            <div>
+                {{ form_label(form.socialLink2Type) }}
+                {{ form_widget(form.socialLink2Type, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.socialLink2Type) }}
+            </div>
+            <div>
+                {{ form_label(form.socialLink2Url) }}
+                {{ form_widget(form.socialLink2Url, {attr: {class: 'form-control', placeholder: 'https://…'}}) }}
+                {{ form_errors(form.socialLink2Url) }}
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn--primary" type="submit">
+        <i class="fas fa-save me-1"></i> Enregistrer
+    </button>
+
+    {{ form_end(form) }}
+
+    {% if city.id %}
+        <div class="adm-danger-zone">
+            <div class="adm-danger-zone__title"><i class="fas fa-triangle-exclamation fa-xs me-1"></i>Zone de danger</div>
+            <div class="adm-danger-zone__desc">La suppression est irréversible. Toutes les participations liées à cette ville seront également supprimées.</div>
+            <form method="post" action="{{ path('app_super_admin_city_delete', {id: city.id}) }}"
+                  data-confirm="Supprimer la ville « {{ city.name|e('html_attr') }} » ? Cette action est irréversible.">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete_city_' ~ city.id) }}">
+                <button type="submit" class="btn btn--danger btn--sm">Supprimer cette ville</button>
+            </form>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

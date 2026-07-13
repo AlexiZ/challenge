@@ -1,0 +1,116 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admininistration | {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="home-wrap">
+    {# ── Super admin notice ── #}
+    {% if app.user and is_granted('ROLE_SUPER_ADMIN') %}
+        <div class="alert alert-info">
+            Vous administrez cette ville en tant que super-administrateur.
+        </div>
+    {% endif %}
+
+    {# ── En-tête de page ── #}
+    <div class="adm-page-header">
+        <div>
+            <h1 class="adm-page-title">Tableau de bord</h1>
+            <div class="adm-page-sub">
+                Édition {{ cityEdition.edition.year }}
+                {% if cityEdition.edition.startDate and cityEdition.edition.endDate %}
+                    &middot; du {{ cityEdition.edition.startDate|date('d/m/Y') }}
+                    au {{ cityEdition.edition.endDate|date('d/m/Y') }}
+                {% endif %}
+                &middot;
+                {% if cityEdition.active %}
+                    <span class="adm-status adm-status--active">En cours</span>
+                {% else %}
+                    <span class="adm-status adm-status--inactive">Terminée</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# ── Navigation entre sections ── #}
+    {% include 'city_admin/_nav.html.twig' %}
+
+    {# ── Statistiques clés ── #}
+    <div class="adm-kpi-grid">
+        <div class="adm-kpi">
+            <div class="adm-kpi__eyebrow">
+                <i class="fas fa-users fa-xs"></i> Participants
+            </div>
+            <div class="adm-kpi__val">{{ cityStats.participant_count }}</div>
+            <div class="adm-kpi__sub">inscrits à cette édition</div>
+        </div>
+        <div class="adm-kpi">
+            <div class="adm-kpi__eyebrow">
+                <i class="fas fa-route fa-xs"></i> Distance totale
+            </div>
+            <div class="adm-kpi__val">
+                {{ cityStats.total_km|number_format(0, '.', ' ') }}<span class="adm-kpi__unit">km</span>
+            </div>
+            <div class="adm-kpi__sub">parcourus cette édition</div>
+        </div>
+        <div class="adm-kpi">
+            <div class="adm-kpi__eyebrow">
+                <i class="fas fa-bullseye fa-xs"></i> Objectif
+            </div>
+            <div class="adm-kpi__val">
+                {{ cityStats.target_progress_pct }}<span class="adm-kpi__unit">%</span>
+            </div>
+            <div class="adm-kpi__sub">sur {{ cityStats.target_km|number_format(0) }} km</div>
+        </div>
+        <div class="adm-kpi">
+            <div class="adm-kpi__eyebrow">
+                <i class="fas fa-leaf fa-xs"></i> CO₂ évité
+            </div>
+            <div class="adm-kpi__val">
+                {{ cityStats.co2_kg|number_format(0) }}<span class="adm-kpi__unit">kg</span>
+            </div>
+            <div class="adm-kpi__sub">émissions économisées</div>
+        </div>
+    </div>
+
+    {# ── Progression vers l'objectif ── #}
+    {% if cityStats.target_km > 0 %}
+        <div class="card card--flat mb-20px">
+            <div class="adm-progress-head">
+                <div class="adm-section-label">
+                    <i class="fas fa-flag-checkered fa-xs me-1"></i>Progression vers l'objectif
+                </div>
+                <span class="adm-progress-ratio">
+                    {{ cityStats.total_km|number_format(0) }} / {{ cityStats.target_km|number_format(0) }} km
+                </span>
+            </div>
+            <div class="adm-progress-bar-wrap">
+                <div class="adm-progress-bar pct-fill" style="--pct:{{ cityStats.target_progress_pct }}%"></div>
+            </div>
+            <div class="adm-progress-meta">{{ cityStats.target_progress_pct }}% de l'objectif atteint</div>
+        </div>
+    {% endif %}
+
+    {# ── Message des organisateurs ── #}
+    <div class="adm-section-label mb-10px">
+        <i class="fas fa-bullhorn fa-xs me-1"></i>Message des organisateurs
+    </div>
+    <div class="card card--flat mb-4">
+        <p class="adm-msg-hint">Affiché sur le dashboard de chaque participant connecté.</p>
+
+        <form method="post" action="{{ path('app_city_admin_update_message', {citySlug: city.slug}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('update_message_' ~ cityEdition.id) }}">
+            <textarea name="message" class="adm-msg-textarea" rows="3" placeholder="Saisissez un message pour vos participants…">{{ cityEdition.organizerMessage }}</textarea>
+            <div class="adm-msg-actions">
+                <button type="submit" class="btn btn--primary btn--sm">
+                    <i class="fas fa-save fa-xs me-1"></i> Enregistrer
+                </button>
+                {% if cityEdition.organizerMessage %}
+                    <button type="submit" name="message" value="" class="btn btn--sm btn--outline">
+                        <i class="fas fa-times fa-xs me-1"></i> Effacer le message
+                    </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

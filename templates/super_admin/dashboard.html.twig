@@ -1,0 +1,163 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Administration globale | {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="home-wrap">
+        <div class="adm-page-header">
+            <div>
+                <h1 class="adm-page-title">Administration globale</h1>
+                <div class="adm-page-sub">Villes, éditions et participations</div>
+            </div>
+            <a href="{{ path('app_super_admin_users') }}" class="btn btn--outline btn--sm">
+                <i class="fas fa-users me-1"></i> Utilisateurs
+            </a>
+        </div>
+
+        {# ── Villes ── #}
+        <div class="adm-table-header">
+            <div class="adm-section-label">
+                <i class="fas fa-city me-1"></i>Villes
+            </div>
+            <a href="{{ path('app_super_admin_city_new') }}" class="btn btn--primary btn--sm">
+                <i class="fas fa-plus fa-xs me-1"></i> Nouvelle ville
+            </a>
+        </div>
+        <div class="card card--flat mb-28px">
+            {% if cities is empty %}
+                <p class="text-muted text-sm">Aucune ville enregistrée.</p>
+            {% else %}
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ville</th>
+                                <th>Slug</th>
+                                <th>Organisation</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for city in cities %}
+                                <tr>
+                                    <td class="font-semibold">{{ city.name }}</td>
+                                    <td><code>{{ city.slug }}</code></td>
+                                    <td class="text-sm text-muted">{{ city.organizationName }}</td>
+                                    <td class="text-nowrap">
+                                        <a href="{{ path('app_city_home', {citySlug: city.slug}) }}"
+                                           class="btn btn--sm btn--outline" title="Voir la page publique">
+                                            <i class="fas fa-arrow-up-right-from-square fa-xs"></i>
+                                        </a>
+                                        <a href="{{ path('app_super_admin_city_edit', {id: city.id}) }}"
+                                           class="btn btn--sm btn--outline">Modifier</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+
+        {# ── Éditions ── #}
+        <div class="adm-table-header">
+            <div class="adm-section-label">
+                <i class="fas fa-calendar-days me-1"></i>Éditions
+            </div>
+            <a href="{{ path('app_super_admin_edition_new') }}" class="btn btn--primary btn--sm">
+                <i class="fas fa-plus fa-xs me-1"></i> Nouvelle édition
+            </a>
+        </div>
+        <div class="card card--flat mb-28px">
+            {% if editions is empty %}
+                <p class="text-muted text-sm">Aucune édition enregistrée.</p>
+            {% else %}
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Année</th>
+                                <th>Début</th>
+                                <th>Fin</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for edition in editions %}
+                                <tr>
+                                    <td class="font-semibold">{{ edition.name }}</td>
+                                    <td>{{ edition.year }}</td>
+                                    <td class="text-sm">{{ edition.startDate|date('d/m/Y') }}</td>
+                                    <td class="text-sm">{{ edition.endDate|date('d/m/Y') }}</td>
+                                    <td>
+                                        <a href="{{ path('app_super_admin_edition_edit', {id: edition.id}) }}"
+                                           class="btn btn--sm btn--outline">Modifier</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+
+        {# ── Participations ville / édition ── #}
+        <div class="adm-table-header">
+            <div class="adm-section-label">
+                <i class="fas fa-link me-1"></i>Participations ville&nbsp;/&nbsp;édition
+            </div>
+            <a href="{{ path('app_super_admin_city_edition_new') }}" class="btn btn--primary btn--sm">
+                <i class="fas fa-plus fa-xs me-1"></i> Nouvelle participation
+            </a>
+        </div>
+        <div class="card card--flat">
+            {% set allCityEditions = [] %}
+            {% for city in cities %}
+                {% for ce in city.cityEditions %}
+                    {% set allCityEditions = allCityEditions|merge([ce]) %}
+                {% endfor %}
+            {% endfor %}
+
+            {% if allCityEditions is empty %}
+                <p class="text-muted text-sm">Aucune participation enregistrée.</p>
+            {% else %}
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ville</th>
+                                <th>Édition</th>
+                                <th>Participants cible</th>
+                                <th>Km cible</th>
+                                <th>Statut</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ce in allCityEditions %}
+                                <tr>
+                                    <td class="font-semibold">{{ ce.city.name }}</td>
+                                    <td>{{ ce.edition.name }}</td>
+                                    <td>{{ ce.targetParticipants }}</td>
+                                    <td>{{ ce.targetDistanceKm|number_format(0, '.', ' ') }}</td>
+                                    <td>
+                                        {% if ce.active %}
+                                            <span class="badge badge--green">Active</span>
+                                        {% else %}
+                                            <span class="badge badge--teal">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ path('app_super_admin_city_edition_edit', {id: ce.id}) }}"
+                                           class="btn btn--sm btn--outline">Modifier</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

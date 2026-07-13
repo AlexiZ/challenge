@@ -1,0 +1,311 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon challenge | {{ city.name }} | Challenge à Pied et à Vélo{% endblock %}
+
+{% block body %}
+
+{# ── Calcul des jours du challenge ───────────────────────────────────── #}
+{% set startTs    = cityEdition.edition.startDate ? cityEdition.edition.startDate|date('U') : 0 %}
+{% set endTs      = cityEdition.edition.endDate   ? cityEdition.edition.endDate|date('U')   : 0 %}
+{% set nowTs      = 'now'|date('U') %}
+{% set totalDays  = (startTs and endTs) ? (((endTs - startTs) / 86400)|round) : 0 %}
+{% set rawElapsed = startTs ? (((nowTs - startTs) / 86400)|round) : 0 %}
+{% set daysElapsed = min(max(rawElapsed, 0), totalDays) %}
+{% set daysLeft    = endTs ? max(((endTs - nowTs) / 86400)|round, 0) : 0 %}
+{% set challengePct = totalDays > 0 ? min(100, ((daysElapsed / totalDays) * 100)|round) : 0 %}
+
+{# ── Décomposition des points ────────────────────────────────────────── #}
+{% set bikePoints = (stats.km_bike * cityEdition.pointsPerKmBike)|round(1) %}
+{% set walkPoints = (stats.km_walk * cityEdition.pointsPerKmWalk)|round(1) %}
+{% set dayPoints  = (stats.active_days * cityEdition.pointsPerDay)|round(1) %}
+
+<div class="home-wrap">
+    {# ── En-tête de page ──────────────────────────────────────────────── #}
+    <div class="mc-page-header">
+        <div>
+            <h1 class="mc-page-title">Mon challenge</h1>
+            <div class="mc-page-sub">
+                <i class="fas fa-map-location-dot fa-sm"></i>
+                {{ city.name }} &middot; Édition {{ cityEdition.edition.year }}
+            </div>
+        </div>
+        {% if cityEdition.tripsEntryOpen %}
+            <a href="{{ path('app_trip_entry', {citySlug: city.slug}) }}" class="btn btn--primary btn--sm">
+                <i class="fas fa-plus"></i> Saisir un trajet
+            </a>
+        {% endif %}
+    </div>
+
+    {# ── Layout 2 colonnes ────────────────────────────────────────────── #}
+    <div class="mc-layout">
+        {# ════════════════════════ COLONNE PRINCIPALE ════════════════════ #}
+        <div class="mc-main">
+            {# 1. Message des organisateurs #}
+            {% if cityEdition.organizerMessage %}
+                <div class="mc-org-msg">
+                    <div class="mc-section-label">
+                        <i class="fas fa-bullhorn me-1"></i>Message des organisateurs
+                    </div>
+                    <p class="mc-org-text">{{ cityEdition.organizerMessage }}</p>
+                </div>
+            {% endif %}
+
+            {# 2. Progression dans le challenge #}
+            <div class="mc-progress-block">
+                <div class="mc-progress-title">
+                    Tu as pédalé ou marché
+                    <strong>{{ stats.active_days }} jour{{ stats.active_days > 1 ? 's' }}</strong>
+                    depuis le début !
+                </div>
+                <div class="mc-progress-bar-wrap">
+                    <div class="mc-progress-bar pct-fill" style="--pct:{{ challengePct }}%"></div>
+                </div>
+                <div class="mc-progress-meta">
+                    {% if cityEdition.edition.startDate and cityEdition.edition.endDate %}
+                        du {{ cityEdition.edition.startDate|format_datetime(pattern: 'd MMMM') }}
+                        au {{ cityEdition.edition.endDate|format_datetime(pattern: 'd MMMM Y') }}
+                        &nbsp;&middot;&nbsp; {{ totalDays }} jours au total
+                    {% endif %}
+                    {% if daysLeft > 0 %}
+                        &nbsp;&middot;&nbsp;
+                        <strong>{{ daysLeft }} jour{{ daysLeft > 1 ? 's' }} restant{{ daysLeft > 1 ? 's' }}</strong>
+                    {% elseif endTs > 0 and nowTs > endTs %}
+                        &nbsp;&middot;&nbsp; <em>Challenge terminé</em>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# 3. Cartes de stats #}
+            <div class="mc-stats-row">
+                <div class="mc-stat-card">
+                    <div class="mc-stat-eyebrow">
+                        <i class="fas fa-calendar-check fa-xs"></i> Jours actifs
+                    </div>
+                    <div class="mc-stat-big">{{ stats.active_days }}</div>
+                    {% if totalDays > 0 %}
+                        <div class="mc-stat-sub">sur {{ totalDays }} jours du challenge</div>
+                    {% endif %}
+                </div>
+
+                <div class="mc-stat-card">
+                    <div class="mc-stat-eyebrow">
+                        <i class="fas fa-route fa-xs"></i> Distance
+                    </div>
+                    <div class="mc-stat-big">
+                        {{ stats.km_total|number_format(0, '.', ' ') }}<span class="mc-stat-unit">km</span>
+                    </div>
+                    <div class="mc-stat-breakdown">
+                        <span><i class="fas fa-bicycle fa-xs text-primary"></i>
+                            {{ stats.km_bike|number_format(1) }} km</span>
+                        <span><i class="fas fa-person-walking fa-xs text-orange"></i>
+                            {{ stats.km_walk|number_format(1) }} km</span>
+                    </div>
+                </div>
+
+                <div class="mc-stat-card">
+                    <div class="mc-stat-eyebrow">
+                        <i class="fas fa-star fa-xs"></i> Points cumulés
+                    </div>
+                    <div class="mc-stat-big text-orange">
+                        {{ stats.total_points|number_format(1) }}
+                    </div>
+                    <div class="mc-stat-breakdown mc-stat-breakdown--col">
+                        <span><i class="fas fa-bicycle fa-xs text-primary"></i>
+                            +{{ bikePoints }} pts vélo</span>
+                        <span><i class="fas fa-person-walking fa-xs text-orange"></i>
+                            +{{ walkPoints }} pts marche</span>
+                        <span><i class="fas fa-calendar-days fa-xs text-ink-3"></i>
+                            +{{ dayPoints }} pts jours</span>
+                        {% if stats.bonus_points > 0 %}
+                            <span><i class="fas fa-camera fa-xs text-secondary"></i>
+                            +{{ stats.bonus_points }} pts bonus</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mc-stat-card">
+                    <div class="mc-stat-eyebrow">
+                        <i class="fas fa-leaf fa-xs"></i> CO₂ évité
+                    </div>
+                    <div class="mc-stat-big text-green">
+                        {{ stats.co2_kg|number_format(0, '.', ' ') }}<span class="mc-stat-unit">kg</span>
+                    </div>
+                    <div class="mc-stat-sub">économisés</div>
+                </div>
+            </div>{# /mc-stats-row #}
+
+            {# 4. Mes trajets récents #}
+            <div class="mc-section">
+                <div class="mc-section-label">
+                    <i class="fas fa-list-ul fa-xs me-1"></i>Mes trajets récents
+                </div>
+                {% if trips is empty %}
+                    <p class="text-ink-3 fs-14">
+                        Aucun trajet enregistré pour le moment. Ajoutez votre premier trajet !
+                    </p>
+                {% else %}
+                    <div class="mc-trips-list">
+                        {% for trip in trips|slice(0, 8) %}
+                            <div class="mc-trip-row">
+                                <span class="mc-trip-icon {{ trip.mode.value == 'bike' ? 'bike' : 'walk' }}">
+                                    <i class="{{ trip.mode.faIcon() }}"></i>
+                                </span>
+                                <span class="mc-trip-date">{{ trip.tripDate|date('d/m/Y') }}</span>
+                                <span class="mc-trip-mode">{{ trip.mode.label() }}</span>
+                                <span class="mc-trip-dist">{{ trip.distanceKm|number_format(1) }} km</span>
+                                <span class="mc-trip-pts">+{{ trip.pointsGenerated|number_format(2) }} pts</span>
+                                {% if trip.isSuspicious() %}
+                                    <span title="{{ trip.suspiciousReason }}" class="text-red flex-shrink-0">
+                                        <i class="fas fa-triangle-exclamation fa-xs"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if trips|length > 8 %}
+                        <div class="text-center mt-12px">
+                            <a href="{{ path('app_trip_entry', {citySlug: city.slug}) }}" class="orga-link fs-13">
+                                <i class="fas fa-arrow-right"></i> Voir mes {{ trips|length }} trajets
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            {# 5. Défis photo #}
+            {% if cityEdition.photoChallengesEnabled %}
+                <div class="mc-bonus-cta">
+                    <div class="mc-bonus-cta-body">
+                        <i class="fas fa-camera mc-bonus-icon"></i>
+                        <div>
+                            <div class="mc-bonus-title">Ajoutez des points bonus en partageant vos photos !</div>
+                            <div class="mc-bonus-sub">Participez aux défis photo pour gagner des points supplémentaires.</div>
+                        </div>
+                    </div>
+                    <a href="{{ path('app_bonus_photo_list', {citySlug: city.slug}) }}" class="btn btn--sm btn--orange flex-shrink-0">
+                        <i class="fas fa-camera"></i> Défis photo
+                    </a>
+                </div>
+
+                <div class="mc-section">
+                    <div class="mc-section-label">
+                        <i class="fas fa-camera fa-xs me-1"></i>Mes challenges photo
+                    </div>
+                    {% if myBonusPhotos is empty %}
+                        <p class="text-ink-3 fs-14">
+                            Vous n'avez pas encore soumis de photo pour un défi.
+                        </p>
+                    {% else %}
+                        <div class="mc-photo-list">
+                            {% for photo in myBonusPhotos %}
+                                <div class="mc-photo-row">
+                                    <div class="mc-photo-info">
+                                        <div class="mc-photo-name">{{ photo.challenge.label() }}</div>
+                                        <div class="mc-photo-desc">
+                                            Soumis le {{ photo.submittedAt|date('d/m/Y') }}
+                                            &middot;
+                                            <span class="bp-status-badge bp-status--{{ photo.status.value }}">
+                                                {{ photo.status.label() }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {% if photo.status.value == 'approved' and photo.pointsAwarded is not null %}
+                                        <div class="mc-photo-pts">+{{ photo.pointsAwarded|number_format(0) }} pts</div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>{# /mc-main #}
+
+        {# ════════════════════════════ BARRE LATÉRALE ════════════════════ #}
+        <div class="mc-sidebar">
+            {# Stats de la ville #}
+            <div class="card card--flat mc-city-stats">
+                <div class="card-title">
+                    <i class="fas fa-chart-bar me-1 text-primary"></i>
+                    Le challenge de {{ city.name }}
+                </div>
+                <div class="mc-city-stat-row">
+                    <span class="mc-city-stat-label">
+                        <i class="fas fa-users fa-xs me-1"></i>Participants
+                    </span>
+                    <span class="mc-city-stat-val">{{ cityStats.participant_count }}</span>
+                </div>
+                <div class="mc-city-stat-row">
+                    <span class="mc-city-stat-label">
+                        <i class="fas fa-route fa-xs me-1"></i>Distance totale
+                    </span>
+                    <span class="mc-city-stat-val">{{ cityStats.total_km|number_format(0, '.', ' ') }} km</span>
+                </div>
+                <div class="mc-city-stat-row">
+                    <span class="mc-city-stat-label">
+                        <i class="fas fa-leaf fa-xs me-1"></i>CO₂ évité
+                    </span>
+                    <span class="mc-city-stat-val">{{ cityStats.co2_kg|number_format(0, '.', ' ') }} kg</span>
+                </div>
+                {% if cityEdition.targetDistanceKm > 0 %}
+                    <div class="mt-14px">
+                        <div class="mc-target-label">
+                            Objectif {{ cityEdition.targetDistanceKm|number_format(0, '.', ' ') }} km
+                        </div>
+                        <div class="mc-target-bar">
+                            <div class="mc-target-bar-fill pct-fill" style="--pct:{{ cityStats.target_progress_pct }}%"></div>
+                        </div>
+                        <div class="fs-11 text-ink-3 mt-1">
+                            {{ cityStats.target_progress_pct }}% atteint
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            {# Comparaison inter-villes #}
+            {% if allCityEditions|length > 1 %}
+                <div class="card card--flat">
+                    <div class="card-title">
+                        <i class="fas fa-ranking-star me-1 text-orange"></i>
+                        Les autres villes
+                    </div>
+                    {% set maxPts = 1 %}
+                    {% for ce in allCityEditions %}
+                        {% if ce.participants.count() > maxPts %}{% set maxPts = ce.participants.count() %}{% endif %}
+                    {% endfor %}
+                    {% for i, ce in allCityEditions|slice(0, 8) %}
+                        <div class="ville-row">
+                            <span class="ville-rank {{ i < 3 ? 'top' }}">{{ i + 1 }}</span>
+                            <span class="ville-name {{ ce.city.slug == city.slug ? 'mine' }}">
+                                {{ ce.city.name|slice(0, 11) }}
+                            </span>
+                            <div class="bar-bg">
+                                <div class="bar-fill pct-fill {{ ce.city.slug == city.slug ? 'mine' }}"
+                                     style="--pct:{{ (ce.participants.count() / maxPts * 100)|round }}%"></div>
+                            </div>
+                            <span class="ville-pts {{ ce.city.slug == city.slug ? 'mine' }}">
+                                {{ ce.participants.count() }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                    <div class="mt-3">
+                        <a href="{{ path('app_home') }}" class="orga-link fs-12">
+                            <i class="fas fa-arrow-right"></i> Toutes les villes
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+
+            {# Lien classements #}
+            <div class="card card--flat card--pad-sm">
+                <div class="mc-section-label mb-2">
+                    <i class="fas fa-trophy fa-xs me-1"></i>Classements
+                </div>
+                <a href="{{ path('app_participants', {citySlug: city.slug}) }}"
+                   class="btn btn--outline btn--sm w-100 justify-content-center">
+                    <i class="fas fa-medal"></i> Voir ma position
+                </a>
+            </div>
+        </div>{# /mc-sidebar #}
+    </div>{# /mc-layout #}
+</div>{# /home-wrap #}
+{% endblock %}

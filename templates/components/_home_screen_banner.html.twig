@@ -1,0 +1,17 @@
+{% set magicLink = url('app_login', {token: app.user.personalToken}) %}
+
+<div class="home-screen-banner">
+    <div class="home-screen-banner__text">
+        <p class="fs-14 mb-2">
+            Ajoutez ce lien à l'écran d'accueil de votre téléphone pour vous reconnecter en un geste, sans ressaisir vos identifiants.
+        </p>
+        <ul class="home-screen-banner__steps text-ink-3 fs-14 mb-2">
+            <li><strong>Sur Android :</strong> appuyez sur <i class="fas fa-ellipsis-vertical fa-xs"></i> puis "Ajouter à l'écran d'accueil".</li>
+            <li><strong>Sur iOS :</strong> touchez « Partager » puis « Sur l'écran d'accueil ».</li>
+        </ul>
+        <code class="home-screen-banner__link">{{ magicLink }}</code>
+    </div>
+    <div class="home-screen-banner__qr">
+        <img src="{{ qr_code_data_uri(magicLink) }}" alt="QR code du lien de connexion personnel">
+    </div>
+</div>

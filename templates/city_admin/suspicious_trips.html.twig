@@ -1,0 +1,57 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Trajets suspects | {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="home-wrap">
+    <div class="adm-page-header">
+        <div>
+            <h1 class="adm-page-title">Trajets suspects</h1>
+            <div class="adm-page-sub">{{ city.name }} &middot; Édition {{ cityEdition.edition.year }}</div>
+        </div>
+    </div>
+
+    {% include 'city_admin/_nav.html.twig' %}
+
+    {% if suspicious is empty %}
+        <div class="alert--success">
+            <i class="fas fa-circle-check me-1"></i> Aucun trajet suspect détecté.
+        </div>
+    {% else %}
+        <div class="card card--flat">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Utilisateur</th>
+                            <th>Date</th>
+                            <th>Mode</th>
+                            <th>Distance</th>
+                            <th>Raison</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trip in suspicious %}
+                            <tr>
+                                <td class="font-semibold">{{ trip.user.fullName }}</td>
+                                <td class="text-sm text-muted">{{ trip.tripDate|date('d/m/Y') }}</td>
+                                <td>{{ trip.mode.icon() }} {{ trip.mode.label() }}</td>
+                                <td class="font-bold">{{ trip.distanceKm|number_format(1) }} km</td>
+                                <td>
+                                    {% if trip.suspiciousReason == 'out_of_period' %}
+                                        <span class="badge badge--red">Hors période</span>
+                                    {% elseif trip.suspiciousReason == 'suspicious_distance' %}
+                                        <span class="badge badge--yellow">Distance suspecte</span>
+                                    {% else %}
+                                        <span class="badge badge--yellow">{{ trip.suspiciousReason }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

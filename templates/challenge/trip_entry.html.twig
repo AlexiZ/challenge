@@ -1,0 +1,163 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Saisir un trajet | {{ city.name }} | Challenge à Pied et à Vélo{% endblock %}
+
+{% block body %}
+
+<div class="home-wrap">
+    {# ── En-tête de page ──────────────────────────────────────────────── #}
+    <div class="mc-page-header">
+        <div>
+            <h1 class="mc-page-title">Saisir un trajet</h1>
+            <div class="mc-page-sub">
+                <i class="fas fa-map-location-dot fa-sm"></i>
+                {{ city.name }} &middot; Édition {{ cityEdition.edition.year }}
+            </div>
+        </div>
+        <a href="{{ path('app_my_challenge', {citySlug: city.slug}) }}" class="btn btn--outline btn--sm">
+            <i class="fas fa-arrow-left"></i> Mon challenge
+        </a>
+    </div>
+
+    {# ── Layout 2 colonnes ────────────────────────────────────────────── #}
+    <div class="mc-layout">
+        {# ════════════════════════ CONTENU PRINCIPAL ═════════════════════ #}
+        <div class="mc-main">
+            {# Formulaire de saisie #}
+            <div class="mc-section">
+                <div class="mc-section-label">
+                    <i class="fas fa-plus-circle fa-xs me-1"></i>Nouveau trajet
+                </div>
+                <div class="mc-trip-form-hint">Choisissez le mode et indiquez la distance.</div>
+                {{ form_start(form, {attr: {class: 'mc-trip-form', novalidate: 'novalidate'}}) }}
+                <div class="mc-trip-form-row">
+                    <div class="mc-mode-toggle" data-radio-group>
+                        {% for child in form.mode %}
+                            <label class="mode-btn js-radio-toggle-option">
+                                {{ form_widget(child) }}
+                                <i class="{{ child.vars.value == 'bike' ? 'fas fa-bicycle' : 'fas fa-person-walking' }}"></i>
+                                {{ child.vars.label }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                    <div class="mc-trip-fields">
+                        {{ form_widget(form.distanceKm, {attr: {class: 'mc-field', placeholder: 'Distance (km)'}}) }}
+                        {{ form_widget(form.tripDate,   {attr: {class: 'mc-field'}}) }}
+                        <button type="submit" class="btn btn--primary">
+                            <i class="fas fa-check"></i> Enregistrer
+                        </button>
+                    </div>
+                </div>
+                {% if not form.vars.valid and form.vars.submitted %}
+                    <div class="mc-form-errors">{{ form_errors(form) }}</div>
+                {% endif %}
+                {{ form_end(form) }}
+            </div>
+
+            {# Liste des trajets récents #}
+            {% if recentTrips is not empty %}
+                <div class="mc-section">
+                    <div class="mc-section-label">
+                        <i class="fas fa-list-ul fa-xs me-1"></i>Mes trajets récents
+                    </div>
+                    <div class="mc-trips-list">
+                        {% for trip in recentTrips %}
+                            <div class="mc-trip-row">
+                                <span class="mc-trip-icon {{ trip.mode.value == 'bike' ? 'bike' : 'walk' }}">
+                                    <i class="{{ trip.mode.faIcon() }}"></i>
+                                </span>
+                                <span class="mc-trip-date">{{ trip.tripDate|date('d/m/Y') }}</span>
+                                <span class="mc-trip-dist">{{ trip.distanceKm|number_format(1) }} km</span>
+                                <span class="mc-trip-pts">+{{ trip.pointsGenerated|number_format(2) }} pts</span>
+                                {% if trip.isSuspicious() %}
+                                    <span title="{{ trip.suspiciousReason }}" class="text-red flex-shrink-0">
+                                        <i class="fas fa-triangle-exclamation fa-xs"></i>
+                                    </span>
+                                {% endif %}
+                                <form method="post"
+                                      action="{{ path('app_trip_delete', {citySlug: city.slug, id: trip.id}) }}"
+                                      data-confirm="Supprimer ce trajet ?"
+                                      class="ms-auto flex-shrink-0">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_trip_' ~ trip.id) }}">
+                                    <button class="btn btn--danger btn--sm" type="submit">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="mc-section">
+                    <div class="mc-section-label">
+                        <i class="fas fa-list-ul fa-xs me-1"></i>Mes trajets récents
+                    </div>
+                    <p class="text-ink-3 fs-14">
+                        Aucun trajet enregistré pour le moment. Ajoutez votre premier trajet !
+                    </p>
+                </div>
+            {% endif %}
+        </div>{# /mc-main #}
+
+        {# ════════════════════════════ BARRE LATÉRALE ════════════════════ #}
+        <div class="mc-sidebar">
+            <div class="card card--flat">
+                <div class="card-title">
+                    <i class="fas fa-chart-simple me-1 text-primary"></i>
+                    Mes statistiques
+                </div>
+                <div class="mc-city-stat-row">
+                    <span class="mc-city-stat-label">
+                        <i class="fas fa-star fa-xs me-1"></i>Points
+                    </span>
+                    <span class="mc-city-stat-val text-orange">
+                        {{ stats.total_points|number_format(1) }}
+                    </span>
+                </div>
+                <div class="mc-city-stat-row">
+                    <span class="mc-city-stat-label">
+                        <i class="fas fa-bicycle fa-xs me-1 text-primary"></i>Vélo
+                    </span>
+                    <span class="mc-city-stat-val">{{ stats.km_bike|number_format(1) }} km</span>
+                </div>
+                <div class="mc-city-stat-row">
+                    <span class="mc-city-stat-label">
+                        <i class="fas fa-person-walking fa-xs me-1 text-orange"></i>Marche
+                    </span>
+                    <span class="mc-city-stat-val">{{ stats.km_walk|number_format(1) }} km</span>
+                </div>
+                <div class="mc-city-stat-row">
+                    <span class="mc-city-stat-label">
+                        <i class="fas fa-calendar-check fa-xs me-1"></i>Jours actifs
+                    </span>
+                    <span class="mc-city-stat-val">{{ stats.active_days }}</span>
+                </div>
+                <div class="mc-city-stat-row border-bottom-0">
+                    <span class="mc-city-stat-label">
+                        <i class="fas fa-leaf fa-xs me-1 text-green"></i>CO₂ évité
+                    </span>
+                    <span class="mc-city-stat-val text-green">{{ stats.co2_kg|number_format(0) }} kg</span>
+                </div>
+            </div>
+
+            <div class="card card--flat card--pad-sm">
+                <div class="mc-section-label mb-2">
+                    <i class="fas fa-trophy fa-xs me-1"></i>Classements
+                </div>
+                <a href="{{ path('app_participants', {citySlug: city.slug}) }}"
+                   class="btn btn--outline btn--sm w-100 justify-content-center">
+                    <i class="fas fa-medal"></i> Voir ma position
+                </a>
+            </div>
+
+            <div class="card card--flat card--pad-sm">
+                <div class="mc-section-label mb-2">
+                    <i class="fas fa-mobile-screen-button fa-xs me-1"></i>Accès rapide
+                </div>
+                {% include 'components/_home_screen_banner.html.twig' %}
+            </div>
+        </div>{# /mc-sidebar #}
+    </div>{# /mc-layout #}
+</div>{# /home-wrap #}
+{% endblock %}
+

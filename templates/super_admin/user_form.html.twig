@@ -1,0 +1,126 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ editedUser.id ? 'Modifier' : 'Nouvel' }} utilisateur | {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="home-wrap">
+    <div class="adm-page-header">
+        <div>
+            <h1 class="adm-page-title">{{ editedUser.id ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur' }}</h1>
+            {% if editedUser.id %}
+                <div class="adm-page-sub">{{ editedUser.fullName }} &middot; {{ editedUser.email }}</div>
+            {% endif %}
+        </div>
+        <a href="{{ path('app_super_admin_users') }}" class="btn btn--sm btn--outline">
+            <i class="fas fa-arrow-left fa-xs me-1"></i> Utilisateurs
+        </a>
+    </div>
+
+    {{ form_start(form) }}
+
+    {# ── Identité ── #}
+    <div class="card card--flat adm-card-gap">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-user me-1"></i>Identité
+        </div>
+        <div class="form-grid-2">
+            <div class="form-group">
+                {{ form_label(form.firstName) }}
+                {{ form_widget(form.firstName, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.firstName) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.lastName) }}
+                {{ form_widget(form.lastName, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.lastName) }}
+            </div>
+        </div>
+        <div class="form-group">
+            {{ form_label(form.email) }}
+            {{ form_widget(form.email, {attr: {class: 'form-control'}}) }}
+            {{ form_errors(form.email) }}
+        </div>
+        <div class="form-group mb-0">
+            {{ form_label(form.username) }}
+            {{ form_widget(form.username, {attr: {class: 'form-control'}}) }}
+            {{ form_errors(form.username) }}
+        </div>
+    </div>
+
+    {# ── Affectation ── #}
+    <div class="card card--flat adm-card-gap">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-city me-1"></i>Affectation
+        </div>
+        <div class="form-group mb-0">
+            {{ form_label(form.city) }}
+            {{ form_widget(form.city, {attr: {class: 'form-control'}}) }}
+            {{ form_errors(form.city) }}
+        </div>
+    </div>
+
+    {# ── Accès et rôles ── #}
+    <div class="card card--flat adm-card-gap">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-key me-1"></i>Accès &amp; rôles
+        </div>
+        <div class="form-group">
+            {{ form_label(form.plainPassword) }}
+            {{ form_widget(form.plainPassword, {attr: {class: 'form-control', autocomplete: 'new-password'}}) }}
+            {% if form.plainPassword.vars.help is defined and form.plainPassword.vars.help %}
+                <p class="text-sm text-muted mt-035rem mb-0">{{ form.plainPassword.vars.help }}</p>
+            {% else %}
+                <p class="text-sm text-muted mt-035rem mb-0">Laisser vide pour ne pas modifier.</p>
+            {% endif %}
+            {{ form_errors(form.plainPassword) }}
+        </div>
+        <div class="mb-0">
+            <div class="adm-section-label mb-10px">Rôles supplémentaires</div>
+            <div class="flex-row-gap-16-wrap">
+                {% for choice in form.roles %}
+                    <div class="adm-check-row">
+                        {{ form_widget(choice) }}
+                        {{ form_label(choice) }}
+                    </div>
+                {% endfor %}
+            </div>
+            {{ form_errors(form.roles) }}
+        </div>
+    </div>
+
+    {# ── Préférences ── #}
+    <div class="card card--flat mb-4">
+        <div class="adm-section-label mb-14px">
+            <i class="fas fa-sliders me-1"></i>Préférences
+        </div>
+        <div class="flex-col-gap-10">
+            <div class="adm-check-row">
+                {{ form_widget(form.receiveEmails) }}
+                {{ form_label(form.receiveEmails) }}
+            </div>
+            <div class="adm-check-row">
+                {{ form_widget(form.publicProfile) }}
+                {{ form_label(form.publicProfile) }}
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn--primary" type="submit">
+        <i class="fas fa-save me-1"></i> Enregistrer
+    </button>
+
+    {{ form_end(form) }}
+
+    {% if editedUser.id %}
+        <div class="adm-danger-zone">
+            <div class="adm-danger-zone__title"><i class="fas fa-triangle-exclamation fa-xs me-1"></i>Zone de danger</div>
+            <div class="adm-danger-zone__desc">La suppression du compte est irréversible. Tous les trajets et photos liés seront également supprimés.</div>
+            <form method="post" action="{{ path('app_super_admin_user_delete', {id: editedUser.id}) }}"
+                  data-confirm="Supprimer le compte de {{ editedUser.fullName|e('html_attr') }} ? Cette action est irréversible.">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete_user_' ~ editedUser.id) }}">
+                <button type="submit" class="btn btn--danger btn--sm">Supprimer ce compte</button>
+            </form>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

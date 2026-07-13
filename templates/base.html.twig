@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}{% if city is defined %}{{ city.name }} | {% endif %}Challenge à Pied et à Vélo{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚲</text></svg>">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+        <link rel="stylesheet" href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}">
+        <link rel="stylesheet" href="{{ asset('vendor/fontawesome/css/all.min.css') }}">
+        {% block stylesheets %}{% endblock %}
+        {% if city is defined %}
+        <style>:root{--primary-color:{{ city.primaryColor|default('#1A9B96') }};--secondary-color:{{ city.secondaryColor|default('#F5821F') }};}</style>
+        {% endif %}
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% endblock %}
+    </head>
+    <body>
+        {% include 'components/_navbar.html.twig' %}
+
+        <div class="lightbox">
+            <button type="button" class="lightbox__close" aria-label="Fermer">
+                <i class="fas fa-xmark"></i>
+            </button>
+            <img class="lightbox__img" src="" alt="">
+        </div>
+
+        <main>
+            <div class="container mt-4">
+                {% for flash in app.flashes('success') %}
+                    <div class="alert alert-success alert-dismissible fade show">{{ flash }}</div>
+                {% endfor %}
+                {% for flash in app.flashes('warning') %}
+                    <div class="alert alert-warning alert-dismissible fade show">{{ flash }}</div>
+                {% endfor %}
+                {% for flash in app.flashes('danger') %}
+                    <div class="alert alert-danger alert-dismissible fade show">{{ flash }}</div>
+                {% endfor %}
+                {% for flash in app.flashes('info') %}
+                    <div class="alert alert-info alert-dismissible fade show">{{ flash }}</div>
+                {% endfor %}
+            </div>
+            {% block body %}{% endblock %}
+        </main>
+
+        <footer class="footer mt-5 py-3 border-top">
+            <div class="container text-center">
+                <p class="text-muted small mb-0">Challenge à Pied et à Vélo | Tous droits réservés</p>
+            </div>
+        </footer>
+    </body>
+</html>

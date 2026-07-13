@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ status_code }} - {{ status_text }} | Challenge à Pied et à Vélo{% endblock %}
+
+{% block body %}
+
+{# ── Contenu selon le code HTTP ──────────────────────────────────────────── #}
+{% if status_code == 404 %}
+    {% set icon       = 'fa-bicycle' %}
+    {% set icon_style = 'color:#cbd5e1' %}
+    {% set title      = 'Vous avez fait une fausse route !' %}
+    {% set desc       = "La page que vous cherchez n'existe pas ou a été déplacée.<br>Pas de panique, ça arrive même aux meilleurs cyclistes." %}
+{% elseif status_code == 403 %}
+    {% set icon       = 'fa-lock' %}
+    {% set icon_style = 'color:#fca5a5' %}
+    {% set title      = 'Accès interdit' %}
+    {% set desc       = "Vous n'avez pas les droits nécessaires pour accéder à cette page." %}
+{% elseif status_code == 401 %}
+    {% set icon       = 'fa-right-to-bracket' %}
+    {% set icon_style = 'color:#94a3b8' %}
+    {% set title      = 'Connexion requise' %}
+    {% set desc       = "Vous devez être connecté pour accéder à cette page." %}
+{% elseif status_code >= 500 %}
+    {% set icon       = 'fa-triangle-exclamation' %}
+    {% set icon_style = 'color:#fca5a5' %}
+    {% set title      = 'Erreur serveur' %}
+    {% set desc       = "Une erreur inattendue s'est produite. Réessayez dans quelques instants." %}
+{% else %}
+    {% set icon       = 'fa-circle-xmark' %}
+    {% set icon_style = 'color:#cbd5e1' %}
+    {% set title      = status_text %}
+    {% set desc       = "Une erreur s'est produite lors du traitement de votre requête." %}
+{% endif %}
+
+<div class="error-page">
+
+    {# ── Illustration ──────────────────────────────────────────────────── #}
+    <div class="error-illustration">
+        <i class="fas {{ icon }} error-bike" style="{{ icon_style }}"></i>
+        {% if status_code == 404 %}
+        <div class="error-badge">
+            <i class="fas fa-map-location-dot"></i>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── Code HTTP ─────────────────────────────────────────────────────── #}
+    <div class="error-code">{{ status_code }}</div>
+
+    {# ── Message ───────────────────────────────────────────────────────── #}
+    <h1 class="error-title">{{ title }}</h1>
+    <p class="error-desc">{{ desc|raw }}</p>
+
+    {# ── CTA buttons ───────────────────────────────────────────────────── #}
+    <div class="error-actions">
+        <a href="{{ path('app_home') }}" class="btn btn--primary btn--lg">
+            <i class="fas fa-house"></i> Retour à l'accueil
+        </a>
+        {% if status_code == 401 or (status_code == 403 and not app.user) or (status_code == 404 and not app.user) %}
+        <a href="{{ path('app_login') }}" class="btn btn--outline btn--lg">
+            <i class="fas fa-key"></i> Se connecter
+        </a>
+        {% endif %}
+    </div>
+
+    {# ── Séparateur + pages populaires (404 uniquement) ────────────────── #}
+    {% if status_code == 404 %}
+    <div class="error-separator"></div>
+    <p class="error-popular-label">Pages populaires :</p>
+    <div class="error-tags">
+        <a href="{{ path('app_home') }}" class="error-tag">Équipes</a>
+        <a href="{{ path('app_home') }}" class="error-tag">Participants</a>
+        <a href="{{ path('app_home') }}" class="error-tag">Classements</a>
+        <a href="{{ path('app_home') }}" class="error-tag">Infos pratiques</a>
+        <a href="{{ path('app_home') }}" class="error-tag">Défis photo</a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+

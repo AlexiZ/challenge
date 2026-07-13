@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Utilisateurs - Administration | {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="home-wrap">
+    <div class="adm-page-header">
+        <div>
+            <h1 class="adm-page-title">Utilisateurs</h1>
+            <div class="adm-page-sub">{{ users|length }} compte(s) enregistré(s)</div>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <a href="{{ path('app_super_admin_user_new') }}" class="btn btn--primary btn--sm">
+                <i class="fas fa-plus fa-xs me-1"></i> Nouvel utilisateur
+            </a>
+            <a href="{{ path('app_super_admin_dashboard') }}" class="btn btn--outline btn--sm">
+                <i class="fas fa-arrow-left fa-xs me-1"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card card--flat">
+        {% if users is empty %}
+            <p class="text-muted text-sm">Aucun utilisateur.</p>
+        {% else %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Email</th>
+                            <th>Pseudo</th>
+                            <th>Ville</th>
+                            <th>Rôle</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td class="font-semibold">{{ u.fullName }}</td>
+                            <td class="text-sm">{{ u.email }}</td>
+                            <td class="text-sm text-muted"><code>{{ u.username }}</code></td>
+                            <td class="text-sm">{{ u.city ? u.city.name : '-' }}</td>
+                            <td>
+                                {% if 'ROLE_SUPER_ADMIN' in u.roles %}
+                                    <span class="badge badge--orange">Super-admin</span>
+                                {% elseif 'ROLE_ADMIN_CITY' in u.roles %}
+                                    <span class="badge badge--teal">Admin ville</span>
+                                {% else %}
+                                    <span class="badge badge--green">Participant</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-nowrap">
+                                <a href="{{ path('app_super_admin_user_edit', {id: u.id}) }}"
+                                   class="btn btn--sm btn--outline">Modifier</a>
+                                {% if u.city %}
+                                    <a href="{{ path('app_city_home', {citySlug: u.city.slug}) }}?_switch_user={{ u.email }}"
+                                       class="btn btn--sm btn--outline"
+                                       title="Impersonifier {{ u.username }}">
+                                        <i class="fas fa-user-tag fa-xs"></i>
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

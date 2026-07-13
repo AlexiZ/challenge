@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Équipes | {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="container mt-6">
+    <div class="page-header">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="page-header__title">👥 Équipes</h1>
+                <p class="page-header__subtitle">{{ city.name }}</p>
+            </div>
+            {% if app.user %}
+                <a href="{{ path('app_team_create', {citySlug: city.slug}) }}" class="btn btn--primary">+ Créer une équipe</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if teams is empty %}
+        <div class="alert alert--info">Aucune équipe pour le moment. Soyez le premier !</div>
+    {% else %}
+        <div class="city-grid">
+            {% for team in teams %}
+            <div class="city-card">
+                <div class="city-card__body">
+                    <div class="font-bold fs-105rem">{{ team.name }}</div>
+                    <div class="text-sm text-muted mt-1">{{ team.memberCount }} membre{{ team.memberCount > 1 ? 's' : '' }}</div>
+                    {% if team.description %}
+                        <p class="text-sm mt-2">{{ team.description|u.truncate(100, '…') }}</p>
+                    {% endif %}
+                </div>
+                <div class="city-card__footer">
+                    <a href="{{ path('app_team_show', {citySlug: city.slug, slug: team.slug}) }}" class="btn btn--outline btn--sm w-full">Voir l'équipe</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

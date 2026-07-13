@@ -1,0 +1,178 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon profil | {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="edit-layout">
+        {# ═══════════════════════════ BARRE LATÉRALE ══════════════════════════ #}
+        <aside>
+            <div class="edit-sidebar">
+                <div class="edit-stats-table">
+                    <div class="edit-stat-row">
+                        <span class="edit-stat-label"><i class="fas fa-bicycle fa-sm text-primary"></i> Vélo</span>
+                        <span class="edit-stat-val">{{ stats.km_bike }} km</span>
+                    </div>
+                    <div class="edit-stat-row">
+                        <span class="edit-stat-label"><i class="fas fa-person-walking fa-sm text-orange"></i> Marche</span>
+                        <span class="edit-stat-val">{{ stats.km_walk }} km</span>
+                    </div>
+                    <div class="edit-stat-row">
+                        <span class="edit-stat-label"><i class="fas fa-star fa-sm text-orange"></i> Points</span>
+                        <span class="edit-stat-val">{{ stats.total_points }}</span>
+                    </div>
+                </div>
+
+                <div class="edit-sidebar-actions">
+                    {% if app.user.publicProfile %}
+                        <a href="{{ path('app_profile_public', {citySlug: city.slug, username: app.user.username}) }}"
+                           class="btn btn--outline btn--sm w-100 text-center d-block">
+                            <i class="fas fa-eye fa-sm"></i> Voir mon profil public
+                        </a>
+                    {% else %}
+                        <p class="edit-sidebar-hint">
+                            <i class="fas fa-lock fa-xs"></i>
+                            Activez « Profil public » pour que les autres participants puissent voir votre profil.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# ── Accès rapide (écran d'accueil) ───────────────────────────── #}
+            <div class="edit-section my-3">
+                <div class="edit-section-label">Accès rapide</div>
+                {% include 'components/_home_screen_banner.html.twig' %}
+            </div>
+        </aside>
+
+        {# ═══════════════════════════ FORMULAIRE ══════════════════════════════ #}
+        <main class="edit-main">
+            <div class="edit-page-header">
+                <h1 class="edit-page-title">Modifier mon profil</h1>
+            </div>
+
+            {{ form_start(form) }}
+                {# ── Photo de profil ───────────────────────────────────────────── #}
+                <div class="edit-section mb-3">
+                    <div class="edit-section-label">Photo de profil</div>
+                    <div class="edit-avatar-row">
+                        {% if app.user.avatar %}
+                            <img src="{{ asset('uploads/avatars/' ~ app.user.avatar) }}" class="edit-avatar-preview" alt="Photo de profil">
+                        {% else %}
+                            <div class="edit-avatar-preview edit-avatar-preview--initials">{{ app.user.initials }}</div>
+                        {% endif %}
+                        <div class="edit-avatar-upload">
+                            <label class="btn btn--outline btn--sm cursor-pointer" for="{{ form.avatarFile.vars.id }}">
+                                <i class="fas fa-camera fa-sm"></i> Choisir une photo
+                            </label>
+                            {{ form_widget(form.avatarFile, {attr: {class: 'edit-avatar-input', accept: 'image/jpeg,image/png,image/webp'}}) }}
+                            <span class="edit-avatar-hint">JPG, PNG ou WebP · max 2 Mo</span>
+                            {{ form_errors(form.avatarFile) }}
+                        </div>
+                    </div>
+                </div>
+
+                {# ── Identité ──────────────────────────────────────────────────── #}
+                <div class="edit-section mb-3">
+                    <div class="edit-section-label">Identité</div>
+                    <div class="edit-grid-2">
+                        <div class="form-group">
+                            {{ form_label(form.firstName) }}
+                            {{ form_widget(form.firstName, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.firstName) }}
+                        </div>
+                        <div class="form-group">
+                            {{ form_label(form.lastName) }}
+                            {{ form_widget(form.lastName, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.lastName) }}
+                        </div>
+                    </div>
+                    <div class="form-group mb-0">
+                        {{ form_label(form.username) }}
+                        {{ form_widget(form.username, {attr: {class: 'form-control'}}) }}
+                        {{ form_errors(form.username) }}
+                    </div>
+                </div>
+
+                {# ── Profil cycliste ───────────────────────────────────────────── #}
+                <div class="edit-section my-3">
+                    <div class="edit-section-label">Profil cycliste</div>
+                    <div class="edit-grid-2">
+                        <div class="form-group mb-0">
+                            {{ form_label(form.cyclistProfile) }}
+                            {{ form_widget(form.cyclistProfile, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.cyclistProfile) }}
+                        </div>
+                        <div class="form-group mb-0">
+                            {{ form_label(form.bikeType) }}
+                            {{ form_widget(form.bikeType, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.bikeType) }}
+                        </div>
+                    </div>
+                </div>
+
+                {# ── Informations personnelles ──────────────────────────────────── #}
+                <div class="edit-section my-3">
+                    <div class="edit-section-label">Informations personnelles</div>
+                    <div class="edit-grid-2">
+                        <div class="form-group mb-0">
+                            {{ form_label(form.gender) }}
+                            {{ form_widget(form.gender, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.gender) }}
+                        </div>
+                        <div class="form-group mb-0">
+                            {{ form_label(form.age) }}
+                            {{ form_widget(form.age, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.age) }}
+                        </div>
+                    </div>
+                </div>
+
+                {# ── Motivations ───────────────────────────────────────────────── #}
+                <div class="edit-section my-3">
+                    <div class="edit-section-label">Motivations</div>
+                    <div class="edit-grid-2">
+                        <div class="form-group mb-0">
+                            {{ form_label(form.perceivedBenefit) }}
+                            {{ form_widget(form.perceivedBenefit, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.perceivedBenefit) }}
+                        </div>
+                        <div class="form-group mb-0">
+                            {{ form_label(form.mainBarrier) }}
+                            {{ form_widget(form.mainBarrier, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.mainBarrier) }}
+                        </div>
+                    </div>
+                </div>
+
+                {# ── Paramètres ────────────────────────────────────────────────── #}
+                <div class="edit-section my-3">
+                    <div class="edit-section-label">Paramètres</div>
+                    <div class="edit-check-group">
+                        <label class="edit-check-row" for="{{ form.publicProfile.vars.id }}">
+                            {{ form_widget(form.publicProfile) }}
+                            <span>
+                                <span class="edit-check-title">Profil public</span>
+                                <span class="edit-check-desc">Votre profil et vos statistiques sont visibles par les autres participants</span>
+                            </span>
+                        </label>
+                        {{ form_errors(form.publicProfile) }}
+                        <label class="edit-check-row" for="{{ form.receiveEmails.vars.id }}">
+                            {{ form_widget(form.receiveEmails) }}
+                            <span>
+                                <span class="edit-check-title">Recevoir les communications</span>
+                                <span class="edit-check-desc">Actualités et informations sur le challenge par e-mail</span>
+                            </span>
+                        </label>
+                        {{ form_errors(form.receiveEmails) }}
+                    </div>
+                </div>
+
+                <div class="edit-footer">
+                    <button class="btn btn--primary btn--lg" type="submit">
+                        <i class="fas fa-check fa-sm"></i> Enregistrer les modifications
+                    </button>
+                </div>
+            {{ form_end(form) }}
+        </main>
+    </div>
+{% endblock %}

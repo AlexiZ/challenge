@@ -1,0 +1,13 @@
+framework:
+    asset_mapper:
+        paths:
+            assets/: ''
+            node_modules/bootstrap/dist: vendor/bootstrap
+            node_modules/@fortawesome/fontawesome-free: vendor/fontawesome
+            node_modules/@popperjs/core/dist/esm: vendor/popperjs
+        missing_import_mode: strict
+
+when@prod:
+    framework:
+        asset_mapper:
+            missing_import_mode: warn

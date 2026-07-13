@@ -1,0 +1,161 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Participation ville / édition | {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="home-wrap">
+    <div class="adm-page-header">
+        <div>
+            <h1 class="adm-page-title">Participation ville / édition</h1>
+            {% if cityEdition is defined and cityEdition.id %}
+                <div class="adm-page-sub">{{ cityEdition.city.name }} &middot; {{ cityEdition.edition.name }}</div>
+            {% endif %}
+        </div>
+        <a href="{{ path('app_super_admin_dashboard') }}" class="btn btn--sm btn--outline">
+            <i class="fas fa-arrow-left fa-xs me-1"></i> Dashboard
+        </a>
+    </div>
+
+    {{ form_start(form) }}
+
+    {# ── Affectation ── #}
+    <div class="card card--flat adm-card-gap">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-link me-1"></i>Affectation
+        </div>
+        <div class="form-grid-2">
+            <div class="form-group">
+                {{ form_label(form.city) }}
+                {{ form_widget(form.city, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.city) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.edition) }}
+                {{ form_widget(form.edition, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.edition) }}
+            </div>
+        </div>
+    </div>
+
+    {# ── Objectifs ── #}
+    <div class="card card--flat adm-card-gap">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-bullseye me-1"></i>Objectifs
+        </div>
+        <div class="form-grid-2">
+            <div class="form-group">
+                {{ form_label(form.targetParticipants) }}
+                {{ form_widget(form.targetParticipants, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.targetParticipants) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.targetDistanceKm) }}
+                {{ form_widget(form.targetDistanceKm, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.targetDistanceKm) }}
+            </div>
+        </div>
+    </div>
+
+    {# ── Points ── #}
+    <div class="card card--flat adm-card-gap">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-star me-1"></i>Barème des points
+        </div>
+        <div class="form-grid-3">
+            <div class="form-group">
+                {{ form_label(form.pointsPerDay) }}
+                {{ form_widget(form.pointsPerDay, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.pointsPerDay) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.pointsPerKmBike) }}
+                {{ form_widget(form.pointsPerKmBike, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.pointsPerKmBike) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.pointsPerKmWalk) }}
+                {{ form_widget(form.pointsPerKmWalk, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.pointsPerKmWalk) }}
+            </div>
+        </div>
+    </div>
+
+    {# ── Sécurité ── #}
+    <div class="card card--flat adm-card-gap">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-shield me-1"></i>Seuils de sécurité
+        </div>
+        <div class="form-grid-2">
+            <div class="form-group">
+                {{ form_label(form.suspiciousDistanceBike) }}
+                {{ form_widget(form.suspiciousDistanceBike, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.suspiciousDistanceBike) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.suspiciousDistanceWalk) }}
+                {{ form_widget(form.suspiciousDistanceWalk, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.suspiciousDistanceWalk) }}
+            </div>
+        </div>
+    </div>
+
+    {# ── Message organisateurs ── #}
+    <div class="card card--flat adm-card-gap">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-bullhorn me-1"></i>Message des organisateurs
+        </div>
+        <div class="form-group mb-0">
+            {{ form_label(form.organizerMessage) }}
+            {{ form_widget(form.organizerMessage, {attr: {class: 'form-control adm-msg-textarea', rows: 3, placeholder: 'Affiché sur le dashboard de chaque participant…'}}) }}
+            {{ form_errors(form.organizerMessage) }}
+        </div>
+    </div>
+
+    {# ── Options ── #}
+    <div class="card card--flat mb-4">
+        <div class="adm-section-label mb-14px">
+            <i class="fas fa-sliders me-1"></i>Options
+        </div>
+        <div class="flex-col-gap-10">
+            <div class="adm-check-row">
+                {{ form_widget(form.registrationsOpen) }}
+                {{ form_label(form.registrationsOpen) }}
+            </div>
+            <div class="adm-check-row">
+                {{ form_widget(form.tripsEntryOpen) }}
+                {{ form_label(form.tripsEntryOpen) }}
+            </div>
+            <div class="adm-check-row">
+                {{ form_widget(form.photoChallengesEnabled) }}
+                {{ form_label(form.photoChallengesEnabled) }}
+            </div>
+            <div class="adm-check-row">
+                {{ form_widget(form.rankingsPublic) }}
+                {{ form_label(form.rankingsPublic) }}
+            </div>
+            <div class="adm-check-row">
+                {{ form_widget(form.profilesPublic) }}
+                {{ form_label(form.profilesPublic) }}
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn--primary" type="submit">
+        <i class="fas fa-save me-1"></i> Enregistrer
+    </button>
+
+    {{ form_end(form) }}
+
+    {% if cityEdition is defined and cityEdition.id %}
+        <div class="adm-danger-zone">
+            <div class="adm-danger-zone__title"><i class="fas fa-triangle-exclamation fa-xs me-1"></i>Zone de danger</div>
+            <div class="adm-danger-zone__desc">La suppression est irréversible. Tous les participants et données liés à cette participation seront également supprimés.</div>
+            <form method="post" action="{{ path('app_super_admin_city_edition_delete', {id: cityEdition.id}) }}"
+                  data-confirm="Supprimer cette participation ? Cette action est irréversible.">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete_city_edition_' ~ cityEdition.id) }}">
+                <button type="submit" class="btn btn--danger btn--sm">Supprimer cette participation</button>
+            </form>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

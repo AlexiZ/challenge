@@ -1,0 +1,94 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ edition.id is defined and edition.id ? 'Modifier' : 'Nouvelle' }} édition | {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="home-wrap">
+    <div class="adm-page-header">
+        <div>
+            <h1 class="adm-page-title">{{ edition.id is defined and edition.id ? 'Modifier l\'édition' : 'Nouvelle édition' }}</h1>
+            {% if edition.id is defined and edition.id %}
+                <div class="adm-page-sub">{{ edition.name }} &middot; {{ edition.year }}</div>
+            {% endif %}
+        </div>
+        <a href="{{ path('app_super_admin_dashboard') }}" class="btn btn--sm btn--outline">
+            <i class="fas fa-arrow-left fa-xs me-1"></i> Dashboard
+        </a>
+    </div>
+
+    {{ form_start(form) }}
+
+    {# ── Identité ── #}
+    <div class="card card--flat adm-card-gap">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-tag me-1"></i>Identité
+        </div>
+        <div class="form-group">
+            {{ form_label(form.name) }}
+            {{ form_widget(form.name, {attr: {class: 'form-control'}}) }}
+            {{ form_errors(form.name) }}
+        </div>
+        <div class="form-group mb-0">
+            {{ form_label(form.year) }}
+            {{ form_widget(form.year, {attr: {class: 'form-control'}}) }}
+            {{ form_errors(form.year) }}
+        </div>
+    </div>
+
+    {# ── Dates de l'édition ── #}
+    <div class="card card--flat adm-card-gap">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-calendar-days me-1"></i>Dates de l'édition
+        </div>
+        <div class="form-grid-2">
+            <div class="form-group">
+                {{ form_label(form.startDate) }}
+                {{ form_widget(form.startDate, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.startDate) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.endDate) }}
+                {{ form_widget(form.endDate, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.endDate) }}
+            </div>
+        </div>
+    </div>
+
+    {# ── Période de chauffe ── #}
+    <div class="card card--flat mb-4">
+        <div class="adm-section-label mb-16px">
+            <i class="fas fa-fire me-1"></i>Période de chauffe
+        </div>
+        <div class="form-grid-2">
+            <div class="form-group">
+                {{ form_label(form.warmupStartDate) }}
+                {{ form_widget(form.warmupStartDate, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.warmupStartDate) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.warmupEndDate) }}
+                {{ form_widget(form.warmupEndDate, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.warmupEndDate) }}
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn--primary" type="submit">
+        <i class="fas fa-save me-1"></i> Enregistrer
+    </button>
+
+    {{ form_end(form) }}
+
+    {% if edition.id is defined and edition.id %}
+        <div class="adm-danger-zone">
+            <div class="adm-danger-zone__title"><i class="fas fa-triangle-exclamation fa-xs me-1"></i>Zone de danger</div>
+            <div class="adm-danger-zone__desc">La suppression est irréversible. Toutes les participations liées à cette édition seront également supprimées.</div>
+            <form method="post" action="{{ path('app_super_admin_edition_delete', {id: edition.id}) }}"
+                  data-confirm="Supprimer l'édition « {{ edition.name|e('html_attr') }} » ? Cette action est irréversible.">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete_edition_' ~ edition.id) }}">
+                <button type="submit" class="btn btn--danger btn--sm">Supprimer cette édition</button>
+            </form>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ma ville | {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="home-wrap">
+        <div class="adm-page-header">
+            <div>
+                <h1 class="adm-page-title">Ma ville</h1>
+                <div class="adm-page-sub">{{ city.name }} &middot; Édition {{ cityEdition.edition.year }}</div>
+            </div>
+        </div>
+
+        {% include 'city_admin/_nav.html.twig' %}
+
+        {{ form_start(form) }}
+
+        {# ── Identité ── #}
+        <div class="card card--flat adm-card-gap">
+            <div class="adm-section-label mb-3">
+                <i class="fas fa-city me-1"></i>Identité de la ville
+            </div>
+            <div class="form-group mb-0">
+                {{ form_label(form.name) }}
+                {{ form_widget(form.name, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.name) }}
+            </div>
+        </div>
+
+        {# ── Organisme ── #}
+        <div class="card card--flat adm-card-gap">
+            <div class="adm-section-label mb-3">
+                <i class="fas fa-building me-1"></i>Organisme organisateur
+            </div>
+            <div class="form-group">
+                {{ form_label(form.organizationName) }}
+                {{ form_widget(form.organizationName, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.organizationName) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.organizationDescription) }}
+                {{ form_widget(form.organizationDescription, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.organizationDescription) }}
+            </div>
+            <div class="form-group mb-0">
+                {{ form_label(form.contactEmail) }}
+                {{ form_widget(form.contactEmail, {attr: {class: 'form-control', placeholder: 'contact@exemple.fr'}}) }}
+                {{ form_errors(form.contactEmail) }}
+            </div>
+        </div>
+
+        {# ── Réseaux sociaux ── #}
+        <div class="card card--flat adm-card-gap">
+            <div class="adm-section-label mb-3">
+                <i class="fas fa-share-nodes me-1"></i>Réseaux sociaux
+            </div>
+            <div class="form-group adm-social-field-row">
+                <div>
+                    {{ form_label(form.socialLink1Type) }}
+                    {{ form_widget(form.socialLink1Type, {attr: {class: 'form-control'}}) }}
+                    {{ form_errors(form.socialLink1Type) }}
+                </div>
+                <div>
+                    {{ form_label(form.socialLink1Url) }}
+                    {{ form_widget(form.socialLink1Url, {attr: {class: 'form-control', placeholder: 'https://…'}}) }}
+                    {{ form_errors(form.socialLink1Url) }}
+                </div>
+            </div>
+            <div class="form-group adm-social-field-row mb-0">
+                <div>
+                    {{ form_label(form.socialLink2Type) }}
+                    {{ form_widget(form.socialLink2Type, {attr: {class: 'form-control'}}) }}
+                    {{ form_errors(form.socialLink2Type) }}
+                </div>
+                <div>
+                    {{ form_label(form.socialLink2Url) }}
+                    {{ form_widget(form.socialLink2Url, {attr: {class: 'form-control', placeholder: 'https://…'}}) }}
+                    {{ form_errors(form.socialLink2Url) }}
+                </div>
+            </div>
+        </div>
+
+        {# ── Couleurs ── #}
+        <div class="card card--flat mb-4">
+            <div class="adm-section-label mb-1">
+                <i class="fas fa-palette me-1"></i>Couleurs de la ville
+            </div>
+            <p class="adm-hint-text mb-3">
+                Ces couleurs personnalisent l'apparence du site pour votre ville. Par défaut : <code>#1A9B96</code> (principale) et <code>#F5821F</code> (secondaire).
+            </p>
+            <div class="adm-color-grid">
+                <div class="form-group mb-0">
+                    {{ form_label(form.primaryColor) }}
+                    <div class="adm-color-field-row">
+                        {{ form_widget(form.primaryColor, {value: city.primaryColor ?: '#1A9B96', attr: {class: 'adm-color-swatch'}}) }}
+                        <span class="color-hex-preview adm-hint-text"></span>
+                        <button type="button" class="btn btn--sm btn--outline adm-color-reset-btn" data-reset-value="#1A9B96">Réinitialiser</button>
+                    </div>
+                    {{ form_errors(form.primaryColor) }}
+                </div>
+                <div class="form-group mb-0">
+                    {{ form_label(form.secondaryColor) }}
+                    <div class="adm-color-field-row">
+                        {{ form_widget(form.secondaryColor, {value: city.secondaryColor ?: '#F5821F', attr: {class: 'adm-color-swatch'}}) }}
+                        <span class="color-hex-preview adm-hint-text"></span>
+                        <button type="button" class="btn btn--sm btn--outline adm-color-reset-btn" data-reset-value="#F5821F">Réinitialiser</button>
+                    </div>
+                    {{ form_errors(form.secondaryColor) }}
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn--primary" type="submit">
+            <i class="fas fa-save me-1"></i> Enregistrer
+        </button>
+
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

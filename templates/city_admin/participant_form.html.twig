@@ -1,0 +1,101 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier {{ participant.fullName }} | {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="home-wrap">
+        <div class="adm-page-header">
+            <div>
+                <h1 class="adm-page-title">Modifier un participant</h1>
+                <div class="adm-page-sub">{{ participant.fullName }} &middot; {{ city.name }}</div>
+            </div>
+            <a href="{{ path('app_city_admin_participants', {citySlug: city.slug}) }}"
+               class="btn btn--sm btn--outline">
+                <i class="fas fa-arrow-left me-1"></i> Retour aux participants
+            </a>
+        </div>
+
+        {% include 'city_admin/_nav.html.twig' %}
+
+        {{ form_start(form) }}
+
+        {# ── Identité ── #}
+        <div class="card card--flat adm-card-gap">
+            <div class="adm-section-label mb-16px">
+                <i class="fas fa-user me-1"></i>Identité
+            </div>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    {{ form_label(form.firstName) }}
+                    {{ form_widget(form.firstName, {attr: {class: 'form-control'}}) }}
+                    {{ form_errors(form.firstName) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.lastName) }}
+                    {{ form_widget(form.lastName, {attr: {class: 'form-control'}}) }}
+                    {{ form_errors(form.lastName) }}
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.email) }}
+                {{ form_widget(form.email, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.email) }}
+            </div>
+            <div class="form-group mb-0">
+                {{ form_label(form.username) }}
+                {{ form_widget(form.username, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.username) }}
+            </div>
+        </div>
+
+        {# ── Accès et rôles ── #}
+        <div class="card card--flat adm-card-gap">
+            <div class="adm-section-label mb-16px">
+                <i class="fas fa-key me-1"></i>Accès &amp; rôles
+            </div>
+            <div class="form-group">
+                {{ form_label(form.plainPassword) }}
+                {{ form_widget(form.plainPassword, {attr: {class: 'form-control', autocomplete: 'new-password'}}) }}
+                <p class="text-sm text-muted mt-035rem mb-0">Laisser vide pour ne pas modifier.</p>
+                {{ form_errors(form.plainPassword) }}
+            </div>
+            <div class="mb-0">
+                <div class="adm-section-label mb-10px">Rôles supplémentaires</div>
+                <div class="flex-row-gap-16-wrap">
+                    {% for choice in form.roles %}
+                        <div class="adm-check-row">
+                            {{ form_widget(choice) }}
+                            {{ form_label(choice) }}
+                        </div>
+                    {% endfor %}
+                </div>
+                {{ form_errors(form.roles) }}
+            </div>
+        </div>
+
+        {# ── Préférences ── #}
+        <div class="card card--flat mb-4">
+            <div class="adm-section-label mb-14px">
+                <i class="fas fa-sliders me-1"></i>Préférences
+            </div>
+            <div class="flex-col-gap-10">
+                <div class="adm-check-row">
+                    {{ form_widget(form.receiveEmails) }}
+                    {{ form_label(form.receiveEmails) }}
+                </div>
+                <div class="adm-check-row">
+                    {{ form_widget(form.publicProfile) }}
+                    {{ form_label(form.publicProfile) }}
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn--primary" type="submit">
+            <i class="fas fa-save me-1"></i> Enregistrer
+        </button>
+
+        {% do form.city.setRendered %}
+
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

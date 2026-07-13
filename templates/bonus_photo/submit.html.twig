@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Soumettre un défi photo | {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="container container--narrow mt-6">
+    <div class="page-header">
+        <h1 class="page-header__title">📸 Soumettre un défi photo</h1>
+    </div>
+    <div class="card">
+        {{ form_start(form, {attr: {enctype: 'multipart/form-data'}}) }}
+            <div class="form-group">{{ form_label(form.challenge) }}{{ form_widget(form.challenge, {attr: {class: 'form-control'}}) }}{{ form_errors(form.challenge) }}</div>
+            <div class="form-group">{{ form_label(form.photoFile) }}{{ form_widget(form.photoFile) }}{{ form_errors(form.photoFile) }}</div>
+            <div class="form-group">{{ form_label(form.comment) }}{{ form_widget(form.comment, {attr: {class: 'form-control'}}) }}</div>
+            <div class="form-check mb-4">{{ form_widget(form.consentToPublish) }}<label>{{ form_label(form.consentToPublish) }}</label></div>
+            <button class="btn btn--orange" type="submit">Soumettre le défi</button>
+            <a href="{{ path('app_bonus_photo_list', {citySlug: city.slug}) }}" class="btn btn--outline">Annuler</a>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# -*- shell-script -*-
+
+function docker_compose_exec() {
+    if [[ $(uname -s) != "Darwin" ]]; then
+        docker compose exec -u $(id -u):$(id -g) "$@"
+    else
+        docker compose exec "$@"
+    fi
+}
+
+function php() {
+    docker_compose_exec php php "$@"
+}
+
+function composer() {
+    docker_compose_exec php php -d memory_limit=-1 /usr/bin/composer "$@"
+}
+
+function sf() {
+    docker_compose_exec php bin/console "$@"
+}
+
+echo php composer sf
