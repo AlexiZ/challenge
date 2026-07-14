@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\CityEditionRepository;
+use App\Service\StatsCalculator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -10,7 +11,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class HomeController extends AbstractController
 {
     #[Route('/', name: 'app_home')]
-    public function index(CityEditionRepository $cityEditionRepository): Response
+    public function index(CityEditionRepository $cityEditionRepository, StatsCalculator $statsCalculator): Response
     {
         $now = new \DateTime();
 
@@ -51,25 +52,11 @@ class HomeController extends AbstractController
         ];
 
         // Active editions only — for the inter-city ranking
-        $activeCityEditions = $cityEditionRepository->findAllActiveEditions();
-        $interCityRanking = [];
-        foreach ($activeCityEditions as $ce) {
-            $totalKm = 0.0;
-            foreach ($ce->getTrips() as $trip) {
-                $totalKm += $trip->getDistanceKm();
-            }
-            $interCityRanking[] = [
-                'city'           => $ce->getCity(),
-                'cityEdition'    => $ce,
-                'totalKm'        => $totalKm,
-                'participantCount' => $ce->getParticipants()->count(),
-            ];
-        }
-        usort($interCityRanking, fn ($a, $b) => $b['totalKm'] <=> $a['totalKm']);
+        $cityRanking = $statsCalculator->rankCityEditions($cityEditionRepository->findAllActiveEditions());
 
         return $this->render('home/index.html.twig', [
-            'cityTabs'         => $cityTabs,
-            'interCityRanking' => $interCityRanking,
+            'cityTabs'    => $cityTabs,
+            'cityRanking' => $cityRanking,
         ]);
     }
 }

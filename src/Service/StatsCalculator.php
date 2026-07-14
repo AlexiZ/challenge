@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\CityEdition;
+use App\Entity\Trip;
 use App\Entity\User;
 use App\Enum\TripModeEnum;
 use App\Repository\BonusPhotoRepository;
@@ -57,5 +58,72 @@ class StatsCalculator
             'target_progress_pct' => $targetProgress,
             'co2_kg' => $this->co2Calculator->calculateForCityEdition($cityEdition),
         ];
+    }
+
+    /**
+     * Aggregated ranking stats for a city edition, used to rank cities against each other.
+     * Mirrors the points formula used for the individual/team rankings (trip points + approved bonus photos),
+     * excluding admins who don't count towards points.
+     *
+     * @return array<string, mixed>
+     */
+    public function getCityEditionRankingStats(CityEdition $cityEdition): array
+    {
+        $trips = array_filter(
+            $this->tripRepository->findByCityEditionWithUsers($cityEdition),
+            fn (Trip $trip) => !$trip->getUser()->isSuperAdmin() && !$trip->getUser()->isAdminCity(),
+        );
+        $bonusPoints = $this->bonusPhotoRepository->getBonusPointsPerUserByCityEdition($cityEdition);
+
+        $perUser = [];
+        foreach ($trips as $trip) {
+            $uid = $trip->getUser()->getId();
+            if (!isset($perUser[$uid])) {
+                $perUser[$uid] = ['km' => 0.0, 'tripPoints' => 0.0, 'dates' => []];
+            }
+            $perUser[$uid]['km'] += $trip->getDistanceKm();
+            $perUser[$uid]['tripPoints'] += $trip->getPointsGenerated();
+            $perUser[$uid]['dates'][$trip->getTripDate()->format('Y-m-d')] = true;
+        }
+
+        $participantCount = count($perUser);
+        $totalPoints = 0.0;
+        $totalKm = 0.0;
+        $totalActiveDays = 0;
+        foreach ($perUser as $uid => $data) {
+            $totalPoints += $data['tripPoints'] + (float) ($bonusPoints[$uid] ?? 0.0);
+            $totalKm += $data['km'];
+            $totalActiveDays += count($data['dates']);
+        }
+
+        return [
+            'participant_count' => $participantCount,
+            'total_points' => round($totalPoints, 1),
+            'avg_score' => $participantCount > 0 ? round($totalPoints / $participantCount, 1) : 0.0,
+            'avg_distance_km' => $participantCount > 0 ? round($totalKm / $participantCount, 1) : 0.0,
+            'avg_active_days' => $participantCount > 0 ? round($totalActiveDays / $participantCount, 1) : 0.0,
+        ];
+    }
+
+    /**
+     * Ranks city editions against each other by total points, descending.
+     * Shared by every inter-city ranking display (city home, my challenge, global home).
+     *
+     * @param CityEdition[] $cityEditions
+     * @return array<int, array{cityEdition: CityEdition, stats: array<string, mixed>}>
+     */
+    public function rankCityEditions(array $cityEditions): array
+    {
+        $ranking = [];
+        foreach ($cityEditions as $ce) {
+            $ranking[] = [
+                'cityEdition' => $ce,
+                'stats' => $this->getCityEditionRankingStats($ce),
+            ];
+        }
+
+        usort($ranking, fn ($a, $b) => $b['stats']['total_points'] <=> $a['stats']['total_points']);
+
+        return $ranking;
     }
 }

@@ -37,7 +37,7 @@ class ChallengeController extends AbstractController
     ): Response {
         $cityEdition = $this->cityEditionResolver->resolve($citySlug);
         $cityStats = $statsCalculator->getCityEditionStats($cityEdition);
-        $allCityEditions = $cityEditionRepository->findLatestPerCity();
+        $cityRanking = $statsCalculator->rankCityEditions($cityEditionRepository->findLatestPerCity());
         $publicPhotos = $bonusPhotoRepository->findApprovedPublicByCityEdition($cityEdition);
 
         // Points and description maps (configured > enum default)
@@ -53,7 +53,7 @@ class ChallengeController extends AbstractController
             'cityEdition' => $cityEdition,
             'city' => $cityEdition->getCity(),
             'cityStats' => $cityStats,
-            'allCityEditions' => $allCityEditions,
+            'cityRanking' => $cityRanking,
             'publicPhotos' => $publicPhotos,
             'challengePointsMap' => $challengePointsMap,
         ]);
@@ -87,7 +87,7 @@ class ChallengeController extends AbstractController
         $stats = $statsCalculator->getUserStats($user, $cityEdition);
         $heatmapData = $tripRepository->getDailyDistanceForHeatmap($user, $cityEdition);
         $cityStats = $statsCalculator->getCityEditionStats($cityEdition);
-        $allCityEditions = $cityEditionRepository->findLatestPerCity();
+        $cityRanking = $statsCalculator->rankCityEditions($cityEditionRepository->findLatestPerCity());
         $myBonusPhotos = $bonusPhotoRepository->findBy(
             ['user' => $user, 'cityEdition' => $cityEdition],
             ['submittedAt' => 'DESC'],
@@ -100,7 +100,7 @@ class ChallengeController extends AbstractController
             'stats' => $stats,
             'heatmapData' => $heatmapData,
             'cityStats' => $cityStats,
-            'allCityEditions' => $allCityEditions,
+            'cityRanking' => $cityRanking,
             'myBonusPhotos' => $myBonusPhotos,
         ]);
     }

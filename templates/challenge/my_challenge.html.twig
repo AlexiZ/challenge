@@ -262,31 +262,13 @@
             </div>
 
             {# Comparaison inter-villes #}
-            {% if allCityEditions|length > 1 %}
+            {% if cityRanking|length > 1 %}
                 <div class="card card--flat">
                     <div class="card-title">
                         <i class="fas fa-ranking-star me-1 text-orange"></i>
                         Les autres villes
                     </div>
-                    {% set maxPts = 1 %}
-                    {% for ce in allCityEditions %}
-                        {% if ce.participants.count() > maxPts %}{% set maxPts = ce.participants.count() %}{% endif %}
-                    {% endfor %}
-                    {% for i, ce in allCityEditions|slice(0, 8) %}
-                        <div class="ville-row">
-                            <span class="ville-rank {{ i < 3 ? 'top' }}">{{ i + 1 }}</span>
-                            <span class="ville-name {{ ce.city.slug == city.slug ? 'mine' }}">
-                                {{ ce.city.name|slice(0, 11) }}
-                            </span>
-                            <div class="bar-bg">
-                                <div class="bar-fill pct-fill {{ ce.city.slug == city.slug ? 'mine' }}"
-                                     style="--pct:{{ (ce.participants.count() / maxPts * 100)|round }}%"></div>
-                            </div>
-                            <span class="ville-pts {{ ce.city.slug == city.slug ? 'mine' }}">
-                                {{ ce.participants.count() }}
-                            </span>
-                        </div>
-                    {% endfor %}
+                    {% include 'components/_city_ranking_table.html.twig' with { rows: cityRanking } %}
                     <div class="mt-3">
                         <a href="{{ path('app_home') }}" class="orga-link fs-12">
                             <i class="fas fa-arrow-right"></i> Toutes les villes

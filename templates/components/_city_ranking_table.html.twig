@@ -1,0 +1,34 @@
+{# Expects `rows`: array of {cityEdition: CityEdition, stats: {participant_count, total_points, avg_score, avg_distance_km, avg_active_days}} #}
+{# Optional global `city`: current city, used to highlight its row #}
+<div class="ville-table-wrap">
+    <table class="ville-table">
+        <thead>
+            <tr>
+                <th class="ville-th-rank"></th>
+                <th class="ville-th-name">Ville</th>
+                <th title="Total des points de la ville (trajets + photos bonus) — critère de classement">Points</th>
+                <th title="Nombre de participants ayant enregistré au moins un trajet">Participants</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i, row in rows|slice(0, 8) %}
+                {% set ce = row.cityEdition %}
+                {% set s = row.stats %}
+                {% set mine = city is defined and ce.city.slug == city.slug %}
+                {% set detail = 'Moyenne par participant : ' ~ s.avg_score ~ ' points, ' ~ s.avg_distance_km ~ ' kms, ' ~ s.avg_active_days ~ ' jours' %}
+                <tr title="{{ detail }}">
+                    <td class="ville-rank">
+                        {% if i == 0 %}<i class="fas fa-medal rank-icon text-gold"></i>
+                        {% elseif i == 1 %}<i class="fas fa-medal rank-icon text-silver"></i>
+                        {% elseif i == 2 %}<i class="fas fa-medal rank-icon text-bronze"></i>
+                        {% else %}{{ i + 1 }}
+                        {% endif %}
+                    </td>
+                    <td class="ville-name {{ mine ? 'mine' }}">{{ ce.city.name|slice(0, 14) }}</td>
+                    <td class="ville-stat ville-stat--total {{ mine ? 'mine' }}">{{ s.total_points }}</td>
+                    <td class="ville-stat {{ mine ? 'mine' }}">{{ s.participant_count }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
