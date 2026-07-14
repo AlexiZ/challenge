@@ -21,4 +21,11 @@ function sf() {
     docker_compose_exec php bin/console "$@"
 }
 
-echo php composer sf
+function deployer() {
+    # Pas de docker_compose_exec ici : Deployer doit tourner en root dans le
+    # conteneur (cf. compose.yaml), sinon `~` ne résout à aucun utilisateur
+    # (uid hôte sans entrée /etc/passwd) et SSH/Deployer échouent en cascade.
+    docker compose exec php vendor/bin/dep "$@"
+}
+
+echo php composer sf deployer
