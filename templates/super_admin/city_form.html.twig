@@ -88,6 +88,36 @@
         </div>
     </div>
 
+    {# ── Couleurs ── #}
+    <div class="card card--flat mb-4">
+        <div class="adm-section-label mb-1">
+            <i class="fas fa-palette me-1"></i>Couleurs de la ville
+        </div>
+        <p class="adm-hint-text mb-3">
+            Ces couleurs personnalisent l'apparence du site pour cette ville. Par défaut : <code>#1A9B96</code> (principale) et <code>#F5821F</code> (secondaire).
+        </p>
+        <div class="adm-color-grid">
+            <div class="form-group mb-0">
+                {{ form_label(form.primaryColor) }}
+                <div class="adm-color-field-row">
+                    {{ form_widget(form.primaryColor, {value: city.primaryColor ?: '#1A9B96', attr: {class: 'adm-color-swatch'}}) }}
+                    <span class="color-hex-preview adm-hint-text"></span>
+                    <button type="button" class="btn btn--sm btn--outline adm-color-reset-btn" data-reset-value="#1A9B96">Réinitialiser</button>
+                </div>
+                {{ form_errors(form.primaryColor) }}
+            </div>
+            <div class="form-group mb-0">
+                {{ form_label(form.secondaryColor) }}
+                <div class="adm-color-field-row">
+                    {{ form_widget(form.secondaryColor, {value: city.secondaryColor ?: '#F5821F', attr: {class: 'adm-color-swatch'}}) }}
+                    <span class="color-hex-preview adm-hint-text"></span>
+                    <button type="button" class="btn btn--sm btn--outline adm-color-reset-btn" data-reset-value="#F5821F">Réinitialiser</button>
+                </div>
+                {{ form_errors(form.secondaryColor) }}
+            </div>
+        </div>
+    </div>
+
     <button class="btn btn--primary" type="submit">
         <i class="fas fa-save me-1"></i> Enregistrer
     </button>
