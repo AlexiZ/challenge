@@ -14,8 +14,6 @@ Application Symfony de gestion d'un défi de mobilité douce (vélo / marche) en
 ### Prérequis
 
 - Docker et Docker Compose
-- Composer
-- Node.js / npm
 
 ### Installation
 
@@ -31,12 +29,15 @@ cp .env .env.local
 # Démarrer les services (PHP, PostgreSQL, Adminer, Mailpit)
 docker compose up -d
 
+# Charger les alias
+source .spells
+
 # Installer les dépendances
 composer install
 npm install
 
 # Appliquer les migrations
-docker compose exec php bin/console doctrine:migrations:migrate
+sf doctrine:migrations:migrate
 ```
 
 L'application est ensuite accessible sur http://localhost:8080, Adminer sur http://localhost:8081, et Mailpit (interception des emails) sur le port exposé par le conteneur `mailer`.
@@ -51,6 +52,7 @@ source .spells
 php bin/console about
 composer require ...
 sf make:controller ...
+deployer ssh prod ...
 ```
 
 ## Sécurité
