@@ -6,6 +6,15 @@ services:
       dockerfile: docker/php/Dockerfile
     volumes:
       - .:/var/www/html
+      - ${HOME}/.ssh:${HOME}/.ssh
+      # Deployer résout `~/.ssh/...` (ControlPath du multiplexage SSH) via l'utilisateur
+      # réel du conteneur (root), pas via $HOME ni les chemins absolus de deploy_secrets.php.
+      - ${HOME}/.ssh:/root/.ssh
+      # Nécessaire pour le ForwardAgent de deploy.php : sans le socket de l'agent hôte,
+      # le serveur distant n'a aucune clé à présenter à GitHub pour "git clone".
+      - ${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}
+    environment:
+      SSH_AUTH_SOCK: ${SSH_AUTH_SOCK}
     depends_on:
       database:
         condition: service_healthy

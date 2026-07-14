@@ -23,3 +23,6 @@
 
 /public/uploads/avatars/*
 /public/uploads/bonus_photos/*
+
+.dep/
+deploy_secrets.php
