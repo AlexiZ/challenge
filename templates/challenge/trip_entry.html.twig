@@ -48,8 +48,12 @@
                         </button>
                     </div>
                 </div>
-                {% if not form.vars.valid and form.vars.submitted %}
-                    <div class="mc-form-errors">{{ form_errors(form) }}</div>
+                {% if form.vars.submitted and not form.vars.valid %}
+                    <div class="mc-form-errors">
+                        {{ form_errors(form) }}
+                        {{ form_errors(form.distanceKm) }}
+                        {{ form_errors(form.tripDate) }}
+                    </div>
                 {% endif %}
                 {{ form_end(form) }}
             </div>

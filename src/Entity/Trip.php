@@ -28,7 +28,7 @@ class Trip
     private TripModeEnum $mode = TripModeEnum::Bike;
 
     #[ORM\Column]
-    #[Assert\GreaterThanOrEqual(0.5)]
+    #[Assert\GreaterThanOrEqual(0.5, message: 'Vous ne pouvez pas saisir un trajet de moins de 0,5 km.')]
     private float $distanceKm = 0.0;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
