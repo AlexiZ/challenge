@@ -117,6 +117,7 @@ class ChallengeController extends AbstractController
 
         if (!$cityEdition->isTripsEntryOpen()) {
             $this->addFlash('warning', 'La saisie des trajets est actuellement fermée.');
+
             return $this->redirectToRoute('app_my_challenge', ['citySlug' => $citySlug]);
         }
 

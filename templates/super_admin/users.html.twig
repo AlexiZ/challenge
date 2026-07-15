@@ -44,9 +44,9 @@
                             <td class="text-sm">{{ u.city ? u.city.name : '-' }}</td>
                             <td>
                                 {% if 'ROLE_SUPER_ADMIN' in u.roles %}
-                                    <span class="badge badge--orange">Super-admin</span>
+                                    <span class="badge badge--secondary">Super-admin</span>
                                 {% elseif 'ROLE_ADMIN_CITY' in u.roles %}
-                                    <span class="badge badge--teal">Admin ville</span>
+                                    <span class="badge badge--primary">Admin ville</span>
                                 {% else %}
                                     <span class="badge badge--green">Participant</span>
                                 {% endif %}
