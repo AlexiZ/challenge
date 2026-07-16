@@ -28,24 +28,29 @@ document.addEventListener('click', (e) => {
 });
 
 // Mobile navbar burger menu
-const navbarToggle = document.getElementById('navbar-toggle');
-const navbarCollapse = document.getElementById('navbar-collapse');
-if (navbarToggle && navbarCollapse) {
-    const closeNavbar = () => {
-        navbarCollapse.classList.remove('navbar__collapse--open');
-        navbarToggle.classList.remove('active');
-        navbarToggle.setAttribute('aria-expanded', 'false');
-    };
-    navbarToggle.addEventListener('click', () => {
+// Delegated on `document` (rather than wired once on the elements captured at module load)
+// so it keeps working after Turbo swaps in a new navbar without a full reload.
+const closeNavbar = () => {
+    const navbarCollapse = document.getElementById('navbar-collapse');
+    const navbarToggle = document.getElementById('navbar-toggle');
+    if (!navbarCollapse || !navbarToggle) return;
+    navbarCollapse.classList.remove('navbar__collapse--open');
+    navbarToggle.classList.remove('active');
+    navbarToggle.setAttribute('aria-expanded', 'false');
+};
+document.addEventListener('click', (e) => {
+    const navbarToggle = document.getElementById('navbar-toggle');
+    const navbarCollapse = document.getElementById('navbar-collapse');
+    if (!navbarToggle || !navbarCollapse) return;
+    if (navbarToggle.contains(e.target)) {
         const isOpen = navbarCollapse.classList.toggle('navbar__collapse--open');
         navbarToggle.classList.toggle('active', isOpen);
         navbarToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    });
-    document.addEventListener('click', (e) => {
-        if (!navbarCollapse.classList.contains('navbar__collapse--open')) return;
-        if (!navbarCollapse.contains(e.target) && !navbarToggle.contains(e.target)) closeNavbar();
-    });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeNavbar();
-    });
-}
+        return;
+    }
+    if (!navbarCollapse.classList.contains('navbar__collapse--open')) return;
+    if (!navbarCollapse.contains(e.target)) closeNavbar();
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeNavbar();
+});

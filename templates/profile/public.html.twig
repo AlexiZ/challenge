@@ -90,7 +90,7 @@
                         </a>
                     {% endfor %}
                     {% if isSelf %}
-                        <a href="{{ path('app_team_create', {citySlug: city.slug}) }}" class="btn btn--outline btn--sm mt-2 w-100 text-center">
+                        <a href="{{ path('app_participants', {citySlug: city.slug}) }}" class="btn btn--outline btn--sm mt-2 w-100 text-center">
                             + Rejoindre une équipe
                         </a>
                     {% endif %}

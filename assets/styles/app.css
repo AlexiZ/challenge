@@ -525,48 +525,6 @@ details.sub-accordion[open] > .sub-accordion__header .sub-accordion__arrow { tra
 /* ── Card title BEM alias ────────────────────────────────────────────────────── */
 .card__title { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--ink); margin-bottom: 16px; }
 
-/* ── Responsive ──────────────────────────────────────────────────────────────── */
-@media (max-width: 900px) {
-    .hero-section  { grid-template-columns: 1fr; }
-    .steps-grid    { grid-template-columns: repeat(2,1fr); }
-    .adm-kpi-grid  { grid-template-columns: repeat(2,1fr); }
-}
-@media (max-width: 767px) {
-    .home-2col            { grid-template-columns: 1fr; }
-    .navbar__toggle        { display: inline-flex; }
-    .navbar__collapse {
-        display: none;
-        position: absolute; top: 100%; left: 0; right: 0;
-        flex-direction: column; align-items: stretch; gap: .25rem;
-        background: var(--surface); border-bottom: 1px solid var(--border);
-        box-shadow: var(--shadow-md); padding: .5rem 1rem 1rem;
-        max-height: calc(100vh - 60px); overflow-y: auto;
-    }
-    .navbar__collapse--open { display: flex; }
-    .navbar__nav           { flex-direction: column; align-items: stretch; gap: 2px; flex: none; }
-    .navbar__nav a         { display: block; padding: .6rem .7rem; }
-    .navbar__actions       { flex-direction: column; align-items: stretch; gap: .5rem; padding-top: .5rem; margin-top: .25rem; border-top: 1px solid var(--border); }
-    .navbar__actions .btn  { width: 100%; justify-content: center; }
-    /* User menu: always expanded inline on mobile, not a dropdown */
-    .navbar__actions .user-menu { position: static; }
-    .navbar__actions .user-menu > summary {
-        display: flex; align-items: center; justify-content: flex-start; gap: .4rem;
-        width: 100%; background: transparent !important; border: none !important;
-        padding: .3rem .2rem !important; cursor: default; text-align: left;
-        pointer-events: none;
-    }
-    .navbar__actions .user-menu > summary .fa-chevron-down { display: none; }
-    .navbar__actions .user-menu__dropdown {
-        display: block !important;
-        position: static; box-shadow: none; border: none; min-width: 0;
-        width: 100%; padding: .25rem 0 0; margin: 0;
-    }
-    .participants-grid    { grid-template-columns: repeat(2,1fr); }
-    .cta-band             { flex-direction: column; padding: 24px; }
-    .cta-band .flex-gap-12 { flex-direction: column; width: 100%; }
-    .steps-grid           { grid-template-columns: 1fr; }
-}
-
 
 /* ─── Message organisateurs ───────────────────────────────────────────── */
 .mc-org-msg {
@@ -1526,6 +1484,49 @@ details.sub-accordion[open] > .sub-accordion__header .sub-accordion__arrow { tra
     background: var(--bs-secondary); color: #fff;
     font-size: 11px; font-weight: 700; padding: 2px 8px;
     border-radius: 99px; flex-shrink: 0; white-space: nowrap;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .hero-section  { grid-template-columns: 1fr; }
+    .steps-grid    { grid-template-columns: repeat(2,1fr); }
+    .adm-kpi-grid  { grid-template-columns: repeat(2,1fr); }
+}
+@media (max-width: 767px) {
+    .home-2col            { grid-template-columns: 1fr; }
+    .navbar__toggle        { display: inline-flex; }
+    .navbar__collapse {
+        display: none;
+        position: absolute; top: 100%; left: 0; right: 0;
+        flex-direction: column; align-items: stretch; gap: .25rem;
+        background: var(--surface); border-bottom: 1px solid var(--border);
+        box-shadow: var(--shadow-md); padding: .5rem 1rem 1rem;
+        max-height: calc(100vh - 60px); overflow-y: auto;
+    }
+    .navbar__collapse--open { display: flex; }
+    .navbar__nav           { flex-direction: column; align-items: stretch; gap: 2px; flex: none; }
+    .navbar__nav a         { display: block; padding: .6rem .7rem; }
+    .navbar__actions       { flex-direction: column; align-items: stretch; gap: .5rem; padding-top: .5rem; margin-top: .25rem; border-top: 1px solid var(--border); }
+    .navbar__actions .btn  { width: 100%; justify-content: center; }
+    /* User menu: always expanded inline on mobile, not a dropdown */
+    .navbar__actions .user-menu { position: static; }
+    .navbar__actions .user-menu > summary {
+        display: flex; align-items: center; justify-content: flex-start; gap: .4rem;
+        width: 100%; background: transparent !important; border: none !important;
+        padding: .3rem .2rem !important; cursor: default; text-align: left;
+        pointer-events: none;
+    }
+    .navbar__actions .user-menu > summary .fa-chevron-down { display: none; }
+    .navbar__actions .user-menu__dropdown {
+        display: block !important;
+        position: static; box-shadow: none; border: none; min-width: 0;
+        width: 100%; padding: .25rem 0 0; margin: 0;
+    }
+    .participants-grid    { grid-template-columns: repeat(2,1fr); }
+    .cta-band             { flex-direction: column; padding: 24px; }
+    .cta-band .flex-gap-12 { flex-direction: column; width: 100%; }
+    .steps-grid           { grid-template-columns: 1fr; }
+    .bp-challenge-grid    { grid-template-columns: 1fr; }
 }
 
 /* ── Admin config (adm-param-*) ──────────────────────────────────────────── */
