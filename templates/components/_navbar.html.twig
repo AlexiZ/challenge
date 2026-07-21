@@ -41,13 +41,13 @@
         {# ── User menu / actions ── #}
         <div class="navbar__actions">
             {% if app.user %}
-                <details class="user-menu">
-                    <summary class="btn btn--sm btn--outline">
+                <div class="dropdown user-menu">
+                    <button type="button" class="btn btn--sm btn--outline" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="avatar avatar--sm" aria-hidden="true">{{ app.user.initials }}</span>
                         {{ app.user.firstName }}
                         <i class="fas fa-chevron-down fa-xs ms-1 opacity-60"></i>
-                    </summary>
-                    <div class="user-menu__dropdown">
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end user-menu__dropdown">
                         <span class="user-menu__label">{{ app.user.fullName }}</span>
                         {% if city is defined %}
                             <a href="{{ path('app_profile', {citySlug: city.slug}) }}" class="user-menu__item">
@@ -86,7 +86,7 @@
                             </a>
                         {% endif %}
                     </div>
-                </details>
+                </div>
             {% else %}
                 <a href="{{ path('app_login') }}" class="btn btn--sm btn--outline">
                     <i class="fas fa-right-to-bracket"></i> Connexion

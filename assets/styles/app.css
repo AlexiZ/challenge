@@ -113,14 +113,10 @@ a:hover { color: var(--bs-primary-dark); }
 .btn-warning:hover { background-color: var(--bs-secondary-dark); border-color: var(--bs-secondary-dark); color: #fff; }
 
 /* ── User dropdown ────────────────────────────────────────────────────────────── */
-.user-menu { position: relative; }
-.user-menu > summary { list-style: none; cursor: pointer; user-select: none; }
-.user-menu > summary::-webkit-details-marker { display: none; }
 .user-menu__dropdown {
-    position: absolute; right: 0; top: calc(100% + 6px);
     background: var(--surface); border-radius: var(--radius-sm);
     box-shadow: var(--shadow-md); border: 1px solid var(--border);
-    min-width: 210px; z-index: 300; padding: .375rem 0;
+    min-width: 210px; padding: .375rem 0;
 }
 .user-menu__label {
     padding: .4rem 1rem .2rem; font-size: .72rem;
@@ -1509,15 +1505,15 @@ details.sub-accordion[open] > .sub-accordion__header .sub-accordion__arrow { tra
     .navbar__actions       { flex-direction: column; align-items: stretch; gap: .5rem; padding-top: .5rem; margin-top: .25rem; border-top: 1px solid var(--border); }
     .navbar__actions .btn  { width: 100%; justify-content: center; }
     /* User menu: always expanded inline on mobile, not a dropdown */
-    .navbar__actions .user-menu { position: static; }
-    .navbar__actions .user-menu > summary {
+    .navbar__actions .user-menu > button {
         display: flex; align-items: center; justify-content: flex-start; gap: .4rem;
         width: 100%; background: transparent !important; border: none !important;
+        border-radius: 0 !important; box-shadow: none !important;
         padding: .3rem .2rem !important; cursor: default; text-align: left;
         pointer-events: none;
     }
-    .navbar__actions .user-menu > summary .fa-chevron-down { display: none; }
-    .navbar__actions .user-menu__dropdown {
+    .navbar__actions .user-menu > button .fa-chevron-down { display: none !important; }
+    .navbar__actions .user-menu .dropdown-menu.user-menu__dropdown {
         display: block !important;
         position: static; box-shadow: none; border: none; min-width: 0;
         width: 100%; padding: .25rem 0 0; margin: 0;

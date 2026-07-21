@@ -10,23 +10,6 @@ import './js/avatar-preview.js';
 import './js/bonus-photo.js';
 import './js/lightbox.js';
 
-// On mobile, the user-menu must stay permanently expanded (not a click-gated dropdown)
-const mobileUserMenuQuery = window.matchMedia('(max-width: 767px)');
-const syncMobileUserMenu = () => {
-    if (!mobileUserMenuQuery.matches) return;
-    document.querySelectorAll('.navbar__actions .user-menu').forEach((d) => d.setAttribute('open', ''));
-};
-syncMobileUserMenu();
-mobileUserMenuQuery.addEventListener('change', syncMobileUserMenu);
-
-// Close user-menu dropdown when clicking outside (desktop only — always open on mobile)
-document.addEventListener('click', (e) => {
-    document.querySelectorAll('details.user-menu[open]').forEach((d) => {
-        if (mobileUserMenuQuery.matches) return;
-        if (!d.contains(e.target)) d.removeAttribute('open');
-    });
-});
-
 // Mobile navbar burger menu
 // Delegated on `document` (rather than wired once on the elements captured at module load)
 // so it keeps working after Turbo swaps in a new navbar without a full reload.
