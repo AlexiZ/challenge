@@ -4,10 +4,10 @@ Application Symfony de gestion d'un défi de mobilité douce (vélo / marche) en
 
 ## Stack technique
 
-- PHP 8.2+ / Symfony 7.4
+- PHP 8.3 / Symfony 7.4
 - PostgreSQL (via Doctrine ORM + Migrations)
 - AssetMapper + Bootstrap 5 + Font Awesome 6 (npm)
-- Docker Compose pour l'environnement de développement
+- Docker Compose, FrankenPHP (Caddy) — HTTPS local automatique
 
 ## Démarrage local
 
@@ -26,8 +26,9 @@ cp .env .env.local
 # Éditer .env.local : APP_SECRET, DATABASE_URL, MAILER_DSN, etc.
 # Ce fichier est ignoré par git et ne doit jamais être commité.
 
-# Démarrer les services (PHP, PostgreSQL, Adminer, Mailpit)
-docker compose up -d
+# Construire les images et démarrer la stack (PHP, PostgreSQL, Adminer, Mailpit)
+make docker-up
+# équivalent à : docker compose up --build -d
 
 # Charger les alias
 source .spells
@@ -38,9 +39,15 @@ npm install
 
 # Appliquer les migrations
 sf doctrine:migrations:migrate
+# ou : make load-fixtures
 ```
 
-L'application est ensuite accessible sur http://localhost:8080, Adminer sur http://localhost:8081, et Mailpit (interception des emails) sur le port exposé par le conteneur `mailer`.
+L'application est accessible sur http://localhost:8080 (HTTP) ou directement
+sur https://localhost:8443 (HTTPS) — le certificat est auto-signé (CA interne
+de Caddy), le navigateur affichera un avertissement à accepter la première
+fois. Adminer sur http://localhost:8081, Mailpit sur http://localhost:8025.
+
+Pour arrêter la stack : `make docker-down`.
 
 ### Raccourcis shell
 

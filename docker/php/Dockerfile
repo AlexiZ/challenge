@@ -1,32 +1,50 @@
-FROM php:8.3-apache
-
-RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    libicu-dev \
-    libpq-dev \
-    libzip-dev \
-    libpng-dev \
-    libcurl4-openssl-dev \
-    nodejs \
-    npm \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN docker-php-ext-configure intl \
- && docker-php-ext-install \
-    intl \
-    pdo_pgsql \
-    zip \
-    opcache \
-    gd \
-    curl
-
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-COPY --link --from=ghcr.io/symfony-cli/symfony-cli:latest /usr/local/bin/symfony /usr/local/bin/symfony
-
-RUN a2enmod rewrite
-
-COPY docker/apache/vhost.conf /etc/apache2/sites-available/000-default.conf
+FROM dunglas/frankenphp:php8.3 AS frankenphp_base
 
 WORKDIR /var/www/html
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+		acl file gettext git openssh-client unzip nodejs npm \
+	&& rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+	install-php-extensions \
+		@composer \
+		apcu \
+		intl \
+		opcache \
+		zip \
+		pdo_pgsql \
+		gd \
+		curl
+
+# .spells execs as the host uid:gid; tools like ssh call getpwuid() and refuse to run
+# for an unknown uid. Default to 1000 (the common single-user Linux uid) - override with
+# --build-arg DEV_UID/DEV_GID if your host uid differs.
+ARG DEV_UID=1000
+ARG DEV_GID=1000
+RUN echo "devuser:x:${DEV_UID}:${DEV_GID}::/home/devuser:/bin/sh" >> /etc/passwd \
+	&& mkdir -p /home/devuser/.ssh \
+	&& chown -R ${DEV_UID}:${DEV_GID} /home/devuser
+
+COPY docker/frankenphp/conf.d/app.ini $PHP_INI_DIR/conf.d/
+COPY docker/frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+
+CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]
+
+# ---------- dev ----------
+FROM frankenphp_base AS frankenphp_dev
+
+ENV APP_ENV=dev XDEBUG_MODE=off
+RUN install-php-extensions xdebug
+
+# ---------- prod ----------
+FROM frankenphp_base AS frankenphp_prod
+
+ENV APP_ENV=prod
+
+COPY . .
+RUN composer install --no-dev --prefer-dist --optimize-autoloader \
+	&& npm ci \
+	&& php bin/console asset-map:compile \
+	&& rm -rf node_modules \
+	&& chmod +x bin/console

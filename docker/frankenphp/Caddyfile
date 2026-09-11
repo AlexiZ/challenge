@@ -1,0 +1,14 @@
+{
+	frankenphp
+	# admin API stays on localhost:2019 inside the container only (not published) - the base image's healthcheck needs it
+}
+
+{$SERVER_NAME:localhost} {
+	log {
+		output stderr
+	}
+
+	root * /var/www/html/public
+	encode zstd br gzip
+	php_server
+}
