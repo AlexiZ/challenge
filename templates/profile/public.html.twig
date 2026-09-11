@@ -85,7 +85,6 @@
                     <div class="pub-section-label">Mes équipes</div>
                     {% for team in cityTeams %}
                         <a href="{{ path('app_team_show', {citySlug: city.slug, slug: team.slug}) }}" class="pub-team-card">
-                            <span class="rk-team-badge rk-badge--{{ team.id % 8 }}">{{ team.initials }}</span>
                             <span class="pub-team-name">{{ team.name }}</span>
                         </a>
                     {% endfor %}

@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier l'équipe | {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="container container--narrow mt-6">
+    <div class="page-header">
+        <h1 class="page-header__title">Modifier l'équipe</h1>
+    </div>
+    <div class="card">
+        {{ form_start(form) }}
+            <div class="form-group">{{ form_label(form.name) }}{{ form_widget(form.name, {attr: {class: 'form-control'}}) }}{{ form_errors(form.name) }}</div>
+            <div class="form-group">{{ form_label(form.description) }}{{ form_widget(form.description, {attr: {class: 'form-control'}}) }}</div>
+            <div class="form-check mb-4">{{ form_widget(form.isPublic) }}<label>{{ form_label(form.isPublic) }}</label></div>
+            <button class="btn btn--primary" type="submit">Enregistrer</button>
+            <a href="{{ path('app_team_show', {citySlug: city.slug, slug: team.slug}) }}" class="btn btn--outline">Annuler</a>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

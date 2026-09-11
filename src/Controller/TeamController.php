@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/{citySlug}/equipes', requirements: ['citySlug' => '(?!(admin|connexion|inscription|deconnexion)(/|$))[a-z0-9][a-z0-9-]*'])]
+#[Route('/{citySlug}/equipes', requirements: ['citySlug' => '(?!(admin|connexion|inscription|deconnexion|mot-de-passe-oublie)(/|$))[a-z0-9][a-z0-9-]*'])]
 class TeamController extends AbstractController
 {
     public function __construct(
@@ -62,6 +62,48 @@ class TeamController extends AbstractController
         ]);
     }
 
+    #[Route('/{slug}/modifier', name: 'app_team_edit')]
+    public function edit(
+        string $citySlug,
+        string $slug,
+        Request $request,
+        TeamRepository $teamRepository,
+        EntityManagerInterface $em,
+    ): Response {
+        $cityEdition = $this->cityEditionResolver->resolve($citySlug);
+        $team = $teamRepository->findBySlugAndCity($slug, $cityEdition->getCity());
+
+        if ($team === null) {
+            throw $this->createNotFoundException('Équipe introuvable.');
+        }
+
+        /** @var User $user */
+        $user = $this->getUser();
+        if ($team->getCreatedBy() !== $user && !$user->isSuperAdmin()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $form = $this->createForm(TeamType::class, $team);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em->flush();
+
+            $this->addFlash('success', 'Équipe mise à jour avec succès !');
+            return $this->redirectToRoute('app_team_show', [
+                'citySlug' => $citySlug,
+                'slug' => $team->getSlug(),
+            ]);
+        }
+
+        return $this->render('team/edit.html.twig', [
+            'cityEdition' => $cityEdition,
+            'city' => $cityEdition->getCity(),
+            'team' => $team,
+            'form' => $form,
+        ]);
+    }
+
     #[Route('/{slug}', name: 'app_team_show')]
     public function show(
         string $citySlug,
@@ -102,10 +144,11 @@ class TeamController extends AbstractController
             $uid = $member->getId();
             $bonus = (float) ($bonusPoints[$uid] ?? 0.0);
             $data = $userTripData[$uid] ?? null;
+            $dayPoints = $data ? count($data['dates']) * $cityEdition->getPointsPerDay() : 0.0;
             $memberRanking[] = [
                 'user'       => $member,
-                'km'         => $data ? round($data['km'], 1) : 0.0,
-                'points'     => $data ? round($data['tripPoints'] + $bonus, 1) : round($bonus, 1),
+                'km'         => $data ? round($data['km'], 2) : 0.0,
+                'points'     => $data ? round($data['tripPoints'] + $dayPoints + $bonus, 1) : round($bonus, 1),
                 'activeDays' => $data ? count($data['dates']) : 0,
                 'lastDate'   => $data ? $data['lastDate'] : null,
             ];
@@ -119,7 +162,7 @@ class TeamController extends AbstractController
         $activeCount = count(array_filter($memberRanking, fn ($m) => $m['activeDays'] > 0));
 
         $teamStats = [
-            'km'                => round($teamKm, 1),
+            'km'                => round($teamKm, 2),
             'points'            => round($teamTotalPoints, 1),
             'activeDays'        => $teamDays,
             'ptsPerParticipant' => $activeCount > 0 ? round($teamTotalPoints / $activeCount, 1) : 0.0,
@@ -135,14 +178,14 @@ class TeamController extends AbstractController
                 if (!isset($userTripData[$uid])) continue;
                 $bonus = (float) ($bonusPoints[$uid] ?? 0.0);
                 $tKm += $userTripData[$uid]['km'];
-                $tPoints += $userTripData[$uid]['tripPoints'] + $bonus;
+                $tPoints += $userTripData[$uid]['tripPoints'] + count($userTripData[$uid]['dates']) * $cityEdition->getPointsPerDay() + $bonus;
                 $tDays += count($userTripData[$uid]['dates']);
                 $active++;
             }
             if ($active < 2) continue;
             $teamRanking[] = [
                 'team'              => $t,
-                'km'                => round($tKm, 1),
+                'km'                => round($tKm, 2),
                 'points'            => round($tPoints, 1),
                 'activeDays'        => $tDays,
                 'participants'      => $active,

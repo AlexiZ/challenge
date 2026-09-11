@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Edition;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -34,7 +35,9 @@ class EditionType extends AbstractType
                 'label' => 'Fin de la phase de rodage',
                 'widget' => 'single_text',
                 'required' => false,
-            ]);
+            ])
+            ->add('bikeModeEnabled', CheckboxType::class, ['label' => 'Vélo', 'required' => false])
+            ->add('walkModeEnabled', CheckboxType::class, ['label' => 'Marche', 'required' => false]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

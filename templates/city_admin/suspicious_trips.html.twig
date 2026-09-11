@@ -36,7 +36,7 @@
                                 <td class="font-semibold">{{ trip.user.fullName }}</td>
                                 <td class="text-sm text-muted">{{ trip.tripDate|date('d/m/Y') }}</td>
                                 <td>{{ trip.mode.icon() }} {{ trip.mode.label() }}</td>
-                                <td class="font-bold">{{ trip.distanceKm|number_format(1) }} km</td>
+                                <td class="font-bold">{{ trip.distanceKm|number_format(2) }} km</td>
                                 <td>
                                     {% if trip.suspiciousReason == 'out_of_period' %}
                                         <span class="badge badge--red">Hors période</span>

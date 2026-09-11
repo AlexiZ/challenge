@@ -24,7 +24,7 @@
                 </p>
                 <div class="hero-cta">
                     {% if not app.user %}
-                        <a href="{{ path('app_register') }}" class="btn btn--primary btn--lg">
+                        <a href="{{ path('app_register', {citySlug: city.slug}) }}" class="btn btn--primary btn--lg">
                             <i class="fas fa-user-plus"></i> Je m'inscris gratuitement
                         </a>
                         <a href="{{ path('app_challenge_info', {citySlug: city.slug}) }}" class="btn btn--outline btn--lg">
@@ -158,10 +158,9 @@
                     <i class="fas fa-person-walking me-1 text-primary"></i>
                     Derniers participants actifs
                 </div>
-                {% set participants = cityEdition.participants|slice(0, 8) %}
-                {% if participants|length > 0 %}
+                {% if recentParticipants|length > 0 %}
                     <div class="participants-grid mb-12px">
-                        {% for p in participants %}
+                        {% for p in recentParticipants %}
                             <div class="participant-mini">
                                 <div class="p-avatar c{{ loop.index0 % 4 }}">{{ p.initials }}</div>
                                 <div class="p-name">{{ p.firstName }} {{ p.lastName|slice(0,1) }}.</div>
@@ -194,7 +193,7 @@
                     </div>
                 </div>
                 <div class="flex-gap-12">
-                    <a href="{{ path('app_register') }}" class="btn-white">
+                    <a href="{{ path('app_register', {citySlug: city.slug}) }}" class="btn-white">
                         <i class="fas fa-user-plus"></i> Je m'inscris maintenant
                     </a>
                     <a href="{{ path('app_challenge_info', {citySlug: city.slug}) }}" class="btn-white btn-white--ghost">

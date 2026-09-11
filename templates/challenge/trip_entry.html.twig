@@ -25,37 +25,47 @@
         <div class="mc-main">
             {# Formulaire de saisie #}
             <div class="mc-section">
-                <div class="mc-section-label">
-                    <i class="fas fa-plus-circle fa-xs me-1"></i>Nouveau trajet
-                </div>
-                <div class="mc-trip-form-hint">Choisissez le mode et indiquez la distance.</div>
-                {{ form_start(form, {attr: {class: 'mc-trip-form', novalidate: 'novalidate'}}) }}
-                <div class="mc-trip-form-row">
-                    <div class="mc-mode-toggle" data-radio-group>
-                        {% for child in form.mode %}
-                            <label class="mode-btn js-radio-toggle-option">
-                                {{ form_widget(child) }}
-                                <i class="{{ child.vars.value == 'bike' ? 'fas fa-bicycle' : 'fas fa-person-walking' }}"></i>
-                                {{ child.vars.label }}
-                            </label>
-                        {% endfor %}
+                {% if not cityEdition.active %}
+                    <div class="edition-status-banner mb-0">
+                        ⚠️ Cette édition n'est pas en cours
+                        ({{ cityEdition.edition.startDate|date('d/m/Y') }} - {{ cityEdition.edition.endDate|date('d/m/Y') }})
+                        &mdash; la saisie de trajets est désactivée.
                     </div>
-                    <div class="mc-trip-fields">
-                        {{ form_widget(form.distanceKm, {attr: {class: 'mc-field', placeholder: 'Distance (km)'}}) }}
-                        {{ form_widget(form.tripDate,   {attr: {class: 'mc-field'}}) }}
-                        <button type="submit" class="btn btn--primary">
-                            <i class="fas fa-check"></i> Enregistrer
-                        </button>
+                {% else %}
+                    <div class="mc-section-label">
+                        <i class="fas fa-plus-circle fa-xs me-1"></i>Nouveau trajet
                     </div>
-                </div>
-                {% if form.vars.submitted and not form.vars.valid %}
-                    <div class="mc-form-errors">
-                        {{ form_errors(form) }}
-                        {{ form_errors(form.distanceKm) }}
-                        {{ form_errors(form.tripDate) }}
+                    <div class="mc-trip-form-hint">Choisissez le mode et indiquez la distance.</div>
+                    {{ form_start(form, {attr: {class: 'mc-trip-form', novalidate: 'novalidate'}}) }}
+                    <div class="mc-trip-form-row">
+                        <div class="mc-mode-toggle" data-radio-group>
+                            {% for child in form.mode %}
+                                {% set modeEnabled = child.vars.value == 'bike' ? cityEdition.edition.bikeModeEnabled : cityEdition.edition.walkModeEnabled %}
+                                <label class="mode-btn js-radio-toggle-option"
+                                       {% if not modeEnabled %}title="Ce mode de transport n'est pas actif pour l'édition en cours"{% endif %}>
+                                    {{ form_widget(child, modeEnabled ? {} : {attr: {disabled: 'disabled'}}) }}
+                                    <i class="{{ child.vars.value == 'bike' ? 'fas fa-bicycle' : 'fas fa-person-walking' }}"></i>
+                                    {{ child.vars.label }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                        <div class="mc-trip-fields">
+                            {{ form_widget(form.distanceKm, {attr: {class: 'mc-field', placeholder: 'Distance (km)'}}) }}
+                            {{ form_widget(form.tripDate,   {attr: {class: 'mc-field'}}) }}
+                            <button type="submit" class="btn btn--primary">
+                                <i class="fas fa-check"></i> Enregistrer
+                            </button>
+                        </div>
                     </div>
+                    {% if form.vars.submitted and not form.vars.valid %}
+                        <div class="mc-form-errors">
+                            {{ form_errors(form) }}
+                            {{ form_errors(form.distanceKm) }}
+                            {{ form_errors(form.tripDate) }}
+                        </div>
+                    {% endif %}
+                    {{ form_end(form) }}
                 {% endif %}
-                {{ form_end(form) }}
             </div>
 
             {# Liste des trajets récents #}
@@ -71,8 +81,14 @@
                                     <i class="{{ trip.mode.faIcon() }}"></i>
                                 </span>
                                 <span class="mc-trip-date">{{ trip.tripDate|date('d/m/Y') }}</span>
-                                <span class="mc-trip-dist">{{ trip.distanceKm|number_format(1) }} km</span>
-                                <span class="mc-trip-pts">+{{ trip.pointsGenerated|number_format(2) }} pts</span>
+                                <span class="mc-trip-dist">{{ trip.distanceKm|number_format(2) }} km</span>
+                                {% set hasDayPoint = trip.id in dayPointTripIds %}
+                                {% set tripPoints = trip.pointsGenerated + (hasDayPoint ? cityEdition.pointsPerDay : 0) %}
+                                {% set kmRate = trip.mode.value == 'bike' ? cityEdition.pointsPerKmBike : cityEdition.pointsPerKmWalk %}
+                                {% set detail = (hasDayPoint ? (cityEdition.pointsPerDay|number_format(2) ~ ' pt jour actif + ') : '') ~ trip.distanceKm|number_format(2) ~ 'km * ' ~ kmRate|number_format(2) ~ ' pts' %}
+                                <span class="mc-trip-pts" title="{{ detail }}">
+                                    +{{ tripPoints|number_format(2) }} pts
+                                </span>
                                 {% if trip.isSuspicious() %}
                                     <span title="{{ trip.suspiciousReason }}" class="text-red flex-shrink-0">
                                         <i class="fas fa-triangle-exclamation fa-xs"></i>
@@ -122,13 +138,13 @@
                     <span class="mc-city-stat-label">
                         <i class="fas fa-bicycle fa-xs me-1 text-primary"></i>Vélo
                     </span>
-                    <span class="mc-city-stat-val">{{ stats.km_bike|number_format(1) }} km</span>
+                    <span class="mc-city-stat-val">{{ stats.km_bike|number_format(2) }} km</span>
                 </div>
                 <div class="mc-city-stat-row">
                     <span class="mc-city-stat-label">
                         <i class="fas fa-person-walking fa-xs me-1 text-orange"></i>Marche
                     </span>
-                    <span class="mc-city-stat-val">{{ stats.km_walk|number_format(1) }} km</span>
+                    <span class="mc-city-stat-val">{{ stats.km_walk|number_format(2) }} km</span>
                 </div>
                 <div class="mc-city-stat-row">
                     <span class="mc-city-stat-label">
@@ -148,7 +164,7 @@
                 <div class="mc-section-label mb-2">
                     <i class="fas fa-trophy fa-xs me-1"></i>Classements
                 </div>
-                <a href="{{ path('app_participants', {citySlug: city.slug}) }}"
+                <a href="{{ path('app_participants', {citySlug: city.slug, 'view': 'individual'}) }}"
                    class="btn btn--outline btn--sm w-100 justify-content-center">
                     <i class="fas fa-medal"></i> Voir ma position
                 </a>

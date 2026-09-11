@@ -24,12 +24,12 @@ class TripType extends AbstractType
             ])
             ->add('distanceKm', NumberType::class, [
                 'label' => 'Distance (km)',
-                'scale' => 1,
+                'scale' => 2,
                 'html5' => true,
                 'attr' => [
                     'min' => 0.5,
-                    'step' => 0.5,
-                    'placeholder' => 'Ex: 12.5',
+                    'step' => 0.01,
+                    'placeholder' => 'Ex: 12.53',
                 ],
             ])
             ->add('tripDate', DateType::class, [

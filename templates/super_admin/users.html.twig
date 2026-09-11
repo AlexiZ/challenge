@@ -61,6 +61,15 @@
                                         <i class="fas fa-user-tag fa-xs"></i>
                                     </a>
                                 {% endif %}
+                                {% if u.id != app.user.id %}
+                                    <form action="{{ path('app_super_admin_user_delete', {id: u.id}) }}" method="post"
+                                          class="d-inline" onsubmit="return confirm('Supprimer {{ u.username }} ?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_user_' ~ u.id) }}">
+                                        <button type="submit" class="btn btn--sm btn--danger">
+                                            <i class="fas fa-trash fa-xs"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}

@@ -96,9 +96,9 @@
                     </div>
                     <div class="mc-stat-breakdown">
                         <span><i class="fas fa-bicycle fa-xs text-primary"></i>
-                            {{ stats.km_bike|number_format(1) }} km</span>
+                            {{ stats.km_bike|number_format(2) }} km</span>
                         <span><i class="fas fa-person-walking fa-xs text-orange"></i>
-                            {{ stats.km_walk|number_format(1) }} km</span>
+                            {{ stats.km_walk|number_format(2) }} km</span>
                     </div>
                 </div>
 
@@ -152,7 +152,7 @@
                                 </span>
                                 <span class="mc-trip-date">{{ trip.tripDate|date('d/m/Y') }}</span>
                                 <span class="mc-trip-mode">{{ trip.mode.label() }}</span>
-                                <span class="mc-trip-dist">{{ trip.distanceKm|number_format(1) }} km</span>
+                                <span class="mc-trip-dist">{{ trip.distanceKm|number_format(2) }} km</span>
                                 <span class="mc-trip-pts">+{{ trip.pointsGenerated|number_format(2) }} pts</span>
                                 {% if trip.isSuspicious() %}
                                     <span title="{{ trip.suspiciousReason }}" class="text-red flex-shrink-0">

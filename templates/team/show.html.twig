@@ -17,7 +17,6 @@
             {# Team header card #}
             <div class="td-header-card">
                 <div class="td-header-card__top">
-                    <div class="td-header-badge">{{ team.initials }}</div>
                     <div class="td-header-info">
                         <h1 class="td-header-name">{{ team.name }}</h1>
                         <div class="td-header-meta">
@@ -107,7 +106,7 @@
                                 </div>
                             </div>
                             <div class="td-member-stats">
-                                <span class="td-member-km">{{ entry.km|number_format(1) }} km</span>
+                                <span class="td-member-km">{{ entry.km|number_format(2) }} km</span>
                                 <span class="td-member-days">
                                     <strong>{{ entry.activeDays }}</strong>
                                     <small>jours</small>
@@ -135,7 +134,7 @@
                     </div>
                     {% if teamRankingGap is not null %}
                         <div class="td-ranking-gap">
-                            Écart avec la {{ teamPosition.rank - 1 }}e place :&nbsp;<strong>{{ teamRankingGap|number_format(1) }} pts/pers.</strong>
+                            Écart avec la {{ teamPosition.rank - 1 }}e équipe :&nbsp;<strong>{{ teamRankingGap|number_format(1) }} pts/pers.</strong>
                         </div>
                     {% elseif teamPosition.rank == 1 %}
                         <div class="td-ranking-gap text-primary">🥇 En tête du classement !</div>
@@ -158,6 +157,9 @@
             {# Actions #}
             <div class="card card--flat td-actions-card">
                 <div class="td-sidebar-label">ACTIONS</div>
+                {% if app.user and (app.user.id == team.createdBy.id or app.user.isSuperAdmin) %}
+                    <a href="{{ path('app_team_edit', {citySlug: city.slug, slug: team.slug}) }}" class="btn btn--outline w-100 mb-2">Modifier l'équipe</a>
+                {% endif %}
                 {% if app.user and not team.hasMember(app.user) %}
                     <form method="post" action="{{ path('app_team_join', {citySlug: city.slug, slug: team.slug}) }}">
                         <input type="hidden" name="_token" value="{{ csrf_token('join_team_' ~ team.id) }}">

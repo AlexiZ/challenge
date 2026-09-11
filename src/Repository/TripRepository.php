@@ -101,6 +101,23 @@ class TripRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /** @return User[] - distinct participants ordered by most recently entered trip first */
+    public function findRecentParticipants(CityEdition $cityEdition, int $limit = 8): array
+    {
+        return $this->getEntityManager()->createQueryBuilder()
+            ->select('u')
+            ->addSelect('MAX(t.createdAt) AS HIDDEN lastEntry')
+            ->from(User::class, 'u')
+            ->join('u.trips', 't')
+            ->where('t.cityEdition = :ce')
+            ->setParameter('ce', $cityEdition)
+            ->groupBy('u.id')
+            ->orderBy('lastEntry', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
     /** @return Trip[] */
     public function findSuspicious(CityEdition $cityEdition): array
     {

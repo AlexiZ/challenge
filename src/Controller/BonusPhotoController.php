@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/{citySlug}/defis-photo', requirements: ['citySlug' => '(?!(admin|connexion|inscription|deconnexion)(/|$))[a-z0-9][a-z0-9-]*'])]
+#[Route('/{citySlug}/defis-photo', requirements: ['citySlug' => '(?!(admin|connexion|inscription|deconnexion|mot-de-passe-oublie)(/|$))[a-z0-9][a-z0-9-]*'])]
 class BonusPhotoController extends AbstractController
 {
     public function __construct(

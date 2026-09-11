@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: EditionRepository::class)]
 class Edition
@@ -35,6 +36,12 @@ class Edition
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $warmupEndDate = null;
+
+    #[ORM\Column(options: ['default' => true])]
+    private bool $bikeModeEnabled = true;
+
+    #[ORM\Column(options: ['default' => true])]
+    private bool $walkModeEnabled = true;
 
     /** @var Collection<int, CityEdition> */
     #[ORM\OneToMany(targetEntity: CityEdition::class, mappedBy: 'edition', cascade: ['persist', 'remove'])]
@@ -69,6 +76,22 @@ class Edition
 
     public function getWarmupEndDate(): ?\DateTimeInterface { return $this->warmupEndDate; }
     public function setWarmupEndDate(?\DateTimeInterface $warmupEndDate): static { $this->warmupEndDate = $warmupEndDate; return $this; }
+
+    public function isBikeModeEnabled(): bool { return $this->bikeModeEnabled; }
+    public function setBikeModeEnabled(bool $bikeModeEnabled): static { $this->bikeModeEnabled = $bikeModeEnabled; return $this; }
+
+    public function isWalkModeEnabled(): bool { return $this->walkModeEnabled; }
+    public function setWalkModeEnabled(bool $walkModeEnabled): static { $this->walkModeEnabled = $walkModeEnabled; return $this; }
+
+    #[Assert\Callback]
+    public function validateTransportModes(ExecutionContextInterface $context): void
+    {
+        if (!$this->bikeModeEnabled && !$this->walkModeEnabled) {
+            $context->buildViolation('Impossible de désactiver les deux modes de transport.')
+                ->atPath('walkModeEnabled')
+                ->addViolation();
+        }
+    }
 
     /** @return Collection<int, CityEdition> */
     public function getCityEditions(): Collection { return $this->cityEditions; }

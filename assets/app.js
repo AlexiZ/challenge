@@ -5,10 +5,12 @@ import './js/confirm-submit.js';
 import './js/row-link.js';
 import './js/reveal-more.js';
 import './js/radio-toggle.js';
+import './js/password-toggle.js';
 import './js/color-swatch.js';
 import './js/avatar-preview.js';
 import './js/bonus-photo.js';
 import './js/lightbox.js';
+import './js/table-sort.js';
 
 // Mobile navbar burger menu
 // Delegated on `document` (rather than wired once on the elements captured at module load)

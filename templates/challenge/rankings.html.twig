@@ -1,5 +1,9 @@
 {% extends 'base.html.twig' %}
 
+{% macro sort_carets() %}
+    <span class="rk-sort-carets"><i class="fas fa-caret-up"></i><i class="fas fa-caret-down"></i></span>
+{% endmacro %}
+
 {% block title %}Équipes & Participants | {{ city.name }} | Challenge à Pied et à Vélo{% endblock %}
 
 {% block body %}
@@ -62,31 +66,33 @@
                         {% if teamRanking is empty %}
                             <div class="rk-empty">
                                 <i class="fas fa-users fa-2x text-ink-3"></i>
-                                <p>Aucune équipe classée pour le moment.<br>
-                                <small>Seules les équipes avec au moins 2 participants actifs sont classées.</small></p>
+                                <p>Aucune équipe pour le moment.</p>
                             </div>
                         {% else %}
                             <div class="rk-table-scroll">
                             <table class="rk-table" id="rk-table">
                                 <thead>
                                     <tr>
-                                        <th class="rk-th rk-th--rank">#</th>
-                                        <th class="rk-th">Équipe</th>
-                                        <th class="rk-th rk-th--num">Participants</th>
-                                        <th class="rk-th rk-th--num">Jours</th>
-                                        <th class="rk-th rk-th--num">Distance</th>
-                                        <th class="rk-th rk-th--num">Points</th>
-                                        <th class="rk-th rk-th--pts">Pts / participant</th>
+                                        <th class="rk-th rk-th--rank" data-sort data-type="number">#{{ _self.sort_carets() }}</th>
+                                        <th class="rk-th" data-sort data-type="text">Équipe{{ _self.sort_carets() }}</th>
+                                        <th class="rk-th rk-th--num" data-sort data-type="number">Participants{{ _self.sort_carets() }}</th>
+                                        <th class="rk-th rk-th--num" data-sort data-type="number">Jours{{ _self.sort_carets() }}</th>
+                                        <th class="rk-th rk-th--num" data-sort data-type="number">Distance{{ _self.sort_carets() }}</th>
+                                        <th class="rk-th rk-th--num" data-sort data-type="number">Points{{ _self.sort_carets() }}</th>
+                                        <th class="rk-th rk-th--pts" data-sort data-type="number" data-sort-dir="desc">Pts / participant{{ _self.sort_carets() }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for entry in teamRanking %}
                                         {% set rank = loop.index %}
-                                        {% set colorIdx = (entry.team.id % 8) %}
-                                        <tr class="rk-row rk-row--searchable rk-row--link {{ myTeamPosition and myTeamPosition.team.id == entry.team.id ? 'rk-row--mine' : '' }}"
+                                        {% set isMyTeam = false %}
+                                        {% for myTeamPosition in myTeamPositions %}
+                                            {% if myTeamPosition.team.id == entry.team.id %}{% set isMyTeam = true %}{% endif %}
+                                        {% endfor %}
+                                        <tr class="rk-row rk-row--searchable rk-row--link {{ isMyTeam ? 'rk-row--mine' : '' }}"
                                             data-search="{{ entry.team.name|lower }}"
                                             data-href="{{ path('app_team_show', {citySlug: city.slug, slug: entry.team.slug}) }}">
-                                            <td class="rk-td rk-td--rank">
+                                            <td class="rk-td rk-td--rank" data-value="{{ rank }}">
                                                 {% if rank == 1 %}
                                                     <i class="fas fa-medal rank-icon text-gold"></i>
                                                 {% elseif rank == 2 %}
@@ -97,17 +103,14 @@
                                                     <span class="rk-rank-num">{{ rank }}</span>
                                                 {% endif %}
                                             </td>
-                                            <td class="rk-td rk-td--team">
-                                                <span class="rk-team-badge rk-badge--{{ colorIdx }}">
-                                                    {{ entry.team.initials }}
-                                                </span>
+                                            <td class="rk-td rk-td--team" data-value="{{ entry.team.name|lower }}">
                                                 <span class="rk-team-name">{{ entry.team.name }}</span>
                                             </td>
-                                            <td class="rk-td rk-td--num">{{ entry.participants }}</td>
-                                            <td class="rk-td rk-td--num">{{ entry.activeDays }}</td>
-                                            <td class="rk-td rk-td--num">{{ entry.km|number_format(0, '.', ' ') }} km</td>
-                                            <td class="rk-td rk-td--num">{{ entry.points|number_format(0, '.', ' ') }}</td>
-                                            <td class="rk-td rk-td--pts">
+                                            <td class="rk-td rk-td--num" data-value="{{ entry.participants }}">{{ entry.participants }}</td>
+                                            <td class="rk-td rk-td--num" data-value="{{ entry.activeDays }}">{{ entry.activeDays }}</td>
+                                            <td class="rk-td rk-td--num" data-value="{{ entry.km }}">{{ entry.km|number_format(0, '.', ' ') }} km</td>
+                                            <td class="rk-td rk-td--num" data-value="{{ entry.points }}">{{ entry.points|number_format(0, '.', ' ') }}</td>
+                                            <td class="rk-td rk-td--pts" data-value="{{ entry.ptsPerParticipant }}">
                                                 <span class="rk-pts-badge">{{ entry.ptsPerParticipant|number_format(1) }}</span>
                                             </td>
                                         </tr>
@@ -117,7 +120,6 @@
                             </div>
                             <div class="rk-table-footer">
                                 {{ teamRanking|length }} équipe{{ teamRanking|length > 1 ? 's' }} au total
-                                &nbsp;&middot;&nbsp; seules les équipes avec ≥&nbsp;2 participants sont classées
                             </div>
                         {% endif %}
                     </div>
@@ -134,11 +136,11 @@
                             <table class="rk-table" id="rk-table">
                                 <thead>
                                     <tr>
-                                        <th class="rk-th rk-th--rank">#</th>
-                                        <th class="rk-th">Participant</th>
-                                        <th class="rk-th rk-th--num">Jours actifs</th>
-                                        <th class="rk-th rk-th--num">Distance</th>
-                                        <th class="rk-th rk-th--pts">Points</th>
+                                        <th class="rk-th rk-th--rank" data-sort data-type="number">#{{ _self.sort_carets() }}</th>
+                                        <th class="rk-th" data-sort data-type="text">Participant{{ _self.sort_carets() }}</th>
+                                        <th class="rk-th rk-th--num" data-sort data-type="number">Jours actifs{{ _self.sort_carets() }}</th>
+                                        <th class="rk-th rk-th--num" data-sort data-type="number">Distance{{ _self.sort_carets() }}</th>
+                                        <th class="rk-th rk-th--pts" data-sort data-type="number" data-sort-dir="desc">Points{{ _self.sort_carets() }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -147,7 +149,7 @@
                                         <tr class="rk-row rk-row--searchable {{ entry.user.publicProfile ? 'rk-row--link' : '' }} {{ app.user and app.user.id == entry.user.id ? 'rk-row--mine' : '' }}"
                                             data-search="{{ (entry.user.firstName ~ ' ' ~ entry.user.lastName ~ ' ' ~ entry.user.username)|lower }}"
                                             {% if entry.user.publicProfile %}data-href="{{ path('app_profile_public', {citySlug: city.slug, username: entry.user.username}) }}"{% endif %}>
-                                            <td class="rk-td rk-td--rank">
+                                            <td class="rk-td rk-td--rank" data-value="{{ rank }}">
                                                 {% if rank == 1 %}
                                                     <i class="fas fa-medal rank-icon text-gold"></i>
                                                 {% elseif rank == 2 %}
@@ -158,7 +160,7 @@
                                                     <span class="rk-rank-num">{{ rank }}</span>
                                                 {% endif %}
                                             </td>
-                                            <td class="rk-td rk-td--team">
+                                            <td class="rk-td rk-td--team" data-value="{{ (entry.user.firstName ~ ' ' ~ entry.user.lastName)|lower }}">
                                                 {% if entry.user.avatar %}
                                                     <img src="{{ asset('uploads/avatars/' ~ entry.user.avatar) }}" class="rk-user-avatar" alt="{{ entry.user.initials }}">
                                                 {% else %}
@@ -174,9 +176,9 @@
                                                     {% endif %}
                                                 </span>
                                             </td>
-                                            <td class="rk-td rk-td--num">{{ entry.activeDays }}</td>
-                                            <td class="rk-td rk-td--num">{{ entry.km|number_format(1) }} km</td>
-                                            <td class="rk-td rk-td--pts">
+                                            <td class="rk-td rk-td--num" data-value="{{ entry.activeDays }}">{{ entry.activeDays }}</td>
+                                            <td class="rk-td rk-td--num" data-value="{{ entry.km }}">{{ entry.km|number_format(2) }} km</td>
+                                            <td class="rk-td rk-td--pts" data-value="{{ entry.points }}">
                                                 <span class="rk-pts-badge">{{ entry.points|number_format(1) }}</span>
                                             </td>
                                         </tr>
@@ -202,12 +204,12 @@
                             {{ myPosition.rank }}<sup>e</sup>
                             <span class="rk-my-rank-sub">sur {{ myPosition.total }} participants</span>
                         </div>
-                        {% if myTeamPosition %}
+                        {% for myTeamPosition in myTeamPositions %}
                             <div class="rk-my-stat-row">
                                 <span>Mon équipe ({{ myTeamPosition.team.name }})</span>
                                 <span class="rk-my-stat-val">{{ myTeamPosition.rank }}e / {{ myTeamPosition.total }}</span>
                             </div>
-                        {% endif %}
+                        {% endfor %}
                         <div class="rk-my-stat-row">
                             <span>Mes points</span>
                             <span class="rk-my-stat-val">{{ myPosition.points|number_format(1) }} pts</span>

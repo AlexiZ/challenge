@@ -32,9 +32,9 @@ class StatsCalculator
         $totalPoints = round($dayPoints + $bikePoints + $walkPoints + $bonusPoints, 2);
 
         return [
-            'km_bike' => round($kmBike, 1),
-            'km_walk' => round($kmWalk, 1),
-            'km_total' => round($kmBike + $kmWalk, 1),
+            'km_bike' => round($kmBike, 2),
+            'km_walk' => round($kmWalk, 2),
+            'km_total' => round($kmBike + $kmWalk, 2),
             'active_days' => $activeDays,
             'bonus_points' => $bonusPoints,
             'total_points' => $totalPoints,
@@ -52,7 +52,7 @@ class StatsCalculator
             : 0;
 
         return [
-            'total_km' => round($totalKm, 1),
+            'total_km' => round($totalKm, 2),
             'participant_count' => $participantCount,
             'target_km' => $cityEdition->getTargetDistanceKm(),
             'target_progress_pct' => $targetProgress,
@@ -91,7 +91,8 @@ class StatsCalculator
         $totalKm = 0.0;
         $totalActiveDays = 0;
         foreach ($perUser as $uid => $data) {
-            $totalPoints += $data['tripPoints'] + (float) ($bonusPoints[$uid] ?? 0.0);
+            $dayPoints = count($data['dates']) * $cityEdition->getPointsPerDay();
+            $totalPoints += $data['tripPoints'] + $dayPoints + (float) ($bonusPoints[$uid] ?? 0.0);
             $totalKm += $data['km'];
             $totalActiveDays += count($data['dates']);
         }
@@ -100,7 +101,7 @@ class StatsCalculator
             'participant_count' => $participantCount,
             'total_points' => round($totalPoints, 1),
             'avg_score' => $participantCount > 0 ? round($totalPoints / $participantCount, 1) : 0.0,
-            'avg_distance_km' => $participantCount > 0 ? round($totalKm / $participantCount, 1) : 0.0,
+            'avg_distance_km' => $participantCount > 0 ? round($totalKm / $participantCount, 2) : 0.0,
             'avg_active_days' => $participantCount > 0 ? round($totalActiveDays / $participantCount, 1) : 0.0,
         ];
     }

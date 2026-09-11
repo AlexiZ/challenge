@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Vérifiez vos emails | {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="container container--narrow mt-8">
+    <div class="card text-center">
+        <h1 class="card__title card__title--lg mb-3">Vérifiez vos emails</h1>
+        <p class="text-ink-3 fs-14 mb-4">
+            Si un compte existe avec cette adresse, vous recevrez un email pour réinitialiser votre mot de passe.
+        </p>
+        <a href="{{ path('app_login') }}" class="btn btn--outline">Retour à la connexion</a>
+    </div>
+</div>
+{% endblock %}

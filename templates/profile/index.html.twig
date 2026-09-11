@@ -6,7 +6,7 @@
     <div class="edit-layout">
         {# ═══════════════════════════ BARRE LATÉRALE ══════════════════════════ #}
         <aside>
-            <div class="edit-sidebar">
+            <div class="edit-section p-1">
                 <div class="edit-stats-table">
                     <div class="edit-stat-row">
                         <span class="edit-stat-label"><i class="fas fa-bicycle fa-sm text-primary"></i> Vélo</span>
@@ -41,6 +41,14 @@
             <div class="edit-section my-3">
                 <div class="edit-section-label">Accès rapide</div>
                 {% include 'components/_home_screen_banner.html.twig' %}
+                <form method="post" action="{{ path('app_profile_regenerate_token', {citySlug: city.slug}) }}"
+                      onsubmit="return confirm('Attention : l\'ancien lien ne fonctionnera plus, y compris s\'il est enregistré en favori ou raccourci. Continuer ?');"
+                      class="mt-2">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('regenerate_token') }}">
+                    <button type="submit" class="btn btn--outline btn--sm w-100">
+                        <i class="fas fa-rotate fa-sm"></i> Régénérer mon lien de connexion
+                    </button>
+                </form>
             </div>
         </aside>
 
@@ -140,6 +148,35 @@
                             {{ form_label(form.mainBarrier) }}
                             {{ form_widget(form.mainBarrier, {attr: {class: 'form-control'}}) }}
                             {{ form_errors(form.mainBarrier) }}
+                        </div>
+                    </div>
+                </div>
+
+                {# ── Mot de passe ──────────────────────────────────────────────── #}
+                <div class="edit-section my-3">
+                    <div class="edit-section-label">Mot de passe</div>
+                    {% if not app.user.password %}
+                        <p class="edit-sidebar-hint mb-2">
+                            <i class="fas fa-circle-info fa-xs"></i>
+                            Vous vous connectez actuellement par lien email. Ajoutez un mot de passe pour pouvoir aussi vous connecter sans lien.
+                        </p>
+                    {% endif %}
+                    <div class="edit-grid-2">
+                        <div class="form-group mb-0">
+                            {{ form_label(form.newPassword.first) }}
+                            <div class="password-field">
+                                {{ form_widget(form.newPassword.first, {attr: {class: 'form-control'}}) }}
+                                <button type="button" class="password-toggle-btn" data-password-toggle aria-label="Afficher le mot de passe"><i class="fas fa-eye"></i></button>
+                            </div>
+                            {{ form_errors(form.newPassword.first) }}
+                        </div>
+                        <div class="form-group mb-0">
+                            {{ form_label(form.newPassword.second) }}
+                            <div class="password-field">
+                                {{ form_widget(form.newPassword.second, {attr: {class: 'form-control'}}) }}
+                                <button type="button" class="password-toggle-btn" data-password-toggle aria-label="Afficher le mot de passe"><i class="fas fa-eye"></i></button>
+                            </div>
+                            {{ form_errors(form.newPassword.second) }}
                         </div>
                     </div>
                 </div>

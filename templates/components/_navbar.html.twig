@@ -91,7 +91,7 @@
                 <a href="{{ path('app_login') }}" class="btn btn--sm btn--outline">
                     <i class="fas fa-right-to-bracket"></i> Connexion
                 </a>
-                <a href="{{ path('app_register') }}" class="btn btn--sm btn--primary">
+                <a href="{{ path('app_register', city is defined ? {citySlug: city.slug} : {}) }}" class="btn btn--sm btn--primary">
                     <i class="fas fa-user-plus"></i> Inscription
                 </a>
             {% endif %}

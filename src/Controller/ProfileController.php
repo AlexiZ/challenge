@@ -12,11 +12,14 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Component\Security\Csrf\CsrfToken;
 
 class ProfileController extends AbstractController
 {
-    private const CITY_SLUG_REQUIREMENT = ['citySlug' => '(?!(admin|connexion|inscription|deconnexion)(/|$))[a-z0-9][a-z0-9-]*'];
+    private const CITY_SLUG_REQUIREMENT = ['citySlug' => '(?!(admin|connexion|inscription|deconnexion|mot-de-passe-oublie)(/|$))[a-z0-9][a-z0-9-]*'];
 
     public function __construct(
         private readonly ActiveCityEditionResolver $cityEditionResolver,
@@ -28,6 +31,7 @@ class ProfileController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         StatsCalculator $statsCalculator,
+        UserPasswordHasherInterface $passwordHasher,
     ): Response {
         $cityEdition = $this->cityEditionResolver->resolve($citySlug);
 
@@ -52,6 +56,12 @@ class ProfileController extends AbstractController
                 $avatarFile->move($uploadsDir, $newFilename);
                 $user->setAvatar($newFilename);
             }
+
+            $newPassword = $form->get('newPassword')->getData();
+            if ($newPassword) {
+                $user->setPassword($passwordHasher->hashPassword($user, $newPassword));
+            }
+
             $em->flush();
             $this->addFlash('success', 'Profil mis à jour.');
             return $this->redirectToRoute('app_profile', ['citySlug' => $citySlug]);
@@ -65,6 +75,23 @@ class ProfileController extends AbstractController
             'form' => $form,
             'stats' => $stats,
         ]);
+    }
+
+    #[Route('/{citySlug}/profil/regenerer-lien', name: 'app_profile_regenerate_token', methods: ['POST'], requirements: self::CITY_SLUG_REQUIREMENT)]
+    public function regenerateToken(string $citySlug, Request $request, EntityManagerInterface $em, CsrfTokenManagerInterface $csrfTokenManager): Response
+    {
+        if (!$csrfTokenManager->isTokenValid(new CsrfToken('regenerate_token', $request->request->get('_csrf_token')))) {
+            throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+        }
+
+        /** @var User $user */
+        $user = $this->getUser();
+        $user->regeneratePersonalToken();
+        $em->flush();
+
+        $this->addFlash('success', 'Nouveau lien de connexion généré.');
+
+        return $this->redirectToRoute('app_profile', ['citySlug' => $citySlug]);
     }
 
     #[Route('/{citySlug}/participants/{username}', name: 'app_profile_public', requirements: self::CITY_SLUG_REQUIREMENT)]

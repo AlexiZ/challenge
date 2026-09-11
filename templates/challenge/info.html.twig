@@ -273,7 +273,7 @@
         {# Actions #}
         <div class="d-flex gap-3 flex-wrap mt-4">
             {% if not app.user %}
-                <a href="{{ path('app_register') }}" class="btn btn--primary btn--lg">S'inscrire pour participer</a>
+                <a href="{{ path('app_register', {citySlug: city.slug}) }}" class="btn btn--primary btn--lg">S'inscrire pour participer</a>
             {% else %}
                 <a href="{{ path('app_trip_entry', {citySlug: city.slug}) }}" class="btn btn--primary btn--lg">Saisir un trajet</a>
             {% endif %}

@@ -17,11 +17,12 @@ use App\Service\StatsCalculator;
 use App\Service\TripPointsCalculator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/{citySlug}', requirements: ['citySlug' => '(?!(admin|connexion|inscription|deconnexion)(/|$))[a-z0-9][a-z0-9-]*'])]
+#[Route('/{citySlug}', requirements: ['citySlug' => '(?!(admin|connexion|inscription|deconnexion|mot-de-passe-oublie)(/|$))[a-z0-9][a-z0-9-]*'])]
 class ChallengeController extends AbstractController
 {
     public function __construct(
@@ -34,11 +35,13 @@ class ChallengeController extends AbstractController
         StatsCalculator $statsCalculator,
         CityEditionRepository $cityEditionRepository,
         BonusPhotoRepository $bonusPhotoRepository,
+        TripRepository $tripRepository,
     ): Response {
         $cityEdition = $this->cityEditionResolver->resolve($citySlug);
         $cityStats = $statsCalculator->getCityEditionStats($cityEdition);
         $cityRanking = $statsCalculator->rankCityEditions($cityEditionRepository->findLatestPerCity());
         $publicPhotos = $bonusPhotoRepository->findApprovedPublicByCityEdition($cityEdition);
+        $recentParticipants = $tripRepository->findRecentParticipants($cityEdition);
 
         // Points and description maps (configured > enum default)
         $challengePointsMap = [];
@@ -56,6 +59,7 @@ class ChallengeController extends AbstractController
             'cityRanking' => $cityRanking,
             'publicPhotos' => $publicPhotos,
             'challengePointsMap' => $challengePointsMap,
+            'recentParticipants' => $recentParticipants,
         ]);
     }
 
@@ -124,30 +128,55 @@ class ChallengeController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
+        $edition = $cityEdition->getEdition();
+
         $trip = new Trip();
         $trip->setUser($user);
         $trip->setCityEdition($cityEdition);
-
-        $form = $this->createForm(TripType::class, $trip);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em->persist($trip);
-            $em->flush();
-
-            $this->addFlash('success', 'Trajet enregistré !');
-
-            return $this->redirectToRoute('app_trip_entry', ['citySlug' => $citySlug]);
+        if (!$edition->isBikeModeEnabled()) {
+            $trip->setMode(TripModeEnum::Walk);
         }
 
-        $recentTrips = $tripRepository->findByUserAndCityEdition($user, $cityEdition);
+        $form = $this->createForm(TripType::class, $trip);
+        if ($cityEdition->isActive()) {
+            $form->handleRequest($request);
+        }
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            if (($trip->getMode() === TripModeEnum::Bike && !$edition->isBikeModeEnabled())
+                || ($trip->getMode() === TripModeEnum::Walk && !$edition->isWalkModeEnabled())
+            ) {
+                $form->get('mode')->addError(new FormError('Ce mode de transport n\'est pas actif pour l\'édition en cours.'));
+            } else {
+                $em->persist($trip);
+                $em->flush();
+
+                $this->addFlash('success', 'Trajet enregistré !');
+
+                return $this->redirectToRoute('app_trip_entry', ['citySlug' => $citySlug]);
+            }
+        }
+
+        $allTrips = $tripRepository->findByUserAndCityEdition($user, $cityEdition);
         $stats = $statsCalculator->getUserStats($user, $cityEdition);
+
+        // Only the first trip entered for a given day earns the active-day point,
+        // regardless of transport mode — mirrors StatsCalculator's per-day dedup.
+        $firstTripIdByDate = [];
+        foreach ($allTrips as $trip) {
+            $date = $trip->getTripDate()->format('Y-m-d');
+            if (!isset($firstTripIdByDate[$date]) || $trip->getId() < $firstTripIdByDate[$date]) {
+                $firstTripIdByDate[$date] = $trip->getId();
+            }
+        }
+        $dayPointTripIds = array_values($firstTripIdByDate);
 
         return $this->render('challenge/trip_entry.html.twig', [
             'cityEdition' => $cityEdition,
             'city' => $cityEdition->getCity(),
             'form' => $form,
-            'recentTrips' => array_slice($recentTrips, 0, 10),
+            'recentTrips' => array_slice($allTrips, 0, 10),
+            'dayPointTripIds' => $dayPointTripIds,
             'stats' => $stats,
         ]);
     }
@@ -225,7 +254,8 @@ class ChallengeController extends AbstractController
         $totalActive = count($allUserData);
         $bestAllModesPoints = 0.0;
         foreach ($allUserData as $uid => $data) {
-            $total = $data['tripPoints'] + (float) ($bonusPoints[$uid] ?? 0.0);
+            $dayPoints = count($data['dates']) * $cityEdition->getPointsPerDay();
+            $total = $data['tripPoints'] + $dayPoints + (float) ($bonusPoints[$uid] ?? 0.0);
             if ($total > $bestAllModesPoints) $bestAllModesPoints = $total;
         }
 
@@ -247,15 +277,20 @@ class ChallengeController extends AbstractController
             $userTripData[$uid]['dates'][$trip->getTripDate()->format('Y-m-d')] = true;
         }
 
-        // Individual ranking (bonus always included, admins already excluded from $allTrips)
+        // Individual ranking — every registered participant appears, even with no trips yet
+        // (bonus always included, admins excluded)
         $individualRanking = [];
-        foreach ($userTripData as $uid => $data) {
+        foreach ($cityEdition->getParticipants() as $user) {
+            if ($user->isSuperAdmin() || $user->isAdminCity()) continue;
+            $uid = $user->getId();
+            $data = $userTripData[$uid] ?? null;
             $bonus = (float) ($bonusPoints[$uid] ?? 0.0);
+            $dayPoints = $data ? count($data['dates']) * $cityEdition->getPointsPerDay() : 0.0;
             $individualRanking[] = [
-                'user'       => $data['user'],
-                'km'         => round($data['km'], 1),
-                'points'     => round($data['tripPoints'] + $bonus, 1),
-                'activeDays' => count($data['dates']),
+                'user'       => $user,
+                'km'         => $data ? round($data['km'], 2) : 0.0,
+                'points'     => round(($data['tripPoints'] ?? 0.0) + $dayPoints + $bonus, 1),
+                'activeDays' => $data ? count($data['dates']) : 0,
             ];
         }
         usort($individualRanking, fn ($a, $b) => $b['points'] <=> $a['points']);
@@ -292,35 +327,34 @@ class ChallengeController extends AbstractController
                 if (!isset($userTripData[$uid])) continue;
                 $bonus = (float) ($bonusPoints[$uid] ?? 0.0);
                 $teamKm += $userTripData[$uid]['km'];
-                $teamPoints += $userTripData[$uid]['tripPoints'] + $bonus;
+                $teamPoints += $userTripData[$uid]['tripPoints'] + count($userTripData[$uid]['dates']) * $cityEdition->getPointsPerDay() + $bonus;
                 $teamDays += count($userTripData[$uid]['dates']);
                 $active++;
             }
-            if ($active < 2) continue;
             $teamRanking[] = [
                 'team'              => $team,
-                'km'                => round($teamKm, 1),
+                'km'                => round($teamKm, 2),
                 'points'            => round($teamPoints, 1),
                 'activeDays'        => $teamDays,
                 'participants'      => $active,
-                'ptsPerParticipant' => round($teamPoints / $active, 1),
+                'ptsPerParticipant' => $active > 0 ? round($teamPoints / $active, 1) : 0.0,
             ];
         }
         usort($teamRanking, fn ($a, $b) => $b['ptsPerParticipant'] <=> $a['ptsPerParticipant']);
 
-        // Current user team position
-        $myTeamPosition = null;
+        // Current user team position(s) — a user can belong to several teams
+        $myTeamPositions = [];
         if ($this->getUser()) {
             $myUserId = $this->getUser()->getId();
             foreach ($teamRanking as $rank => $entry) {
                 foreach ($entry['team']->getMembers() as $member) {
                     if ($member->getId() === $myUserId) {
-                        $myTeamPosition = [
+                        $myTeamPositions[] = [
                             'rank'  => $rank + 1,
                             'total' => count($teamRanking),
                             'team'  => $entry['team'],
                         ];
-                        break 2;
+                        break;
                     }
                 }
             }
@@ -343,7 +377,7 @@ class ChallengeController extends AbstractController
             'teamRanking'      => $teamRanking,
             'individualRanking' => $individualRanking,
             'myPosition'       => $myPosition,
-            'myTeamPosition'   => $myTeamPosition,
+            'myTeamPositions'  => $myTeamPositions,
             'editionStats'     => $editionStats,
         ]);
     }

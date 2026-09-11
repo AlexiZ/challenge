@@ -34,10 +34,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     /** @var list<string> */
     #[ORM\Column]
-    private array $roles = [];
+    private array $roles = ['ROLE_USER'];
 
-    #[ORM\Column]
-    private string $password = '';
+    #[ORM\Column(nullable: true)]
+    private ?string $password = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank]
@@ -135,8 +135,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /** @param list<string> $roles */
     public function setRoles(array $roles): static { $this->roles = $roles; return $this; }
 
-    public function getPassword(): string { return $this->password; }
-    public function setPassword(string $password): static { $this->password = $password; return $this; }
+    public function getPassword(): ?string { return $this->password; }
+    public function setPassword(?string $password): static { $this->password = $password; return $this; }
 
     public function eraseCredentials(): void {}
 
