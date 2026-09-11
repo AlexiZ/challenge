@@ -26,6 +26,10 @@ RUN echo "devuser:x:${DEV_UID}:${DEV_GID}::/home/devuser:/bin/sh" >> /etc/passwd
 	&& mkdir -p /home/devuser/.ssh \
 	&& chown -R ${DEV_UID}:${DEV_GID} /home/devuser
 
+# var/cache et var/log sont sinon créés root (premier RUN/exec qui écrit dedans),
+# ce qui casse deploy.php:asset:compile lancé en uid host via docker compose exec -u.
+RUN mkdir -p var/cache var/log && chown -R ${DEV_UID}:${DEV_GID} var/cache var/log
+
 COPY docker/frankenphp/conf.d/app.ini $PHP_INI_DIR/conf.d/
 COPY docker/frankenphp/Caddyfile /etc/frankenphp/Caddyfile
 
@@ -40,6 +44,8 @@ RUN install-php-extensions xdebug
 # ---------- prod ----------
 FROM frankenphp_base AS frankenphp_prod
 
+ARG DEV_UID=1000
+ARG DEV_GID=1000
 ENV APP_ENV=prod
 
 COPY . .
@@ -47,4 +53,5 @@ RUN composer install --no-dev --prefer-dist --optimize-autoloader \
 	&& npm ci \
 	&& php bin/console asset-map:compile \
 	&& rm -rf node_modules \
-	&& chmod +x bin/console
+	&& chmod +x bin/console \
+	&& chown -R ${DEV_UID}:${DEV_GID} var/cache var/log
