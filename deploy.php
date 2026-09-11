@@ -114,6 +114,13 @@ task('deploy:assets', function () {
     }
     $scpArgs = implode(' ', $sshArgs);
 
+    // Vider le cache local de compilation AssetMapper avant de recompiler : en APP_ENV=prod
+    // (debug=false), le ConfigCache sous-jacent ne revérifie jamais la fraîcheur d'une entrée
+    // déjà en cache (un fichier .php présent est considéré éternellement valide), donc un
+    // fichier déjà compilé une fois (ex. app.js) ne reprend jamais en compte les imports
+    // ajoutés depuis, même après plein de recompilations.
+    runLocally('rm -rf var/cache/prod/asset_mapper');
+
     // Build local (AssetMapper : compile assets/ + node_modules mappés vers public/assets)
     runLocally('APP_ENV=prod php bin/console asset-map:compile --no-interaction');
 
