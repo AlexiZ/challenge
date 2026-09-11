@@ -27,6 +27,7 @@ class UserRegistrar
         private readonly UserPasswordHasherInterface $passwordHasher,
         private readonly MailerInterface $mailer,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly string $mailerFromAddress,
     ) {}
 
     public function registerQuick(string $email, ?City $city): User
@@ -70,7 +71,7 @@ class UserRegistrar
     {
         $this->mailer->send(
             (new TemplatedEmail())
-                ->from(new Address('noreply@challenge-velo.bzh', 'Challenge Vélo'))
+                ->from(new Address($this->mailerFromAddress, 'Challenge Vélo'))
                 ->to($user->getEmail())
                 ->subject('Votre lien de connexion')
                 ->htmlTemplate('emails/magic_link.html.twig')

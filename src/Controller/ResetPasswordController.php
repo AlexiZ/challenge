@@ -28,6 +28,7 @@ class ResetPasswordController extends AbstractController
 
     public function __construct(
         private readonly ResetPasswordHelperInterface $resetPasswordHelper,
+        private readonly string $mailerFromAddress,
     ) {
     }
 
@@ -126,7 +127,7 @@ class ResetPasswordController extends AbstractController
         }
 
         $email = (new TemplatedEmail())
-            ->from(new Address('noreply@challenge-velo.bzh', 'Challenge Vélo'))
+            ->from(new Address($this->mailerFromAddress, 'Challenge Vélo'))
             ->to($user->getEmail())
             ->subject('Réinitialisation de votre mot de passe')
             ->htmlTemplate('emails/reset_password.html.twig')
