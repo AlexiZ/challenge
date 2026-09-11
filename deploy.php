@@ -186,8 +186,8 @@ task('deploy', [
     'deploy:assets:install',
     'deploy:importmap:install',
     'database:migrate',
-    'deploy:cache:clear',
     'deploy:assets',
+    'deploy:cache:clear',
     'deploy:publish',
 ]);
 
