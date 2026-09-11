@@ -7,8 +7,10 @@ use App\Entity\Trip;
 use App\Entity\User;
 use App\Enum\TripModeEnum;
 use App\Repository\BonusPhotoRepository;
+use App\Repository\TeamRepository;
 use App\Repository\TripRepository;
 use App\Service\Co2Calculator;
+use App\Service\RankingCalculator;
 use App\Service\StatsCalculator;
 use PHPUnit\Framework\TestCase;
 
@@ -55,7 +57,9 @@ class StatsCalculatorTest extends TestCase
         $bonusPhotoRepository = $this->createMock(BonusPhotoRepository::class);
         $bonusPhotoRepository->method('getBonusPointsPerUserByCityEdition')->willReturn([]);
 
-        $calculator = new StatsCalculator($tripRepository, $bonusPhotoRepository, $this->createMock(Co2Calculator::class));
+        $rankingCalculator = new RankingCalculator($tripRepository, $bonusPhotoRepository, $this->createMock(TeamRepository::class));
+
+        $calculator = new StatsCalculator($tripRepository, $bonusPhotoRepository, $this->createMock(Co2Calculator::class), $rankingCalculator);
 
         $stats = $calculator->getCityEditionRankingStats($cityEdition);
 

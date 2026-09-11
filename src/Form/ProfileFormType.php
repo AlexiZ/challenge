@@ -20,6 +20,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotCompromisedPassword;
 
 class ProfileFormType extends AbstractType
 {
@@ -85,6 +86,12 @@ class ProfileFormType extends AbstractType
                 'label' => 'Profil public',
                 'required' => false,
             ])
+            ->add('currentPassword', PasswordType::class, [
+                'mapped' => false,
+                'required' => false,
+                'label' => 'Mot de passe actuel',
+                'help' => 'Requis pour changer de mot de passe.',
+            ])
             ->add('newPassword', RepeatedType::class, [
                 'type' => PasswordType::class,
                 'mapped' => false,
@@ -93,6 +100,7 @@ class ProfileFormType extends AbstractType
                 'second_options' => ['label' => 'Confirmer le mot de passe'],
                 'constraints' => [
                     new Length(min: 8, minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères.'),
+                    new NotCompromisedPassword(skipOnError: true),
                 ],
             ]);
     }

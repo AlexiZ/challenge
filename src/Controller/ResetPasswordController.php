@@ -11,9 +11,11 @@ use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
@@ -30,12 +32,20 @@ class ResetPasswordController extends AbstractController
     }
 
     #[Route('/mot-de-passe-oublie', name: 'app_forgot_password_request')]
-    public function request(Request $request, MailerInterface $mailer, UserRepository $userRepository): Response
-    {
+    public function request(
+        Request $request,
+        MailerInterface $mailer,
+        UserRepository $userRepository,
+        RateLimiterFactory $passwordResetLimiter,
+    ): Response {
         $form = $this->createForm(ResetPasswordRequestFormType::class);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            if (!$passwordResetLimiter->create($request->getClientIp())->consume()->isAccepted()) {
+                throw new TooManyRequestsHttpException();
+            }
+
             $user = $userRepository->findOneBy(['email' => $form->get('email')->getData()]);
 
             if ($user) {
@@ -88,11 +98,16 @@ class ResetPasswordController extends AbstractController
             $user->setPassword($passwordHasher->hashPassword($user, $form->get('plainPassword')->getData()));
             $em->flush();
 
-            $this->cleanSessionAfterReset();
+            // Invalidate this browser's session and remember-me cookie so a
+            // password reset actually evicts whoever held the old credentials.
+            $request->getSession()->invalidate();
 
             $this->addFlash('success', 'Mot de passe réinitialisé. Vous pouvez vous connecter.');
 
-            return $this->redirectToRoute('app_login');
+            $response = $this->redirectToRoute('app_login');
+            $response->headers->clearCookie('REMEMBERME', '/');
+
+            return $response;
         }
 
         return $this->render('reset_password/reset.html.twig', [
@@ -102,7 +117,13 @@ class ResetPasswordController extends AbstractController
 
     private function sendResetPasswordEmail(User $user, MailerInterface $mailer): void
     {
-        $resetToken = $this->resetPasswordHelper->generateResetToken($user);
+        try {
+            $resetToken = $this->resetPasswordHelper->generateResetToken($user);
+        } catch (ResetPasswordExceptionInterface) {
+            // Same outward behaviour as "no such user" — don't let the bundle's own
+            // per-user throttling exception leak whether the email is registered.
+            return;
+        }
 
         $email = (new TemplatedEmail())
             ->from(new Address('noreply@challenge-velo.bzh', 'Challenge Vélo'))

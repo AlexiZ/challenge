@@ -8,6 +8,7 @@ use App\Enum\BonusChallengeEnum;
 use App\Form\BonusPhotoType;
 use App\Repository\BonusPhotoRepository;
 use App\Service\ActiveCityEditionResolver;
+use App\Service\FileUploader;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,6 +28,7 @@ class BonusPhotoController extends AbstractController
         Request $request,
         BonusPhotoRepository $bonusPhotoRepository,
         EntityManagerInterface $em,
+        FileUploader $fileUploader,
     ): Response {
         $cityEdition = $this->cityEditionResolver->resolve($citySlug);
 
@@ -57,14 +59,10 @@ class BonusPhotoController extends AbstractController
             if ($submitForm->isSubmitted() && $submitForm->isValid()) {
                 $photoFile = $submitForm->get('photoFile')->getData();
                 if ($photoFile) {
-                    $subDir = $cityEdition->getCity()->getSlug() . '/' . $cityEdition->getEdition()->getYear();
-                    $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/bonus_photos/' . $subDir;
-                    if (!is_dir($uploadsDir)) {
-                        mkdir($uploadsDir, 0775, true);
-                    }
-                    $newFilename = bin2hex(random_bytes(8)) . '.' . $photoFile->guessExtension();
-                    $photoFile->move($uploadsDir, $newFilename);
-                    $bonusPhoto->setPhoto($subDir . '/' . $newFilename);
+                    // Photo path is stored relative to public/uploads/bonus_photos/.
+                    $relativeDir = $cityEdition->getCity()->getSlug() . '/' . $cityEdition->getEdition()->getYear();
+                    $filename = $fileUploader->upload($photoFile, 'bonus_photos/' . $relativeDir);
+                    $bonusPhoto->setPhoto($relativeDir . '/' . $filename);
                 }
 
                 $em->persist($bonusPhoto);

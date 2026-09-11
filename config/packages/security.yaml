@@ -22,6 +22,9 @@ security:
                 success_handler: App\Security\LoginSuccessHandler
             custom_authenticators:
                 - App\Security\TokenLoginAuthenticator
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
             logout:
                 path: app_logout
                 target: /
@@ -43,8 +46,10 @@ security:
         - { path: ^/([^/]+)/mon-challenge, roles: ROLE_USER }
         - { path: ^/([^/]+)/saisie-trajets, roles: ROLE_USER }
         - { path: ^/([^/]+)/defis-photo, roles: ROLE_USER }
-        - { path: ^/([^/]+)/mon-equipe, roles: ROLE_USER }
         - { path: ^/([^/]+)/profil, roles: ROLE_USER }
+        # Team routes stay reachable anonymously (public team viewing) — write actions
+        # (create/edit/join/leave) are guarded individually with #[IsGranted('ROLE_USER')]
+        # on TeamController, since only some of the /equipes/* paths must require auth.
 
 when@test:
     security:

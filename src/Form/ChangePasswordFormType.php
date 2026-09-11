@@ -9,6 +9,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\NotCompromisedPassword;
 
 class ChangePasswordFormType extends AbstractType
 {
@@ -21,6 +22,7 @@ class ChangePasswordFormType extends AbstractType
             'constraints' => [
                 new NotBlank(message: 'Veuillez entrer un mot de passe.'),
                 new Length(min: 8, minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères.'),
+                new NotCompromisedPassword(skipOnError: true),
             ],
         ]);
     }

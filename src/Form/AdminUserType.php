@@ -15,6 +15,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\NotCompromisedPassword;
 
 class AdminUserType extends AbstractType
 {
@@ -48,9 +49,11 @@ class AdminUserType extends AbstractType
                 'attr' => ['autocomplete' => 'new-password'],
                 'constraints' => $options['require_password'] ? [
                     new NotBlank(message: 'Le mot de passe est obligatoire.'),
-                    new Length(min: 6, minMessage: 'Minimum 6 caractères.'),
+                    new Length(min: 8, minMessage: 'Minimum {{ limit }} caractères.'),
+                    new NotCompromisedPassword(skipOnError: true),
                 ] : [
-                    new Length(min: 6, minMessage: 'Minimum 6 caractères.'),
+                    new Length(min: 8, minMessage: 'Minimum {{ limit }} caractères.'),
+                    new NotCompromisedPassword(skipOnError: true),
                 ],
                 'help' => $options['require_password'] ? null : 'Laisser vide pour ne pas modifier.',
             ])

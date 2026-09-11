@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\BonusPhoto;
+use App\Entity\CityEdition;
 use App\Entity\User;
 use App\Enum\BonusPhotoStatusEnum;
 use App\Form\AdminUserType;
@@ -10,6 +11,7 @@ use App\Form\CityType;
 use App\Repository\BonusPhotoRepository;
 use App\Repository\TripRepository;
 use App\Repository\UserRepository;
+use App\Security\Voter\ParticipantVoter;
 use App\Service\ActiveCityEditionResolver;
 use App\Service\StatsCalculator;
 use Doctrine\ORM\EntityManagerInterface;
@@ -27,6 +29,14 @@ class CityAdminController extends AbstractController
         private readonly ActiveCityEditionResolver $cityEditionResolver,
     ) {}
 
+    private function resolveManagedCityEdition(string $citySlug): CityEdition
+    {
+        $cityEdition = $this->cityEditionResolver->resolve($citySlug);
+        $this->denyAccessUnlessGranted('CITY_MANAGE', $cityEdition->getCity());
+
+        return $cityEdition;
+    }
+
     #[Route('/', name: 'app_city_admin_dashboard')]
     #[IsGranted('ROLE_ADMIN_CITY')]
     public function dashboard(
@@ -34,9 +44,7 @@ class CityAdminController extends AbstractController
         StatsCalculator $statsCalculator,
         UserRepository $userRepository,
     ): Response {
-        $cityEdition = $this->cityEditionResolver->resolve($citySlug);
-
-        $this->denyAccessUnlessGranted('CITY_MANAGE', $cityEdition->getCity());
+        $cityEdition = $this->resolveManagedCityEdition($citySlug);
 
         $cityStats = $statsCalculator->getCityEditionStats($cityEdition);
         $participants = $cityEdition->getParticipants();
@@ -56,8 +64,7 @@ class CityAdminController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
     ): Response {
-        $cityEdition = $this->cityEditionResolver->resolve($citySlug);
-        $this->denyAccessUnlessGranted('CITY_MANAGE', $cityEdition->getCity());
+        $cityEdition = $this->resolveManagedCityEdition($citySlug);
 
         if ($this->isCsrfTokenValid('update_message_' . $cityEdition->getId(), $request->request->get('_token'))) {
             $message = trim($request->request->get('message', ''));
@@ -75,9 +82,7 @@ class CityAdminController extends AbstractController
         string $citySlug,
         BonusPhotoRepository $bonusPhotoRepository,
     ): Response {
-        $cityEdition = $this->cityEditionResolver->resolve($citySlug);
-
-        $this->denyAccessUnlessGranted('CITY_MANAGE', $cityEdition->getCity());
+        $cityEdition = $this->resolveManagedCityEdition($citySlug);
 
         $pending = $bonusPhotoRepository->findPendingByCityEdition($cityEdition);
 
@@ -96,9 +101,11 @@ class CityAdminController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
     ): Response {
-        $cityEdition = $this->cityEditionResolver->resolve($citySlug);
+        $cityEdition = $this->resolveManagedCityEdition($citySlug);
 
-        $this->denyAccessUnlessGranted('CITY_MANAGE', $cityEdition->getCity());
+        if ($bonusPhoto->getCityEdition()?->getId() !== $cityEdition->getId()) {
+            throw $this->createNotFoundException();
+        }
 
         if ($this->isCsrfTokenValid('approve_bonus_photo_' . $bonusPhoto->getId(), $request->request->get('_token'))) {
             /** @var User $admin */
@@ -131,9 +138,11 @@ class CityAdminController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
     ): Response {
-        $cityEdition = $this->cityEditionResolver->resolve($citySlug);
+        $cityEdition = $this->resolveManagedCityEdition($citySlug);
 
-        $this->denyAccessUnlessGranted('CITY_MANAGE', $cityEdition->getCity());
+        if ($bonusPhoto->getCityEdition()?->getId() !== $cityEdition->getId()) {
+            throw $this->createNotFoundException();
+        }
 
         if ($this->isCsrfTokenValid('reject_bonus_photo_' . $bonusPhoto->getId(), $request->request->get('_token'))) {
             /** @var User $admin */
@@ -155,9 +164,7 @@ class CityAdminController extends AbstractController
         string $citySlug,
         TripRepository $tripRepository,
     ): Response {
-        $cityEdition = $this->cityEditionResolver->resolve($citySlug);
-
-        $this->denyAccessUnlessGranted('CITY_MANAGE', $cityEdition->getCity());
+        $cityEdition = $this->resolveManagedCityEdition($citySlug);
 
         $suspicious = $tripRepository->findSuspicious($cityEdition);
 
@@ -175,9 +182,7 @@ class CityAdminController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
     ): Response {
-        $cityEdition = $this->cityEditionResolver->resolve($citySlug);
-
-        $this->denyAccessUnlessGranted('CITY_MANAGE', $cityEdition->getCity());
+        $cityEdition = $this->resolveManagedCityEdition($citySlug);
 
         return $this->render('city_admin/config.html.twig', [
             'cityEdition' => $cityEdition,
@@ -194,10 +199,8 @@ class CityAdminController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
     ): Response {
-        $cityEdition = $this->cityEditionResolver->resolve($citySlug);
+        $cityEdition = $this->resolveManagedCityEdition($citySlug);
         $city = $cityEdition->getCity();
-
-        $this->denyAccessUnlessGranted('CITY_MANAGE', $city);
 
         $form = $this->createForm(CityType::class, $city, ['show_slug' => false]);
         $form->handleRequest($request);
@@ -221,9 +224,7 @@ class CityAdminController extends AbstractController
     #[IsGranted('ROLE_ADMIN_CITY')]
     public function participants(string $citySlug): Response
     {
-        $cityEdition = $this->cityEditionResolver->resolve($citySlug);
-
-        $this->denyAccessUnlessGranted('CITY_MANAGE', $cityEdition->getCity());
+        $cityEdition = $this->resolveManagedCityEdition($citySlug);
 
         return $this->render('city_admin/participants.html.twig', [
             'cityEdition' => $cityEdition,
@@ -241,9 +242,8 @@ class CityAdminController extends AbstractController
         EntityManagerInterface $em,
         UserPasswordHasherInterface $hasher,
     ): Response {
-        $cityEdition = $this->cityEditionResolver->resolve($citySlug);
-
-        $this->denyAccessUnlessGranted('CITY_MANAGE', $cityEdition->getCity());
+        $cityEdition = $this->resolveManagedCityEdition($citySlug);
+        $this->denyAccessUnlessGranted(ParticipantVoter::MANAGE, $participant);
 
         $form = $this->createForm(AdminUserType::class, $participant);
         $form->handleRequest($request);
@@ -274,9 +274,8 @@ class CityAdminController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
     ): Response {
-        $cityEdition = $this->cityEditionResolver->resolve($citySlug);
-
-        $this->denyAccessUnlessGranted('CITY_MANAGE', $cityEdition->getCity());
+        $cityEdition = $this->resolveManagedCityEdition($citySlug);
+        $this->denyAccessUnlessGranted(ParticipantVoter::MANAGE, $participant);
 
         if ($this->isCsrfTokenValid('remove_participant_' . $participant->getId(), $request->request->get('_token'))) {
             $cityEdition->removeParticipant($participant);

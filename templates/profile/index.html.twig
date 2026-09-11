@@ -160,6 +160,16 @@
                             <i class="fas fa-circle-info fa-xs"></i>
                             Vous vous connectez actuellement par lien email. Ajoutez un mot de passe pour pouvoir aussi vous connecter sans lien.
                         </p>
+                        {% do form.currentPassword.setRendered %}
+                    {% else %}
+                        <div class="form-group mb-3">
+                            {{ form_label(form.currentPassword) }}
+                            <div class="password-field">
+                                {{ form_widget(form.currentPassword, {attr: {class: 'form-control'}}) }}
+                                <button type="button" class="password-toggle-btn" data-password-toggle aria-label="Afficher le mot de passe"><i class="fas fa-eye"></i></button>
+                            </div>
+                            {{ form_errors(form.currentPassword) }}
+                        </div>
                     {% endif %}
                     <div class="edit-grid-2">
                         <div class="form-group mb-0">

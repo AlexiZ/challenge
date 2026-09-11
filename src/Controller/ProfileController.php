@@ -7,9 +7,11 @@ use App\Form\ProfileFormType;
 use App\Repository\TripRepository;
 use App\Repository\UserRepository;
 use App\Service\ActiveCityEditionResolver;
+use App\Service\FileUploader;
 use App\Service\StatsCalculator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -32,6 +34,7 @@ class ProfileController extends AbstractController
         EntityManagerInterface $em,
         StatsCalculator $statsCalculator,
         UserPasswordHasherInterface $passwordHasher,
+        FileUploader $fileUploader,
     ): Response {
         $cityEdition = $this->cityEditionResolver->resolve($citySlug);
 
@@ -42,29 +45,33 @@ class ProfileController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $avatarFile = $form->get('avatarFile')->getData();
-            if ($avatarFile) {
-                $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/avatars';
-                $oldAvatar = $user->getAvatar();
-                if ($oldAvatar) {
-                    $oldPath = $uploadsDir . '/' . $oldAvatar;
-                    if (file_exists($oldPath)) {
-                        unlink($oldPath);
-                    }
-                }
-                $newFilename = bin2hex(random_bytes(8)) . '.' . $avatarFile->guessExtension();
-                $avatarFile->move($uploadsDir, $newFilename);
-                $user->setAvatar($newFilename);
-            }
-
             $newPassword = $form->get('newPassword')->getData();
-            if ($newPassword) {
-                $user->setPassword($passwordHasher->hashPassword($user, $newPassword));
+
+            // Accounts created via the passwordless magic-link flow have no password yet —
+            // only require the current one when there's actually one to confirm.
+            $currentPasswordOk = true;
+            if ($newPassword && null !== $user->getPassword()) {
+                $currentPassword = (string) $form->get('currentPassword')->getData();
+                $currentPasswordOk = '' !== $currentPassword && $passwordHasher->isPasswordValid($user, $currentPassword);
+                if (!$currentPasswordOk) {
+                    $form->get('currentPassword')->addError(new FormError('Mot de passe actuel incorrect.'));
+                }
             }
 
-            $em->flush();
-            $this->addFlash('success', 'Profil mis à jour.');
-            return $this->redirectToRoute('app_profile', ['citySlug' => $citySlug]);
+            if ($currentPasswordOk) {
+                $avatarFile = $form->get('avatarFile')->getData();
+                if ($avatarFile) {
+                    $user->setAvatar($fileUploader->upload($avatarFile, 'avatars', $user->getAvatar()));
+                }
+
+                if ($newPassword) {
+                    $user->setPassword($passwordHasher->hashPassword($user, $newPassword));
+                }
+
+                $em->flush();
+                $this->addFlash('success', 'Profil mis à jour.');
+                return $this->redirectToRoute('app_profile', ['citySlug' => $citySlug]);
+            }
         }
 
         $stats = $statsCalculator->getUserStats($user, $cityEdition);

@@ -3,7 +3,6 @@
 namespace App\Service;
 
 use App\Entity\CityEdition;
-use App\Entity\Trip;
 use App\Entity\User;
 use App\Enum\TripModeEnum;
 use App\Repository\BonusPhotoRepository;
@@ -15,6 +14,7 @@ class StatsCalculator
         private readonly TripRepository $tripRepository,
         private readonly BonusPhotoRepository $bonusPhotoRepository,
         private readonly Co2Calculator $co2Calculator,
+        private readonly RankingCalculator $rankingCalculator,
     ) {}
 
     /** @return array<string, mixed> */
@@ -69,22 +69,8 @@ class StatsCalculator
      */
     public function getCityEditionRankingStats(CityEdition $cityEdition): array
     {
-        $trips = array_filter(
-            $this->tripRepository->findByCityEditionWithUsers($cityEdition),
-            fn (Trip $trip) => !$trip->getUser()->isSuperAdmin() && !$trip->getUser()->isAdminCity(),
-        );
+        $perUser = $this->rankingCalculator->buildUserTripData($cityEdition);
         $bonusPoints = $this->bonusPhotoRepository->getBonusPointsPerUserByCityEdition($cityEdition);
-
-        $perUser = [];
-        foreach ($trips as $trip) {
-            $uid = $trip->getUser()->getId();
-            if (!isset($perUser[$uid])) {
-                $perUser[$uid] = ['km' => 0.0, 'tripPoints' => 0.0, 'dates' => []];
-            }
-            $perUser[$uid]['km'] += $trip->getDistanceKm();
-            $perUser[$uid]['tripPoints'] += $trip->getPointsGenerated();
-            $perUser[$uid]['dates'][$trip->getTripDate()->format('Y-m-d')] = true;
-        }
 
         $participantCount = count($perUser);
         $totalPoints = 0.0;

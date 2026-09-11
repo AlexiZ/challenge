@@ -5,16 +5,16 @@ namespace App\Controller;
 use App\Entity\Team;
 use App\Entity\User;
 use App\Form\TeamType;
-use App\Repository\BonusPhotoRepository;
 use App\Repository\TeamRepository;
-use App\Repository\TripRepository;
 use App\Service\ActiveCityEditionResolver;
+use App\Service\RankingCalculator;
 use App\Service\SlugGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/{citySlug}/equipes', requirements: ['citySlug' => '(?!(admin|connexion|inscription|deconnexion|mot-de-passe-oublie)(/|$))[a-z0-9][a-z0-9-]*'])]
 class TeamController extends AbstractController
@@ -24,6 +24,7 @@ class TeamController extends AbstractController
     ) {}
 
     #[Route('/creer', name: 'app_team_create')]
+    #[IsGranted('ROLE_USER')]
     public function create(
         string $citySlug,
         Request $request,
@@ -63,6 +64,7 @@ class TeamController extends AbstractController
     }
 
     #[Route('/{slug}/modifier', name: 'app_team_edit')]
+    #[IsGranted('ROLE_USER')]
     public function edit(
         string $citySlug,
         string $slug,
@@ -109,8 +111,7 @@ class TeamController extends AbstractController
         string $citySlug,
         string $slug,
         TeamRepository $teamRepository,
-        TripRepository $tripRepository,
-        BonusPhotoRepository $bonusPhotoRepository,
+        RankingCalculator $rankingCalculator,
     ): Response {
         $cityEdition = $this->cityEditionResolver->resolve($citySlug);
         $team = $teamRepository->findBySlugAndCity($slug, $cityEdition->getCity());
@@ -119,41 +120,9 @@ class TeamController extends AbstractController
             throw $this->createNotFoundException('Équipe introuvable.');
         }
 
-        // Build per-user trip data for this edition
-        $trips = $tripRepository->findByCityEditionWithUsers($cityEdition);
-        $bonusPoints = $bonusPhotoRepository->getBonusPointsPerUserByCityEdition($cityEdition);
+        $userTripData = $rankingCalculator->buildUserTripData($cityEdition);
 
-        $userTripData = [];
-        foreach ($trips as $trip) {
-            $uid = $trip->getUser()->getId();
-            if (!isset($userTripData[$uid])) {
-                $userTripData[$uid] = ['user' => $trip->getUser(), 'km' => 0.0, 'tripPoints' => 0.0, 'dates' => [], 'lastDate' => null];
-            }
-            $userTripData[$uid]['km'] += $trip->getDistanceKm();
-            $userTripData[$uid]['tripPoints'] += $trip->getPointsGenerated();
-            $userTripData[$uid]['dates'][$trip->getTripDate()->format('Y-m-d')] = true;
-            $date = $trip->getTripDate();
-            if ($userTripData[$uid]['lastDate'] === null || $date > $userTripData[$uid]['lastDate']) {
-                $userTripData[$uid]['lastDate'] = $date;
-            }
-        }
-
-        // Member ranking for this team
-        $memberRanking = [];
-        foreach ($team->getMembers() as $member) {
-            $uid = $member->getId();
-            $bonus = (float) ($bonusPoints[$uid] ?? 0.0);
-            $data = $userTripData[$uid] ?? null;
-            $dayPoints = $data ? count($data['dates']) * $cityEdition->getPointsPerDay() : 0.0;
-            $memberRanking[] = [
-                'user'       => $member,
-                'km'         => $data ? round($data['km'], 2) : 0.0,
-                'points'     => $data ? round($data['tripPoints'] + $dayPoints + $bonus, 1) : round($bonus, 1),
-                'activeDays' => $data ? count($data['dates']) : 0,
-                'lastDate'   => $data ? $data['lastDate'] : null,
-            ];
-        }
-        usort($memberRanking, fn ($a, $b) => $b['points'] <=> $a['points']);
+        $memberRanking = $rankingCalculator->buildTeamMemberRanking($cityEdition, $team, $userTripData);
 
         // Team aggregate stats
         $teamKm = array_sum(array_column($memberRanking, 'km'));
@@ -168,31 +137,8 @@ class TeamController extends AbstractController
             'ptsPerParticipant' => $activeCount > 0 ? round($teamTotalPoints / $activeCount, 1) : 0.0,
         ];
 
-        // Full team ranking (for general position)
-        $teams = $teamRepository->findWithMembersByCity($cityEdition->getCity());
-        $teamRanking = [];
-        foreach ($teams as $t) {
-            $tKm = 0.0; $tPoints = 0.0; $tDays = 0; $active = 0;
-            foreach ($t->getMembers() as $member) {
-                $uid = $member->getId();
-                if (!isset($userTripData[$uid])) continue;
-                $bonus = (float) ($bonusPoints[$uid] ?? 0.0);
-                $tKm += $userTripData[$uid]['km'];
-                $tPoints += $userTripData[$uid]['tripPoints'] + count($userTripData[$uid]['dates']) * $cityEdition->getPointsPerDay() + $bonus;
-                $tDays += count($userTripData[$uid]['dates']);
-                $active++;
-            }
-            if ($active < 2) continue;
-            $teamRanking[] = [
-                'team'              => $t,
-                'km'                => round($tKm, 2),
-                'points'            => round($tPoints, 1),
-                'activeDays'        => $tDays,
-                'participants'      => $active,
-                'ptsPerParticipant' => round($tPoints / $active, 1),
-            ];
-        }
-        usort($teamRanking, fn ($a, $b) => $b['ptsPerParticipant'] <=> $a['ptsPerParticipant']);
+        // Full team ranking (for general position) — only teams with 2+ active members count
+        $teamRanking = $rankingCalculator->buildTeamRanking($cityEdition, $userTripData, minActiveMembers: 2);
 
         // Find this team's general position
         $teamPosition = null;
@@ -220,6 +166,7 @@ class TeamController extends AbstractController
     }
 
     #[Route('/{slug}/rejoindre', name: 'app_team_join', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
     public function join(
         string $citySlug,
         string $slug,
@@ -247,6 +194,7 @@ class TeamController extends AbstractController
     }
 
     #[Route('/{slug}/quitter', name: 'app_team_leave', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
     public function leave(
         string $citySlug,
         string $slug,

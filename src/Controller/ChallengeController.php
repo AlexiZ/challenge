@@ -9,10 +9,10 @@ use App\Enum\TripModeEnum;
 use App\Form\TripType;
 use App\Repository\BonusPhotoRepository;
 use App\Repository\CityEditionRepository;
-use App\Repository\TeamRepository;
 use App\Repository\TripRepository;
 use App\Service\ActiveCityEditionResolver;
 use App\Service\Co2Calculator;
+use App\Service\RankingCalculator;
 use App\Service\StatsCalculator;
 use App\Service\TripPointsCalculator;
 use Doctrine\ORM\EntityManagerInterface;
@@ -211,7 +211,7 @@ class ChallengeController extends AbstractController
         string $citySlug,
         Request $request,
         TripRepository $tripRepository,
-        TeamRepository $teamRepository,
+        RankingCalculator $rankingCalculator,
         BonusPhotoRepository $bonusPhotoRepository,
     ): Response {
         $cityEdition = $this->cityEditionResolver->resolve($citySlug);
@@ -224,76 +224,36 @@ class ChallengeController extends AbstractController
         $mode = $modeParam ? TripModeEnum::tryFrom($modeParam) : null;
         $view = $request->query->get('view', 'team');
 
-        // All trips with users (2 queries: trips + users join)
-        // Admins don't count towards points/rankings — they only administer the challenge.
+        // All-modes data (edition stats always reflect every mode, regardless of the view filter)
+        $allUserTripData = $rankingCalculator->buildUserTripData($cityEdition);
+        $userTripData = null !== $mode ? $rankingCalculator->buildUserTripData($cityEdition, $mode) : $allUserTripData;
+
+        // Bike/walk participation rates for edition stats
+        $bikeUsers = [];
+        $walkUsers = [];
         $allTrips = array_filter(
             $tripRepository->findByCityEditionWithUsers($cityEdition),
             fn (Trip $trip) => !$trip->getUser()->isSuperAdmin() && !$trip->getUser()->isAdminCity(),
         );
-
-        // Bonus photo points per user (1 query)
-        $bonusPoints = $bonusPhotoRepository->getBonusPointsPerUserByCityEdition($cityEdition);
-
-        // All-modes data for edition stats
-        $allUserData = [];
-        $bikeUsers = [];
-        $walkUsers = [];
         foreach ($allTrips as $trip) {
             $uid = $trip->getUser()->getId();
-            if (!isset($allUserData[$uid])) {
-                $allUserData[$uid] = ['tripPoints' => 0.0, 'dates' => []];
-            }
-            $allUserData[$uid]['tripPoints'] += $trip->getPointsGenerated();
-            $allUserData[$uid]['dates'][$trip->getTripDate()->format('Y-m-d')] = true;
             if ($trip->getMode() === TripModeEnum::Bike) {
                 $bikeUsers[$uid] = true;
             } else {
                 $walkUsers[$uid] = true;
             }
         }
-        $totalActive = count($allUserData);
+        $totalActive = count($allUserTripData);
+
+        $bonusPoints = $bonusPhotoRepository->getBonusPointsPerUserByCityEdition($cityEdition);
         $bestAllModesPoints = 0.0;
-        foreach ($allUserData as $uid => $data) {
+        foreach ($allUserTripData as $uid => $data) {
             $dayPoints = count($data['dates']) * $cityEdition->getPointsPerDay();
             $total = $data['tripPoints'] + $dayPoints + (float) ($bonusPoints[$uid] ?? 0.0);
-            if ($total > $bestAllModesPoints) $bestAllModesPoints = $total;
+            $bestAllModesPoints = max($bestAllModesPoints, $total);
         }
 
-        // Mode-filtered per-user data for ranking
-        $userTripData = [];
-        foreach ($allTrips as $trip) {
-            if ($mode !== null && $trip->getMode() !== $mode) continue;
-            $uid = $trip->getUser()->getId();
-            if (!isset($userTripData[$uid])) {
-                $userTripData[$uid] = [
-                    'user'       => $trip->getUser(),
-                    'km'         => 0.0,
-                    'tripPoints' => 0.0,
-                    'dates'      => [],
-                ];
-            }
-            $userTripData[$uid]['km'] += $trip->getDistanceKm();
-            $userTripData[$uid]['tripPoints'] += $trip->getPointsGenerated();
-            $userTripData[$uid]['dates'][$trip->getTripDate()->format('Y-m-d')] = true;
-        }
-
-        // Individual ranking — every registered participant appears, even with no trips yet
-        // (bonus always included, admins excluded)
-        $individualRanking = [];
-        foreach ($cityEdition->getParticipants() as $user) {
-            if ($user->isSuperAdmin() || $user->isAdminCity()) continue;
-            $uid = $user->getId();
-            $data = $userTripData[$uid] ?? null;
-            $bonus = (float) ($bonusPoints[$uid] ?? 0.0);
-            $dayPoints = $data ? count($data['dates']) * $cityEdition->getPointsPerDay() : 0.0;
-            $individualRanking[] = [
-                'user'       => $user,
-                'km'         => $data ? round($data['km'], 2) : 0.0,
-                'points'     => round(($data['tripPoints'] ?? 0.0) + $dayPoints + $bonus, 1),
-                'activeDays' => $data ? count($data['dates']) : 0,
-            ];
-        }
-        usort($individualRanking, fn ($a, $b) => $b['points'] <=> $a['points']);
+        $individualRanking = $rankingCalculator->buildIndividualRanking($cityEdition, $userTripData);
 
         // Current user individual position
         $myPosition = null;
@@ -314,33 +274,7 @@ class ChallengeController extends AbstractController
             }
         }
 
-        // Team ranking (1 query for teams + members)
-        $teams = $teamRepository->findWithMembersByCity($cityEdition->getCity());
-        $teamRanking = [];
-        foreach ($teams as $team) {
-            $teamKm = 0.0;
-            $teamPoints = 0.0;
-            $teamDays = 0;
-            $active = 0;
-            foreach ($team->getMembers() as $member) {
-                $uid = $member->getId();
-                if (!isset($userTripData[$uid])) continue;
-                $bonus = (float) ($bonusPoints[$uid] ?? 0.0);
-                $teamKm += $userTripData[$uid]['km'];
-                $teamPoints += $userTripData[$uid]['tripPoints'] + count($userTripData[$uid]['dates']) * $cityEdition->getPointsPerDay() + $bonus;
-                $teamDays += count($userTripData[$uid]['dates']);
-                $active++;
-            }
-            $teamRanking[] = [
-                'team'              => $team,
-                'km'                => round($teamKm, 2),
-                'points'            => round($teamPoints, 1),
-                'activeDays'        => $teamDays,
-                'participants'      => $active,
-                'ptsPerParticipant' => $active > 0 ? round($teamPoints / $active, 1) : 0.0,
-            ];
-        }
-        usort($teamRanking, fn ($a, $b) => $b['ptsPerParticipant'] <=> $a['ptsPerParticipant']);
+        $teamRanking = $rankingCalculator->buildTeamRanking($cityEdition, $userTripData);
 
         // Current user team position(s) — a user can belong to several teams
         $myTeamPositions = [];
