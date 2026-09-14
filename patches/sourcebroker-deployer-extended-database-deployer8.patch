@@ -1,0 +1,255 @@
+diff -ruN a/deployer/db/config/arguments.php b/deployer/db/config/arguments.php
+--- a/deployer/db/config/arguments.php	2026-09-14 08:53:02.408417804 +0200
++++ b/deployer/db/config/arguments.php	2026-09-14 08:53:02.410354940 +0200
+@@ -2,6 +2,7 @@
+ 
+ namespace Deployer;
+ 
+-use Symfony\Component\Console\Input\InputArgument;
+-
+-argument('targetStage', InputArgument::OPTIONAL, 'Run tasks only on this server or group of servers.');
++// argument() n'existe plus depuis Deployer 8 (remplacé par l'argument natif "selector").
++// db:copy, seul appelant de "targetStage", reste une fonctionnalité non supportée sous
++// Deployer 8 (aucun mécanisme pour ajouter un second argument positionnel) : ce fichier
++// ne fait donc plus rien plutôt que de planter au chargement.
+diff -ruN a/deployer/db/task/db:backup.php b/deployer/db/task/db:backup.php
+--- a/deployer/db/task/db:backup.php	2026-09-14 08:53:02.408565459 +0200
++++ b/deployer/db/task/db:backup.php	2026-09-14 08:53:02.410778565 +0200
+@@ -35,9 +35,9 @@
+         $dumpCode = 'backup' . $dumpCodeRealese . '_' . md5(microtime(true) . rand(0, 10000));
+     }
+     if (get('db_instance') == get('server')['name']) {
+-        runLocally('{{local/bin/deployer}} db:export --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
+-        runLocally('{{local/bin/deployer}} db:compress --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
+-        runLocally('{{local/bin/deployer}} db:dumpclean' . $verbosity, 0);
++        runLocally('{{local/bin/deployer}} db:export --dumpcode=' . $dumpCode . ' ' . $verbosity);
++        runLocally('{{local/bin/deployer}} db:compress --dumpcode=' . $dumpCode . ' ' . $verbosity);
++        runLocally('{{local/bin/deployer}} db:dumpclean' . $verbosity);
+     } else {
+         $activePath = get('deploy_path') . '/' . (test('[ -L {{deploy_path}}/release ]') ? 'release' : 'current');
+         run('cd ' . $activePath .
+diff -ruN a/deployer/db/task/db:compress.php b/deployer/db/task/db:compress.php
+--- a/deployer/db/task/db:compress.php	2026-09-14 08:53:02.408603098 +0200
++++ b/deployer/db/task/db:compress.php	2026-09-14 08:53:02.410419947 +0200
+@@ -19,7 +19,7 @@
+                     array_keys($markersArray),
+                     $markersArray,
+                     $dbProcessCommand
+-                ), 0);
++                ));
+             }
+         }
+     } else {
+diff -ruN a/deployer/db/task/db:copy.php b/deployer/db/task/db:copy.php
+--- a/deployer/db/task/db:copy.php	2026-09-14 08:53:02.408631235 +0200
++++ b/deployer/db/task/db:copy.php	2026-09-14 08:53:02.410457806 +0200
+@@ -46,18 +46,18 @@
+     $dumpCode = md5(microtime(true) . rand(0, 10000));
+     $dl = get('local/bin/deployer');
+     if (get('db_instance') == get('server')['name']) {
+-        runLocally($dl . ' db:export --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
++        runLocally($dl . ' db:export --dumpcode=' . $dumpCode . ' ' . $verbosity);
+     } else {
+-        runLocally($dl . ' db:export ' . $sourceInstance . ' --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
+-        runLocally($dl . ' db:download ' . $sourceInstance . ' --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
++        runLocally($dl . ' db:export ' . $sourceInstance . ' --dumpcode=' . $dumpCode . ' ' . $verbosity);
++        runLocally($dl . ' db:download ' . $sourceInstance . ' --dumpcode=' . $dumpCode . ' ' . $verbosity);
+     }
+-    runLocally($dl . ' db:process --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
++    runLocally($dl . ' db:process --dumpcode=' . $dumpCode . ' ' . $verbosity);
+     if (get('db_instance') == $targetInstanceName) {
+-        runLocally($dl . ' db:import --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
+-        runLocally($dl . ' db:rmdump --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
++        runLocally($dl . ' db:import --dumpcode=' . $dumpCode . ' ' . $verbosity);
++        runLocally($dl . ' db:rmdump --dumpcode=' . $dumpCode . ' ' . $verbosity);
+     } else {
+-        runLocally($dl . ' db:upload ' . $targetInstanceName . ' --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
+-        runLocally($dl . ' db:import ' . $targetInstanceName . ' --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
+-        runLocally($dl . ' db:rmdump ' . $targetInstanceName . ' --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
++        runLocally($dl . ' db:upload ' . $targetInstanceName . ' --dumpcode=' . $dumpCode . ' ' . $verbosity);
++        runLocally($dl . ' db:import ' . $targetInstanceName . ' --dumpcode=' . $dumpCode . ' ' . $verbosity);
++        runLocally($dl . ' db:rmdump ' . $targetInstanceName . ' --dumpcode=' . $dumpCode . ' ' . $verbosity);
+     }
+ })->desc('Synchronize database between instances.');
+diff -ruN a/deployer/db/task/db:decompress.php b/deployer/db/task/db:decompress.php
+--- a/deployer/db/task/db:decompress.php	2026-09-14 08:53:02.408659271 +0200
++++ b/deployer/db/task/db:decompress.php	2026-09-14 08:53:02.410486405 +0200
+@@ -19,7 +19,7 @@
+                     array_keys($markersArray),
+                     $markersArray,
+                     $dbProcessCommand
+-                ), 0);
++                ));
+             }
+         }
+     } else {
+diff -ruN a/deployer/db/task/db:download.php b/deployer/db/task/db:download.php
+--- a/deployer/db/task/db:download.php	2026-09-14 08:53:02.408686716 +0200
++++ b/deployer/db/task/db:download.php	2026-09-14 08:53:02.410662667 +0200
+@@ -10,9 +10,6 @@
+  * @see https://github.com/sourcebroker/deployer-extended-database#db-download
+  */
+ task('db:download', function () {
+-    if (null === input()->getArgument('stage')) {
+-        throw new \RuntimeException('The source instance is required for db:download command.', 1488143750580);
+-    }
+     $dumpCode = (new ConsoleUtility())->optionRequired('dumpcode', input());
+     $rsyncUtility = new RsyncUtility();
+     $fileUtility = new FileUtility();
+@@ -23,5 +20,5 @@
+         escapeshellarg('*dumpcode=' . $dumpCode . '*'),
+         escapeshellarg($rsyncUtility->getHostWithDbStoragePath(Task\Context::get())),
+         escapeshellarg($fileUtility->normalizeFolder(get('db_current_server')->get('db_storage_path_current')))
+-    ), 0);
++    ));
+ })->desc('Download the database dumps with given dumpcode from target to current database dumps storage.');
+diff -ruN a/deployer/db/task/db:export.php b/deployer/db/task/db:export.php
+--- a/deployer/db/task/db:export.php	2026-09-14 08:53:02.408741786 +0200
++++ b/deployer/db/task/db:export.php	2026-09-14 08:53:02.410572980 +0200
+@@ -50,7 +50,7 @@
+             runLocally(vsprintf(
+                 'export MYSQL_PWD=%s && %s %s -h%s -P%s -u%s %s -r%s',
+                 $mysqlDumpArgs
+-            ), 0);
++            ));
+ 
+             // dump database data
+             if (isset($databaseConfig['ignore_tables_out']) && is_array($databaseConfig['ignore_tables_out'])) {
+@@ -70,7 +70,7 @@
+             runLocally(vsprintf(
+                 'export MYSQL_PWD=%s && %s %s -h%s -P%s -u%s %s -r%s %s',
+                 $mysqlDumpArgs
+-            ), 0);
++            ));
+         }
+     } else {
+         $verbosity = (new ConsoleUtility())->getVerbosityAsParameter(output());
+diff -ruN a/deployer/db/task/db:import.php b/deployer/db/task/db:import.php
+--- a/deployer/db/task/db:import.php	2026-09-14 08:53:02.408769864 +0200
++++ b/deployer/db/task/db:import.php	2026-09-14 08:53:02.410601828 +0200
+@@ -56,7 +56,7 @@
+                 escapeshellarg((isset($databaseConfig['port']) && $databaseConfig['port']) ? $databaseConfig['port'] : 3306),
+                 escapeshellarg($databaseConfig['user']),
+                 escapeshellarg($databaseConfig['dbname'])
+-            ), 0);
++            ));
+             // Import dump with database structure.
+             runLocally(sprintf(
+                 'export MYSQL_PWD=%s && %s %s -h%s -P%s -u%s -D%s -e%s',
+@@ -68,7 +68,7 @@
+                 escapeshellarg($databaseConfig['user']),
+                 escapeshellarg($databaseConfig['dbname']),
+                 escapeshellarg('SOURCE ' . $structureSqlFile[0])
+-            ), 0);
++            ));
+             // Import dump with data.
+             runLocally(sprintf(
+                 'export MYSQL_PWD=%s && %s %s -h%s -P%s -u%s -D%s -e%s',
+@@ -80,7 +80,7 @@
+                 escapeshellarg($databaseConfig['user']),
+                 escapeshellarg($databaseConfig['dbname']),
+                 escapeshellarg('SOURCE ' . $dataSqlFile[0])
+-            ), 0);
++            ));
+             $postSqlInCollected = [];
+             if (isset($databaseConfig['post_sql_in_markers'])) {
+                 // Prepare some markers to use in post_sql_in_markers:
+@@ -127,12 +127,12 @@
+                     escapeshellarg($databaseConfig['user']),
+                     escapeshellarg($databaseConfig['dbname']),
+                     escapeshellarg('SOURCE ' . $importSqlFile)
+-                ), 0);
++                ));
+                 unlink($importSqlFile);
+             }
+             if (isset($databaseConfig['post_command']) && is_array($databaseConfig['post_command'])) {
+                 foreach ($databaseConfig['post_command'] as $postCommand) {
+-                    runLocally($postCommand . ' --dumpcode=' . $dumpCode, 0);
++                    runLocally($postCommand . ' --dumpcode=' . $dumpCode);
+                 }
+             }
+         }
+diff -ruN a/deployer/db/task/db:process.php b/deployer/db/task/db:process.php
+--- a/deployer/db/task/db:process.php	2026-09-14 08:53:02.408800715 +0200
++++ b/deployer/db/task/db:process.php	2026-09-14 08:53:02.410633527 +0200
+@@ -19,7 +19,7 @@
+                     array_keys($markersArray),
+                     $markersArray,
+                     $dbProcessCommand
+-                ), 0);
++                ));
+             }
+         }
+     } else {
+diff -ruN a/deployer/db/task/db:pull.php b/deployer/db/task/db:pull.php
+--- a/deployer/db/task/db:pull.php	2026-09-14 08:53:02.408828461 +0200
++++ b/deployer/db/task/db:pull.php	2026-09-14 08:53:02.410749801 +0200
+@@ -8,18 +8,15 @@
+  * @see https://github.com/sourcebroker/deployer-extended-database#db-pull
+  */
+ task('db:pull', function () {
+-    if (null === input()->getArgument('stage')) {
+-        throw new \RuntimeException('The target instance is required for db:pull command.');
+-    }
+     $sourceInstance = get('server')['name'];
+     $dumpCode = md5(microtime(true) . rand(0, 10000));
+ 
+     $dl = get('local/bin/deployer');
+     $verbosity = (new ConsoleUtility())->getVerbosityAsParameter(output());
+-    runLocally($dl . ' db:export ' . $sourceInstance . ' --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
+-    runLocally($dl . ' db:download ' . $sourceInstance . ' --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
+-    runLocally($dl . ' db:process --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
+-    runLocally($dl . ' db:import --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
+-    runLocally($dl . ' db:compress --dumpcode=' . $dumpCode . ' ' . $verbosity, 0);
+-    runLocally($dl . ' db:dumpclean' . $verbosity, 0);
++    runLocally($dl . ' db:export ' . $sourceInstance . ' --dumpcode=' . $dumpCode . ' ' . $verbosity);
++    runLocally($dl . ' db:download ' . $sourceInstance . ' --dumpcode=' . $dumpCode . ' ' . $verbosity);
++    runLocally($dl . ' db:process --dumpcode=' . $dumpCode . ' ' . $verbosity);
++    runLocally($dl . ' db:import --dumpcode=' . $dumpCode . ' ' . $verbosity);
++    runLocally($dl . ' db:compress --dumpcode=' . $dumpCode . ' ' . $verbosity);
++    runLocally($dl . ' db:dumpclean' . $verbosity);
+ })->desc('Synchronize database from target instance to current instance.');
+diff -ruN a/deployer/db/task/db:rmdump.php b/deployer/db/task/db:rmdump.php
+--- a/deployer/db/task/db:rmdump.php	2026-09-14 08:53:02.408856066 +0200
++++ b/deployer/db/task/db:rmdump.php	2026-09-14 08:53:02.410691635 +0200
+@@ -11,7 +11,7 @@
+     $dumpCode = (new ConsoleUtility())->optionRequired('dumpcode', input());
+     if (get('db_instance') == get('server')['name']) {
+         runLocally('cd ' . get('db_current_server')->get('db_storage_path_current') .
+-            ' && rm -f *dumpcode=' . $dumpCode . '*', 0);
++            ' && rm -f *dumpcode=' . $dumpCode . '*');
+     } else {
+         $verbosity = (new ConsoleUtility())->getVerbosityAsParameter(output());
+         $activePath = get('deploy_path') . '/' . (test('[ -L {{deploy_path}}/release ]') ? 'release' : 'current');
+diff -ruN a/deployer/db/task/db:truncate.php b/deployer/db/task/db:truncate.php
+--- a/deployer/db/task/db:truncate.php	2026-09-14 08:53:02.408891943 +0200
++++ b/deployer/db/task/db:truncate.php	2026-09-14 08:53:02.410720688 +0200
+@@ -30,7 +30,7 @@
+                             escapeshellarg($databaseConfig['user']),
+                             escapeshellarg($databaseConfig['dbname']),
+                             escapeshellarg('TRUNCATE ' . $truncateTable)
+-                        ), 0);
++                        ));
+                     }
+                     writeln('<info>Truncated tables: ' . implode(',', $truncateTables) . '</info>');
+                 }
+diff -ruN a/deployer/db/task/db:upload.php b/deployer/db/task/db:upload.php
+--- a/deployer/db/task/db:upload.php	2026-09-14 08:53:02.408924225 +0200
++++ b/deployer/db/task/db:upload.php	2026-09-14 08:53:02.410514896 +0200
+@@ -10,9 +10,6 @@
+  * @see https://github.com/sourcebroker/deployer-extended-database#db-upload
+  */
+ task('db:upload', function () {
+-    if (null === input()->getArgument('stage')) {
+-        throw new \RuntimeException('The target instance is required for db:upload command.', 1500716535614);
+-    }
+     $dumpCode = (new ConsoleUtility())->optionRequired('dumpcode', input());
+     $rsyncUtility = new RsyncUtility();
+     $fileUtility = new FileUtility();
+@@ -23,5 +20,5 @@
+         escapeshellarg('*dumpcode=' . $dumpCode . '*'),
+         escapeshellarg($fileUtility->normalizeFolder(get('db_current_server')->get('db_storage_path_current'))),
+         escapeshellarg($rsyncUtility->getHostWithDbStoragePath(Task\Context::get()))
+-    ), 0);
++    ));
+ })->desc('Upload the database dumps for given dumpcode from current to target database dumps storage.');

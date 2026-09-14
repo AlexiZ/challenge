@@ -2,24 +2,8 @@
 
 namespace Deployer;
 
-use SourceBroker\DeployerExtendedDatabase\Driver\EnvDriver;
-use SourceBroker\DeployerLoader\Load;
-
-// vlucas/phpdotenv v2 (dépendance de sourcebroker/deployer-extended-database) utilise
-// la directive ini "auto_detect_line_endings", dépréciée depuis PHP 8.1. Le gestionnaire
-// d'erreurs de Deployer transforme toute déprécation en ErrorException fatale : on
-// désactive donc ce niveau avant que EnvDriver ne lise le .env.
-error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
-
 require 'recipe/symfony.php';
 require_once __DIR__.'/vendor/autoload.php';
-
-new Load([
-    ['path' => 'vendor/sourcebroker/deployer-instance/deployer'],
-    // arguments.php appelle argument(), une fonction retirée depuis Deployer 8 :
-    // l'argument "stage" qu'elle déclarait pour l'aide CLI existe déjà nativement.
-    ['path' => 'vendor/sourcebroker/deployer-extended-database/deployer', 'excludePattern' => '/^arguments\.php$/'],
-]);
 
 // Charger les secrets depuis un fichier local qui n’est pas versionné
 if (file_exists(__DIR__.'/deploy_secrets.php')) {
@@ -38,12 +22,7 @@ set('composer_options', '--no-scripts');
 
 localhost('local')
     ->set('deploy_path', getcwd())
-    ->set('bin/php', 'php')
-    ->set('db_databases', [
-        'database_default' => [
-            (new EnvDriver())->getDatabaseConfig(),
-        ],
-    ]);
+    ->set('bin/php', 'php');
 
 // Hosts
 foreach (['preprod', 'prod'] as $env) {
@@ -53,11 +32,6 @@ foreach (['preprod', 'prod'] as $env) {
         ->set('http_user', getenv('DEPLOY_USER'))
         ->set('writable_mode', 'chmod')
         ->setDeployPath(getenv('DEPLOY_PATH'))
-        ->set('db_databases', [
-            'database_default' => [
-                (new EnvDriver())->getDatabaseConfig(),
-            ],
-        ])
         ->setIdentityFile(getenv('DEPLOY_IDENTITY_FILE'))
         ->setForwardAgent(true)
         ->set('symfony_env', $env)
@@ -98,6 +72,69 @@ task('deploy:assets:install', function () {
 task('deploy:importmap:install', function () {
     run('{{bin/console}} importmap:install {{console_options}}');
 });
+
+function parsePostgresUrl(string $url): array
+{
+    $parts = parse_url($url);
+
+    return [
+        'host' => $parts['host'],
+        'port' => $parts['port'] ?? 5432,
+        'user' => rawurldecode($parts['user'] ?? ''),
+        'password' => rawurldecode($parts['pass'] ?? ''),
+        'dbname' => ltrim($parts['path'] ?? '', '/'),
+    ];
+}
+
+task('db:pull', function () {
+    // La cible (get('release_path')) a déjà .env.local.php (généré par deploy:dump-env),
+    // qui contient la DATABASE_URL résolue telle que l'app la lit vraiment en prod.
+    $remote = parsePostgresUrl(run(
+        '{{bin/php}} -r '
+        .escapeshellarg("echo (require '{{current_path}}/.env.local.php')['DATABASE_URL'];")
+    ));
+
+    $dotenv = new \Symfony\Component\Dotenv\Dotenv();
+    $dotenv->usePutenv()->loadEnv(getcwd().'/.env');
+    $local = parsePostgresUrl(getenv('DATABASE_URL'));
+
+    $remoteDumpPath = get('deploy_path').'/.dep/database/dump.sql';
+    $localDumpPath = 'var/db_pull_dump.sql';
+
+    run('mkdir -p '.escapeshellarg(dirname($remoteDumpPath)));
+    run(sprintf(
+        'pg_dump --no-owner --no-privileges --clean --if-exists -h %s -p %s -U %s %s -f %s',
+        escapeshellarg($remote['host']),
+        escapeshellarg((string) $remote['port']),
+        escapeshellarg($remote['user']),
+        escapeshellarg($remote['dbname']),
+        escapeshellarg($remoteDumpPath)
+    ), env: ['PGPASSWORD' => $remote['password']], timeout: null);
+
+    // Pas de rsync côté hébergement cPanel (cf. download_medias/upload_medias plus bas) : scp comme le reste du fichier.
+    $host = currentHost()->getHostname();
+    $user = currentHost()->getRemoteUser();
+    $sshArgs = ['-F /dev/null'];
+    if ($port = getenv('DEPLOY_PORT')) {
+        $sshArgs[] = '-P '.escapeshellarg($port);
+    }
+    if ($knownHosts = getenv('DEPLOY_KNOWN_HOSTS')) {
+        $sshArgs[] = '-o UserKnownHostsFile='.escapeshellarg($knownHosts);
+    }
+    $scpArgs = implode(' ', $sshArgs);
+    runLocally("scp $scpArgs {$user}@{$host}:".escapeshellarg($remoteDumpPath)." ".escapeshellarg($localDumpPath));
+    run('rm -f '.escapeshellarg($remoteDumpPath));
+
+    runLocally(sprintf(
+        'psql -h %s -p %s -U %s -d %s -f %s',
+        escapeshellarg($local['host']),
+        escapeshellarg((string) $local['port']),
+        escapeshellarg($local['user']),
+        escapeshellarg($local['dbname']),
+        escapeshellarg($localDumpPath)
+    ), env: ['PGPASSWORD' => $local['password']], timeout: null);
+    runLocally('rm -f '.escapeshellarg($localDumpPath));
+})->desc('Pull the remote PostgreSQL database and restore it locally.');
 
 task('deploy:assets', function () {
     $host = currentHost()->getHostname();
@@ -157,8 +194,11 @@ task('download_medias', function () {
     $sshArgs = implode(' ', $sshOptions);
 
     // Remote → local
+    // --ignore-failed-read : certains uploads appartiennent à un autre utilisateur que
+    // {$user} (ex. process web) et ne sont pas lisibles en SSH ; on récupère le reste
+    // plutôt que d'échouer entièrement (exit code 2) sur ces fichiers-là.
     $cmd = "ssh $sshArgs {$user}@{$host} "
-        ."\"tar -C {$sharedPath}/public -czf - uploads\" "
+        ."\"tar --ignore-failed-read -C {$sharedPath}/public -czf - uploads\" "
         .'| tar -xzf - -C public';
 
     runLocally($cmd);

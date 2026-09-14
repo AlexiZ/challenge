@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cb0121a96c8e917be34321509deb8d45",
+    "content-hash": "d6906e2f7913ae94539cb5034bdbf641",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -8991,44 +8991,6 @@
             "time": "2026-05-18T16:59:34+00:00"
         },
         {
-            "name": "deployer/dist",
-            "version": "v4.3.4",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/deployphp/distribution.git",
-                "reference": "e2fe6049f9b2b9e63aae455ccd3dfc60964f63ed"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/deployphp/distribution/zipball/e2fe6049f9b2b9e63aae455ccd3dfc60964f63ed",
-                "reference": "e2fe6049f9b2b9e63aae455ccd3dfc60964f63ed",
-                "shasum": ""
-            },
-            "bin": [
-                "dep"
-            ],
-            "type": "library",
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Anton Medvedev",
-                    "email": "anton@medv.io"
-                }
-            ],
-            "description": "Deployer Phar Distribution",
-            "homepage": "https://deployer.org",
-            "support": {
-                "docs": "https://deployer.org/docs",
-                "issues": "https://github.com/deployphp/deployer/issues",
-                "source": "https://github.com/deployphp/deployer"
-            },
-            "abandoned": "deployer/deployer",
-            "time": "2018-09-24T13:25:06+00:00"
-        },
-        {
             "name": "maml/maml",
             "version": "v3.2.0",
             "source": {
@@ -10730,97 +10692,6 @@
             "time": "2025-02-07T05:00:38+00:00"
         },
         {
-            "name": "sourcebroker/deployer-extended-database",
-            "version": "7.0.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sourcebroker/deployer-extended-database.git",
-                "reference": "214ac84387932a50aab94e3cfa773cbaea07a784"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sourcebroker/deployer-extended-database/zipball/214ac84387932a50aab94e3cfa773cbaea07a784",
-                "reference": "214ac84387932a50aab94e3cfa773cbaea07a784",
-                "shasum": ""
-            },
-            "require": {
-                "deployer/dist": "^4.3.1",
-                "sourcebroker/deployer-loader": "^1.0.0",
-                "vlucas/phpdotenv": "^2.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "SourceBroker\\DeployerExtendedDatabase\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Krystian Szymukowicz",
-                    "email": "k.szymukowicz@gmail.com"
-                }
-            ],
-            "description": "Deployer tasks to manage database synchronization between application instances.",
-            "keywords": [
-                "database",
-                "deployer",
-                "deployer.org",
-                "synchronization"
-            ],
-            "support": {
-                "issues": "https://github.com/sourcebroker/deployer-extended-database/issues",
-                "source": "https://github.com/sourcebroker/deployer-extended-database/tree/master"
-            },
-            "time": "2018-11-09T10:35:55+00:00"
-        },
-        {
-            "name": "sourcebroker/deployer-loader",
-            "version": "1.0.4",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sourcebroker/deployer-loader.git",
-                "reference": "74dd364e457768136a9f3bb617516f25f84fb333"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sourcebroker/deployer-loader/zipball/74dd364e457768136a9f3bb617516f25f84fb333",
-                "reference": "74dd364e457768136a9f3bb617516f25f84fb333",
-                "shasum": ""
-            },
-            "require": {
-                "deployer/dist": "~4.3.1"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "SourceBroker\\DeployerLoader\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Krystian Szymukowicz",
-                    "email": "k.szymukowicz@gmail.com"
-                }
-            ],
-            "description": "Autoload of vendors and autoload of deployer tasks.",
-            "keywords": [
-                "deployer"
-            ],
-            "support": {
-                "issues": "https://github.com/sourcebroker/deployer-loader/issues",
-                "source": "https://github.com/sourcebroker/deployer-loader/tree/1.0.4"
-            },
-            "time": "2017-10-24T15:55:16+00:00"
-        },
-        {
             "name": "staabm/side-effects-detector",
             "version": "1.0.5",
             "source": {
@@ -11399,82 +11270,6 @@
                 }
             ],
             "time": "2025-12-08T11:19:18+00:00"
-        },
-        {
-            "name": "vlucas/phpdotenv",
-            "version": "v2.6.9",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/vlucas/phpdotenv.git",
-                "reference": "2e93cc98e2e8e869f8d9cfa61bb3a99ba4fc4141"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/vlucas/phpdotenv/zipball/2e93cc98e2e8e869f8d9cfa61bb3a99ba4fc4141",
-                "reference": "2e93cc98e2e8e869f8d9cfa61bb3a99ba4fc4141",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^5.3.9 || ^7.0 || ^8.0",
-                "symfony/polyfill-ctype": "^1.17"
-            },
-            "require-dev": {
-                "ext-filter": "*",
-                "ext-pcre": "*",
-                "phpunit/phpunit": "^4.8.36 || ^5.7.27 || ^6.5.14 || ^7.5.20 || ^8.5.21"
-            },
-            "suggest": {
-                "ext-filter": "Required to use the boolean validator.",
-                "ext-pcre": "Required to use most of the library."
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.6-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Dotenv\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Graham Campbell",
-                    "email": "hello@gjcampbell.co.uk",
-                    "homepage": "https://github.com/GrahamCampbell"
-                },
-                {
-                    "name": "Vance Lucas",
-                    "email": "vance@vancelucas.com",
-                    "homepage": "https://github.com/vlucas"
-                }
-            ],
-            "description": "Loads environment variables from `.env` to `getenv()`, `$_ENV` and `$_SERVER` automagically.",
-            "keywords": [
-                "dotenv",
-                "env",
-                "environment"
-            ],
-            "support": {
-                "issues": "https://github.com/vlucas/phpdotenv/issues",
-                "source": "https://github.com/vlucas/phpdotenv/tree/v2.6.9"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/GrahamCampbell",
-                    "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/vlucas/phpdotenv",
-                    "type": "tidelift"
-                }
-            ],
-            "time": "2021-12-12T22:59:22+00:00"
         }
     ],
     "aliases": [],
