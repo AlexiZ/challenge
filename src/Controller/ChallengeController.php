@@ -148,6 +148,7 @@ class ChallengeController extends AbstractController
             ) {
                 $form->get('mode')->addError(new FormError('Ce mode de transport n\'est pas actif pour l\'édition en cours.'));
             } else {
+                $cityEdition->addParticipant($user);
                 $em->persist($trip);
                 $em->flush();
 
