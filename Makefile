@@ -13,7 +13,7 @@ remote        ?= preprod
 REMOTE        ?= $(remote)
 
 # Executables
-EXEC_PHP      = php
+EXEC_PHP      = docker compose exec php
 COMPOSER      = composer
 GIT           = git
 DEP           = docker compose exec -u $(shell id -u):$(shell id -g) php vendor/bin/dep
@@ -22,7 +22,7 @@ DEP           = docker compose exec -u $(shell id -u):$(shell id -g) php vendor/
 SYMFONY       = $(EXEC_PHP) bin/console
 
 # Executables: vendors
-PHPUNIT       = ./vendor/bin/phpunit
+PHPUNIT       = $(EXEC_PHP) vendor/bin/phpunit
 
 # Misc
 .DEFAULT_GOAL = help
@@ -78,6 +78,9 @@ commands: ## Display all commands in the project namespace
 load-fixtures: ## Create the DB if needed and apply migrations
 	@$(SYMFONY) doctrine:database:create --if-not-exists
 	@$(SYMFONY) doctrine:migrations:migrate --no-interaction
+
+migrate: ## Display all commands in the project namespace
+	@$(SYMFONY) doctrine:migrations:migrate
 
 database: ## Pull REMOTE database to local instance
 	@$(DEP) db:pull $(REMOTE)

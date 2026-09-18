@@ -40,11 +40,12 @@
 
         {# ── User menu / actions ── #}
         <div class="navbar__actions">
+            {% if not hideUserMenu|default(false) %}
             {% if app.user %}
                 <div class="dropdown user-menu">
                     <button type="button" class="btn btn--sm btn--outline" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="avatar avatar--sm" aria-hidden="true">{{ app.user.initials }}</span>
-                        {{ app.user.firstName }}
+                        {{ app.user.firstName|default(app.user.username) }}
                         <i class="fas fa-chevron-down fa-xs ms-1 opacity-60"></i>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end user-menu__dropdown">
@@ -94,6 +95,7 @@
                 <a href="{{ path('app_register', city is defined ? {citySlug: city.slug} : {}) }}" class="btn btn--sm btn--primary">
                     <i class="fas fa-user-plus"></i> Inscription
                 </a>
+            {% endif %}
             {% endif %}
         </div>
         </div>

@@ -147,7 +147,7 @@
                                     {% for entry in individualRanking %}
                                         {% set rank = loop.index %}
                                         <tr class="rk-row rk-row--searchable {{ entry.user.publicProfile ? 'rk-row--link' : '' }} {{ app.user and app.user.id == entry.user.id ? 'rk-row--mine' : '' }}"
-                                            data-search="{{ (entry.user.firstName ~ ' ' ~ entry.user.lastName ~ ' ' ~ entry.user.username)|lower }}"
+                                            data-search="{{ entry.user.username|lower }}"
                                             {% if entry.user.publicProfile %}data-href="{{ path('app_profile_public', {citySlug: city.slug, username: entry.user.username}) }}"{% endif %}>
                                             <td class="rk-td rk-td--rank" data-value="{{ rank }}">
                                                 {% if rank == 1 %}
@@ -160,7 +160,7 @@
                                                     <span class="rk-rank-num">{{ rank }}</span>
                                                 {% endif %}
                                             </td>
-                                            <td class="rk-td rk-td--team" data-value="{{ (entry.user.firstName ~ ' ' ~ entry.user.lastName)|lower }}">
+                                            <td class="rk-td rk-td--team" data-value="{{ entry.user.username|lower }}">
                                                 {% if entry.user.avatar %}
                                                     <img src="{{ asset('uploads/avatars/' ~ entry.user.avatar) }}" class="rk-user-avatar" alt="{{ entry.user.initials }}">
                                                 {% else %}
@@ -169,10 +169,10 @@
                                                     </span>
                                                 {% endif %}
                                                 <span class="rk-team-name">
-                                                    {{ entry.user.firstName }} {{ entry.user.lastName|slice(0,1) }}.
                                                     {% if not cityEdition.profilesPublic and not app.user %}
+                                                        Participant
                                                     {% else %}
-                                                        <span class="fs-12 text-ink-3">&nbsp;@{{ entry.user.username }}</span>
+                                                        {{ entry.user.username }}
                                                     {% endif %}
                                                 </span>
                                             </td>

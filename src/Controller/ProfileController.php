@@ -120,6 +120,7 @@ class ProfileController extends AbstractController
         $stats = $statsCalculator->getUserStats($profileUser, $cityEdition);
         $trips = $tripRepository->findByUserAndCityEdition($profileUser, $cityEdition);
         $heatmapData = $tripRepository->getDailyDistanceForHeatmap($profileUser, $cityEdition);
+        $dayPointTripIds = $statsCalculator->getDayPointTripIds($trips);
 
         /** @var User|null $currentUser */
         $currentUser = $this->getUser();
@@ -131,6 +132,7 @@ class ProfileController extends AbstractController
             'stats' => $stats,
             'trips' => $trips,
             'heatmapData' => $heatmapData,
+            'dayPointTripIds' => $dayPointTripIds,
             'isSelf' => $currentUser !== null && $currentUser->getId() === $profileUser->getId(),
         ]);
     }

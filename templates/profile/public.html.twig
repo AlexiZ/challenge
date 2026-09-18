@@ -200,7 +200,11 @@
                                 </span>
                                 <span class="pub-trip-date">{{ trip.tripDate|format_datetime(pattern: 'd MMMM Y') }}</span>
                                 <span class="pub-trip-km">{{ trip.distanceKm|number_format(0) }} km</span>
-                                <span class="pub-trip-pts">+{{ trip.pointsGenerated|number_format(1) }} pts</span>
+                                {% set hasDayPoint = trip.id in dayPointTripIds %}
+                                {% set tripPoints = trip.pointsGenerated + (hasDayPoint ? cityEdition.pointsPerDay : 0) %}
+                                {% set kmRate = trip.mode.value == 'bike' ? cityEdition.pointsPerKmBike : cityEdition.pointsPerKmWalk %}
+                                {% set detail = (hasDayPoint ? (cityEdition.pointsPerDay|number_format(2) ~ ' pt jour actif + ') : '') ~ trip.distanceKm|number_format(2) ~ 'km * ' ~ kmRate|number_format(2) ~ ' pts' %}
+                                <span class="pub-trip-pts" title="{{ detail }}">+{{ tripPoints|number_format(2) }} pts</span>
                             </div>
                         {% endfor %}
                     </div>

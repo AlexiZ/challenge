@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\CityEdition;
+use App\Entity\Trip;
 use App\Entity\User;
 use App\Enum\TripModeEnum;
 use App\Repository\BonusPhotoRepository;
@@ -40,6 +41,25 @@ class StatsCalculator
             'total_points' => $totalPoints,
             'co2_kg' => $co2,
         ];
+    }
+
+    /**
+     * Trip IDs that earn the active-day point — the first trip entered per day.
+     *
+     * @param Trip[] $trips
+     * @return int[]
+     */
+    public function getDayPointTripIds(array $trips): array
+    {
+        $firstTripIdByDate = [];
+        foreach ($trips as $trip) {
+            $date = $trip->getTripDate()->format('Y-m-d');
+            if (!isset($firstTripIdByDate[$date]) || $trip->getId() < $firstTripIdByDate[$date]) {
+                $firstTripIdByDate[$date] = $trip->getId();
+            }
+        }
+
+        return array_values($firstTripIdByDate);
     }
 
     /** @return array<string, mixed> */

@@ -1,5 +1,7 @@
 {% extends 'base.html.twig' %}
 
+{% set hideUserMenu = true %}
+
 {% block title %}Connexion | {{ parent() }}{% endblock %}
 
 {% block body %}
@@ -7,12 +9,10 @@
         <div class="card text-center">
             {% if tokenUser.avatar %}
                 <img src="{{ asset('uploads/avatars/' ~ tokenUser.avatar) }}" class="edit-avatar-preview mx-auto mb-3" alt="">
-            {% else %}
-                <div class="edit-avatar-preview edit-avatar-preview--initials mx-auto mb-3">{{ tokenUser.initials }}</div>
             {% endif %}
 
             <h1 class="card__title card__title--lg mb-2">Se connecter en tant que {{ tokenUser.fullName }}</h1>
-            <p class="text-ink-3 fs-14 mb-4">{{ tokenUser.email }}</p>
+            <p class="text-ink-3 fs-5 mb-4">{{ tokenUser.email }}</p>
 
             <form method="post" action="{{ path('app_login_token_confirm', {token: token}) }}">
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('login_token_confirm') }}">

@@ -161,16 +161,7 @@ class ChallengeController extends AbstractController
         $allTrips = $tripRepository->findByUserAndCityEdition($user, $cityEdition);
         $stats = $statsCalculator->getUserStats($user, $cityEdition);
 
-        // Only the first trip entered for a given day earns the active-day point,
-        // regardless of transport mode — mirrors StatsCalculator's per-day dedup.
-        $firstTripIdByDate = [];
-        foreach ($allTrips as $trip) {
-            $date = $trip->getTripDate()->format('Y-m-d');
-            if (!isset($firstTripIdByDate[$date]) || $trip->getId() < $firstTripIdByDate[$date]) {
-                $firstTripIdByDate[$date] = $trip->getId();
-            }
-        }
-        $dayPointTripIds = array_values($firstTripIdByDate);
+        $dayPointTripIds = $statsCalculator->getDayPointTripIds($allTrips);
 
         return $this->render('challenge/trip_entry.html.twig', [
             'cityEdition' => $cityEdition,

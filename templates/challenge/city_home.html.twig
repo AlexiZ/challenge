@@ -163,7 +163,7 @@
                         {% for p in recentParticipants %}
                             <div class="participant-mini">
                                 <div class="p-avatar c{{ loop.index0 % 4 }}">{{ p.initials }}</div>
-                                <div class="p-name">{{ p.firstName }} {{ p.lastName|slice(0,1) }}.</div>
+                                <div class="p-name">{{ p.username }}</div>
                                 <div class="p-last"><i class="fas fa-bicycle fa-xs"></i></div>
                             </div>
                         {% endfor %}
@@ -241,7 +241,7 @@
                             <div class="bp-photo-footer">
                                 <div class="bp-photo-left">
                                     <span class="bp-photo-author">
-                                        {{ photo.user.firstName }} {{ photo.user.lastName|slice(0,1) }}.
+                                        {{ photo.user.username }}
                                     </span>
                                     <span class="bp-photo-tag dyn-bg dyn-color" style="--dyn-bg:{{ meta.bg }};--dyn-color:{{ meta.color }}">
                                         {{ photo.challenge.label() }}

@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -27,6 +28,7 @@ class UserRegistrar
         private readonly UserPasswordHasherInterface $passwordHasher,
         private readonly MailerInterface $mailer,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly ActiveCityEditionResolver $cityEditionResolver,
         private readonly string $mailerFromAddress,
     ) {}
 
@@ -36,6 +38,8 @@ class UserRegistrar
         $user->setEmail($email);
         $user->setCity($city);
         $user->setUsername($this->generateUniqueUsername($email));
+
+        $this->addAsParticipant($user, $city);
 
         $this->em->persist($user);
         $this->em->flush();
@@ -49,10 +53,25 @@ class UserRegistrar
     {
         $user->setPassword($this->passwordHasher->hashPassword($user, $plainPassword));
 
+        $this->addAsParticipant($user, $user->getCity());
+
         $this->em->persist($user);
         $this->em->flush();
 
         return $user;
+    }
+
+    private function addAsParticipant(User $user, ?City $city): void
+    {
+        if ($city === null) {
+            return;
+        }
+
+        try {
+            $this->cityEditionResolver->resolve($city->getSlug())->addParticipant($user);
+        } catch (NotFoundHttpException) {
+            // No edition exists yet for this city; nothing to attach to.
+        }
     }
 
     private function generateUniqueUsername(string $email): string
