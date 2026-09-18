@@ -48,7 +48,12 @@
 
         <footer class="footer mt-5 py-3 border-top">
             <div class="container text-center">
-                <p class="text-muted small mb-0">Challenge à Pied et à Vélo | Tous droits réservés</p>
+                <p class="text-muted small mb-0">
+                    Challenge à Pied et à Vélo | Tous droits réservés
+                    {% if release.date %}
+                        | Version du <span title="{{ release.hash }}">{{ release.date|format_datetime(pattern="EEEE d MMMM yyyy 'à' H'h'mm", locale='fr', timezone='Europe/Paris') }}</span>
+                    {% endif %}
+                </p>
             </div>
         </footer>
     </body>

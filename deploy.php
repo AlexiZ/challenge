@@ -73,6 +73,10 @@ task('deploy:importmap:install', function () {
     run('{{bin/console}} importmap:install {{console_options}}');
 });
 
+task('deploy:release-date', function () {
+    run('date -u +"%Y-%m-%dT%H:%M:%SZ" > {{release_path}}/RELEASE_DATE');
+});
+
 function parsePostgresUrl(string $url): array
 {
     $parts = parse_url($url);
@@ -235,6 +239,7 @@ task('deploy', [
     'deploy:dump-env',
     'deploy:assets:install',
     'deploy:importmap:install',
+    'deploy:release-date',
     'database:migrate',
     'deploy:assets',
     'deploy:cache:clear',

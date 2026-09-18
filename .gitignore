@@ -28,3 +28,6 @@
 deploy_secrets.php
 
 .claude/agent-memory/
+
+RELEASE_DATE
+REVISION
