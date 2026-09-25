@@ -29,29 +29,31 @@
         </div>
 
         <main>
-            <div class="container mt-4">
-                {% for flash in app.flashes('success') %}
-                    <div class="alert alert-success alert-dismissible fade show">{{ flash }}</div>
-                {% endfor %}
-                {% for flash in app.flashes('warning') %}
-                    <div class="alert alert-warning alert-dismissible fade show">{{ flash }}</div>
-                {% endfor %}
-                {% for flash in app.flashes('danger') %}
-                    <div class="alert alert-danger alert-dismissible fade show">{{ flash }}</div>
-                {% endfor %}
-                {% for flash in app.flashes('info') %}
-                    <div class="alert alert-info alert-dismissible fade show">{{ flash }}</div>
-                {% endfor %}
-            </div>
+            {% if app.flashes|length > 0 %}
+                <div class="container mt-4">
+                    {% for flash in app.flashes('success') %}
+                        <div class="alert alert-success alert-dismissible fade show">{{ flash }}</div>
+                    {% endfor %}
+                    {% for flash in app.flashes('warning') %}
+                        <div class="alert alert-warning alert-dismissible fade show">{{ flash }}</div>
+                    {% endfor %}
+                    {% for flash in app.flashes('danger') %}
+                        <div class="alert alert-danger alert-dismissible fade show">{{ flash }}</div>
+                    {% endfor %}
+                    {% for flash in app.flashes('info') %}
+                        <div class="alert alert-info alert-dismissible fade show">{{ flash }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
             {% block body %}{% endblock %}
         </main>
 
         <footer class="footer mt-5 py-3 border-top">
             <div class="container text-center">
                 <p class="text-muted small mb-0">
-                    Challenge à Pied et à Vélo | Tous droits réservés
+                    &copy; Challenge à Pied et à Vélo | <a href="https://github.com/AlexiZ/challenge" title="Open Source"><i class="fa-brands fa-github text-black"></i></a>
                     {% if release.date %}
-                        | Version du <span title="{{ release.hash }}">{{ release.date|format_datetime(pattern="EEEE d MMMM yyyy 'à' H'h'mm", locale='fr', timezone='Europe/Paris') }}</span>
+                        Version du <span title="{{ release.hash }}">{{ release.date|format_datetime(pattern="EEEE d MMMM yyyy 'à' H'h'mm", locale='fr', timezone='Europe/Paris') }}</span>
                     {% endif %}
                 </p>
             </div>

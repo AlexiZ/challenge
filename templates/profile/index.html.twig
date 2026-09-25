@@ -3,61 +3,27 @@
 {% block title %}Mon profil | {{ parent() }}{% endblock %}
 
 {% block body %}
-    <div class="edit-layout">
-        {# ═══════════════════════════ BARRE LATÉRALE ══════════════════════════ #}
-        <aside>
-            <div class="edit-section p-1">
-                <div class="edit-stats-table">
-                    <div class="edit-stat-row">
-                        <span class="edit-stat-label"><i class="fas fa-bicycle fa-sm text-primary"></i> Vélo</span>
-                        <span class="edit-stat-val">{{ stats.km_bike }} km</span>
-                    </div>
-                    <div class="edit-stat-row">
-                        <span class="edit-stat-label"><i class="fas fa-person-walking fa-sm text-orange"></i> Marche</span>
-                        <span class="edit-stat-val">{{ stats.km_walk }} km</span>
-                    </div>
-                    <div class="edit-stat-row">
-                        <span class="edit-stat-label"><i class="fas fa-star fa-sm text-orange"></i> Points</span>
-                        <span class="edit-stat-val">{{ stats.total_points }}</span>
-                    </div>
-                </div>
+    <div class="page edit-layout">
+        <div class="edit-page-header">
+            <h1 class="edit-page-title">Mon profil</h1>
+        </div>
 
-                <div class="edit-sidebar-actions">
-                    {% if app.user.publicProfile %}
-                        <a href="{{ path('app_profile_public', {citySlug: city.slug, username: app.user.username}) }}"
-                           class="btn btn--outline btn--sm w-100 text-center d-block">
-                            <i class="fas fa-eye fa-sm"></i> Voir mon profil public
-                        </a>
-                    {% else %}
-                        <p class="edit-sidebar-hint">
-                            <i class="fas fa-lock fa-xs"></i>
-                            Activez « Profil public » pour que les autres participants puissent voir votre profil.
-                        </p>
-                    {% endif %}
-                </div>
-            </div>
-
-            {# ── Accès rapide (écran d'accueil) ───────────────────────────── #}
-            <div class="edit-section my-3">
-                <div class="edit-section-label">Accès rapide</div>
-                {% include 'components/_home_screen_banner.html.twig' %}
-                <form method="post" action="{{ path('app_profile_regenerate_token', {citySlug: city.slug}) }}"
-                      onsubmit="return confirm('Attention : l\'ancien lien ne fonctionnera plus, y compris s\'il est enregistré en favori ou raccourci. Continuer ?');"
-                      class="mt-2">
-                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('regenerate_token') }}">
-                    <button type="submit" class="btn btn--outline btn--sm w-100">
-                        <i class="fas fa-rotate fa-sm"></i> Régénérer mon lien de connexion
-                    </button>
-                </form>
-            </div>
-        </aside>
+        {# ── Accès rapide (écran d'accueil) ───────────────────────────── #}
+        <div class="edit-section edit-quick-access">
+            <div class="edit-section-label">Accès rapide</div>
+            {% include 'components/_home_screen_banner.html.twig' %}
+            <form method="post" action="{{ path('app_profile_regenerate_token', {citySlug: city.slug}) }}"
+                  onsubmit="return confirm('Attention : l\'ancien lien ne fonctionnera plus, y compris s\'il est enregistré en favori ou raccourci. Continuer ?');"
+                  class="mt-2">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('regenerate_token') }}">
+                <button type="submit" class="btn btn--outline btn--sm">
+                    <i class="fas fa-rotate fa-sm"></i> Régénérer mon lien de connexion
+                </button>
+            </form>
+        </div>
 
         {# ═══════════════════════════ FORMULAIRE ══════════════════════════════ #}
         <main class="edit-main">
-            <div class="edit-page-header">
-                <h1 class="edit-page-title">Modifier mon profil</h1>
-            </div>
-
             {{ form_start(form) }}
                 {# ── Photo de profil ───────────────────────────────────────────── #}
                 <div class="edit-section mb-3">
@@ -102,12 +68,13 @@
                 </div>
 
                 {# ── Profil cycliste ───────────────────────────────────────────── #}
-                <div class="edit-section my-3">
+                <div class="edit-section mb-3">
                     <div class="edit-section-label">Profil cycliste</div>
                     <div class="edit-grid-2">
                         <div class="form-group mb-0">
                             {{ form_label(form.cyclistProfile) }}
                             {{ form_widget(form.cyclistProfile, {attr: {class: 'form-control'}}) }}
+                            {{ form_help(form.cyclistProfile) }}
                             {{ form_errors(form.cyclistProfile) }}
                         </div>
                         <div class="form-group mb-0">
@@ -119,7 +86,7 @@
                 </div>
 
                 {# ── Informations personnelles ──────────────────────────────────── #}
-                <div class="edit-section my-3">
+                <div class="edit-section mb-3">
                     <div class="edit-section-label">Informations personnelles</div>
                     <div class="edit-grid-2">
                         <div class="form-group mb-0">
@@ -136,7 +103,7 @@
                 </div>
 
                 {# ── Motivations ───────────────────────────────────────────────── #}
-                <div class="edit-section my-3">
+                <div class="edit-section mb-3">
                     <div class="edit-section-label">Motivations</div>
                     <div class="edit-grid-2">
                         <div class="form-group mb-0">
@@ -153,7 +120,7 @@
                 </div>
 
                 {# ── Mot de passe ──────────────────────────────────────────────── #}
-                <div class="edit-section my-3">
+                <div class="edit-section mb-3">
                     <div class="edit-section-label">Mot de passe</div>
                     {% if not app.user.password %}
                         <p class="edit-sidebar-hint mb-2">
@@ -192,7 +159,7 @@
                 </div>
 
                 {# ── Paramètres ────────────────────────────────────────────────── #}
-                <div class="edit-section my-3">
+                <div class="edit-section mb-3">
                     <div class="edit-section-label">Paramètres</div>
                     <div class="edit-check-group">
                         <label class="edit-check-row" for="{{ form.publicProfile.vars.id }}">
@@ -215,7 +182,7 @@
                 </div>
 
                 <div class="edit-footer">
-                    <button class="btn btn--primary btn--lg" type="submit">
+                    <button class="btn btn--sm btn--primary" type="submit">
                         <i class="fas fa-check fa-sm"></i> Enregistrer les modifications
                     </button>
                 </div>

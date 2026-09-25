@@ -5,7 +5,7 @@
 {% block title %}Connexion | {{ parent() }}{% endblock %}
 
 {% block body %}
-    <div class="container container--narrow mt-8">
+    <div class="page page--narrow">
         <div class="card text-center">
             {% if tokenUser.avatar %}
                 <img src="{{ asset('uploads/avatars/' ~ tokenUser.avatar) }}" class="edit-avatar-preview mx-auto mb-3" alt="">
@@ -16,7 +16,7 @@
 
             <form method="post" action="{{ path('app_login_token_confirm', {token: token}) }}">
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('login_token_confirm') }}">
-                <button class="btn btn--primary w-full" type="submit">Se connecter</button>
+                <button class="btn btn--sm btn--primary w-full" type="submit">Se connecter</button>
             </form>
 
             <div class="text-center mt-4 text-sm">

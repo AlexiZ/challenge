@@ -3,7 +3,7 @@
 {% block title %}Accueil | Challenge à Pied et à Vélo{% endblock %}
 
 {% block body %}
-<div class="home-wrap">
+<div class="page">
     {# ── Hero global ───────────────────────────────────────────────────── #}
     <section class="global-hero">
         <div class="hero-eyebrow justify-content-center">
@@ -19,11 +19,11 @@
             Rejoignez votre ville, enregistrez vos trajets et grimpez au classement.
         </p>
         <div class="hero-cta justify-content-center">
-            <a href="#villes" class="btn btn--primary btn--lg">
+            <a href="#villes" class="btn btn--sm btn--primary">
                 <i class="fas fa-map-location-dot"></i> Découvrir les villes
             </a>
             {% if not app.user %}
-            <a href="{{ path('app_register') }}" class="btn btn--outline btn--lg">
+            <a href="{{ path('app_register') }}" class="btn btn--sm btn--outline">
                 <i class="fas fa-user-plus"></i> M'inscrire
             </a>
             {% endif %}

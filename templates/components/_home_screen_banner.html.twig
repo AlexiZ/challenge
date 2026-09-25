@@ -6,10 +6,15 @@
             Ajoutez ce lien à l'écran d'accueil de votre téléphone pour vous reconnecter en un geste, sans ressaisir vos identifiants.
         </p>
         <ul class="home-screen-banner__steps text-ink-3 fs-14 mb-2">
-            <li><strong>Sur Android :</strong> appuyez sur <i class="fas fa-ellipsis-vertical fa-xs"></i> puis "Ajouter à l'écran d'accueil".</li>
-            <li><strong>Sur iOS :</strong> touchez « Partager » puis « Sur l'écran d'accueil ».</li>
+            <li><strong>Sur Android :</strong> appuyez sur <i class="fas fa-ellipsis-vertical"></i> puis "Ajouter à l'écran d'accueil".</li>
+            <li><strong>Sur iOS (Apple iPhone) :</strong> touchez "Partager" puis "Sur l'écran d'accueil".</li>
         </ul>
-        <code class="home-screen-banner__link">{{ magicLink }}</code>
+        <div class="home-screen-banner__copy" data-controller="clipboard">
+            <code class="home-screen-banner__link" data-clipboard-target="source">{{ magicLink }}</code>
+            <button type="button" class="home-screen-banner__copy-btn" data-action="clipboard#copy" title="Copier le lien" aria-label="Copier le lien">
+                <i class="fas fa-copy" data-clipboard-target="icon"></i>
+            </button>
+        </div>
     </div>
     <div class="home-screen-banner__qr">
         <img src="{{ qr_code_data_uri(magicLink) }}" alt="QR code du lien de connexion personnel">

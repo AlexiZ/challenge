@@ -4,7 +4,7 @@
 
 {% block body %}
     {# ── calculs utiles ─────────────────────────────────────────────────────── #}
-    {% set bikePoints = (stats.km_bike  * cityEdition.pointsPerKmBike)|round(1) %}
+    {% set bikePoints = (stats.km_bike  * cityEdition.pointsPerKmBikeFor(profileUser))|round(1) %}
     {% set walkPoints = (stats.km_walk  * cityEdition.pointsPerKmWalk)|round(1) %}
     {% set dayPoints  = (stats.active_days * cityEdition.pointsPerDay)|round(1) %}
     {% set totalDays  = cityEdition.edition.getDurationDays() %}
@@ -20,6 +20,18 @@
             {% set dayModes = dayModes|merge({(d): (cur == 'bike' ? 'both' : 'walk')}) %}
         {% endif %}
     {% endfor %}
+
+    <div class="page">
+    {# ── En-tête de page ──────────────────────────────────────────────── #}
+    <div class="mc-page-header">
+        <div>
+            <h1 class="mc-page-title">{{ isSelf ? 'Mon profil public' : profileUser.fullName }}</h1>
+            <div class="mc-page-sub">
+                <i class="fas fa-map-location-dot fa-sm"></i>
+                {{ city.name }} - Édition {{ cityEdition.edition.year }}
+            </div>
+        </div>
+    </div>
 
     <div class="pub-layout">
         {# ════════════════════════════ BARRE LATÉRALE ════════════════════════ #}
@@ -82,7 +94,7 @@
 
             {% if cityTeams is not empty %}
                 <div class="pub-teams-section">
-                    <div class="pub-section-label">Mes équipes</div>
+                    <div class="mc-section-label"><i class="fas fa-people-group fa-xs me-1"></i>{{ isSelf ? 'Mes équipes' : 'Équipes' }}</div>
                     {% for team in cityTeams %}
                         <a href="{{ path('app_team_show', {citySlug: city.slug, slug: team.slug}) }}" class="pub-team-card">
                             <span class="pub-team-name">{{ team.name }}</span>
@@ -104,119 +116,164 @@
         </aside>
 
         {# ════════════════════════════ CONTENU PRINCIPAL ════════════════════ #}
-        <main class="pub-main">
-            {# ── Titre + sélecteur édition ─────────────────────────────────── #}
-            <div class="pub-main-header">
-                <h2 class="pub-main-title">Statistiques de participation</h2>
-                <div class="pub-edition-tabs">
-                    <span class="pub-edition-tab pub-edition-tab--active">{{ cityEdition.edition.year }}</span>
+        <main class="mc-main">
+            {# ── Cartes de stats ───────────────────────────────────────────── #}
+            <div class="mc-stats-row">
+                <div class="mc-stat-card">
+                    <div class="mc-stat-eyebrow">
+                        <i class="fas fa-calendar-check fa-xs"></i> Jours actifs
+                    </div>
+                    <div class="mc-stat-big">{{ stats.active_days }}</div>
+                    <div class="mc-stat-sub">sur {{ totalDays }} jours du challenge</div>
                 </div>
-            </div>
 
-            {# ── 3 stat cards ──────────────────────────────────────────────── #}
-            <div class="pub-stats-grid">
-                <div class="pub-stat-card">
-                    <div class="pub-stat-val pub-stat-val--teal">{{ stats.active_days }}</div>
-                    <div class="pub-stat-lbl">jours actifs</div>
-                    <div class="pub-stat-sub">sur {{ totalDays }} jours de challenge</div>
+                <div class="mc-stat-card">
+                    <div class="mc-stat-eyebrow">
+                        <i class="fas fa-route fa-xs"></i> Distance
+                    </div>
+                    <div class="mc-stat-big">
+                        {{ stats.km_total|number_format(0, '.', ' ') }}<span class="mc-stat-unit">km</span>
+                    </div>
+                    <div class="mc-stat-breakdown">
+                        <span><i class="fas fa-bicycle fa-xs text-primary"></i>
+                            {{ stats.km_bike|number_format(2) }} km</span>
+                        <span><i class="fas fa-person-walking fa-xs text-orange"></i>
+                            {{ stats.km_walk|number_format(2) }} km</span>
+                    </div>
                 </div>
-                <div class="pub-stat-card">
-                    <div class="pub-stat-val pub-stat-val--teal">{{ stats.km_total }} km</div>
-                    <div class="pub-stat-lbl">distance totale</div>
-                    <div class="pub-stat-sub d-flex gap-1 justify-content-center flex-wrap mt-1">
-                        {% if stats.km_bike > 0 %}
-                            <span class="tag tag-velo"><i class="fas fa-bicycle fa-xs"></i> {{ stats.km_bike }} km</span>
-                        {% endif %}
-                        {% if stats.km_walk > 0 %}
-                            <span class="tag tag-marche"><i class="fas fa-person-walking fa-xs"></i> {{ stats.km_walk }} km</span>
+
+                <div class="mc-stat-card">
+                    <div class="mc-stat-eyebrow">
+                        <i class="fas fa-star fa-xs"></i> Points cumulés
+                    </div>
+                    <div class="mc-stat-big text-orange">
+                        {{ stats.total_points|number_format(1) }}
+                    </div>
+                    <div class="mc-stat-breakdown mc-stat-breakdown--col">
+                        <span><i class="fas fa-bicycle fa-xs text-primary"></i>
+                            +{{ bikePoints }} pts vélo</span>
+                        <span><i class="fas fa-person-walking fa-xs text-orange"></i>
+                            +{{ walkPoints }} pts marche</span>
+                        <span><i class="fas fa-calendar-days fa-xs text-ink-3"></i>
+                            +{{ dayPoints }} pts jours</span>
+                        {% if stats.bonus_points > 0 %}
+                            <span><i class="fas fa-camera fa-xs text-secondary"></i>
+                            +{{ stats.bonus_points }} pts bonus</span>
                         {% endif %}
                     </div>
                 </div>
-                <div class="pub-stat-card">
-                    <div class="pub-stat-val pub-stat-val--orange">{{ stats.total_points }}</div>
-                    <div class="pub-stat-lbl">points</div>
-                    <div class="pub-stat-sub">
-                        {{ dayPoints }} jours
-                        {% if stats.km_bike > 0 %} + {{ bikePoints }} vélo{% endif %}
-                        {% if stats.km_walk > 0 %} + {{ walkPoints }} marche{% endif %}
-                        {% if stats.bonus_points > 0 %} + {{ stats.bonus_points }} bonus{% endif %}
+
+                <div class="mc-stat-card">
+                    <div class="mc-stat-eyebrow">
+                        <i class="fas fa-leaf fa-xs"></i> CO₂ évité
                     </div>
+                    <div class="mc-stat-big text-green">
+                        {{ stats.co2_kg|number_format(0, '.', ' ') }}<span class="mc-stat-unit">kg</span>
+                    </div>
+                    <div class="mc-stat-sub">économisés</div>
                 </div>
             </div>
 
             {# ── Heatmap ───────────────────────────────────────────────────── #}
-            <div class="pub-section-block">
-                <div class="pub-section-label">
-                    Jours de participation depuis
-                    {% if cityEdition.edition.startDate %}
-                        {{ cityEdition.edition.startDate|format_datetime(pattern: 'MMMM Y') }}
-                    {% endif %}
+            <div class="mc-section">
+                <div class="mc-section-label">
+                    <i class="fas fa-calendar-days fa-xs me-1"></i>Jours de participation
                 </div>
-                <div class="heatmap mt-2">
-                    {% if cityEdition.edition.startDate and cityEdition.edition.endDate %}
-                        {% set startTs  = cityEdition.edition.startDate|date('U') %}
-                        {% set endTs    = cityEdition.edition.endDate|date('U') %}
-                        {% set nowTs    = 'now'|date('U') %}
-                        {% set dayCount = (((endTs - startTs) / 86400)|round) + 1 %}
-                        {% for i in 0..(dayCount - 1) %}
-                            {% set dayTs  = startTs + (i * 86400) %}
-                            {% set dayKey = dayTs|date('Y-m-d') %}
-                            {% set mode   = dayModes[dayKey] ?? '' %}
-                            {% set isPast = dayTs <= nowTs %}
-                            {% if not isPast %}
-                                <div class="heatmap-day heatmap-day--future" title="{{ dayKey }}"></div>
-                            {% elseif mode == '' %}
-                                <div class="heatmap-day" title="{{ dayKey }}"></div>
-                            {% else %}
-                                <div class="heatmap-day" data-mode="{{ mode }}" title="{{ dayKey }}"></div>
-                            {% endif %}
-                        {% endfor %}
-                    {% endif %}
-                </div>
-                <div class="pub-heatmap-legend">
-                    <span class="pub-legend-dot pub-legend-dot--both"></span> Vélo + marche &nbsp;
-                    <span class="pub-legend-dot pub-legend-dot--bike"></span> Vélo seulement &nbsp;
-                    <span class="pub-legend-dot pub-legend-dot--walk"></span> Marche seulement &nbsp;
-                    <span class="pub-legend-dot pub-legend-dot--none"></span> Pas de trajet
+                <div class="mc-progress-block mb-0">
+                    <div class="heatmap">
+                        {% if cityEdition.edition.startDate and cityEdition.edition.endDate %}
+                            {% set startTs  = cityEdition.edition.startDate|date('U') %}
+                            {% set endTs    = cityEdition.edition.endDate|date('U') %}
+                            {% set nowTs    = 'now'|date('U') %}
+                            {% set dayCount = (((endTs - startTs) / 86400)|round) + 1 %}
+                            {% for i in 0..(dayCount - 1) %}
+                                {% set dayTs  = startTs + (i * 86400) %}
+                                {% set dayKey = dayTs|date('Y-m-d') %}
+                                {% set mode   = dayModes[dayKey] ?? '' %}
+                                {% set isPast = dayTs <= nowTs %}
+                                {% if not isPast %}
+                                    <div class="heatmap-day heatmap-day--future" title="{{ dayKey }}"></div>
+                                {% elseif mode == '' %}
+                                    <div class="heatmap-day" title="{{ dayKey }}"></div>
+                                {% else %}
+                                    <div class="heatmap-day" data-mode="{{ mode }}" title="{{ dayKey }}"></div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="pub-heatmap-legend">
+                        <span class="pub-legend-dot pub-legend-dot--both"></span> Vélo + marche &nbsp;
+                        <span class="pub-legend-dot pub-legend-dot--bike"></span> Vélo seulement &nbsp;
+                        <span class="pub-legend-dot pub-legend-dot--walk"></span> Marche seulement &nbsp;
+                        <span class="pub-legend-dot pub-legend-dot--none"></span> Pas de trajet
+                    </div>
                 </div>
             </div>
 
-            {# ── Trajets saisis ────────────────────────────────────────────── #}
-            <div class="pub-section-block">
-                <div class="pub-section-label">Trajets saisis</div>
+            {# ── Trajets ───────────────────────────────────────────────────── #}
+            <div class="mc-section">
+                <div class="mc-section-label">
+                    <i class="fas fa-list-ul fa-xs me-1"></i>Mes trajets
+                </div>
                 {% if trips is empty %}
-                    <p class="pub-empty">Aucun trajet saisi pour cette édition.</p>
+                    <p class="text-ink-3 fs-14">Aucun trajet saisi pour cette édition.</p>
                 {% else %}
                     {% set maxTripsAtStartup = 6 %}
-                    <div class="pub-trips">
+                    <div class="mc-trips-list">
                         {% for trip in trips %}
-                            <div class="pub-trip-row {% if loop.index > maxTripsAtStartup %}d-none{% endif %}">
-                                <span class="pub-trip-icon">
-                                    {% if trip.mode.value == 'bike' %}
-                                        <i class="fas fa-bicycle text-primary"></i>
-                                    {% else %}
-                                        <i class="fas fa-person-walking text-orange"></i>
-                                    {% endif %}
+                            <div class="mc-trip-row {% if loop.index > maxTripsAtStartup %}d-none{% endif %}">
+                                <span class="mc-trip-icon {{ trip.mode.value == 'bike' ? 'bike' : 'walk' }}">
+                                    <i class="{{ trip.mode.faIcon() }}"></i>
                                 </span>
-                                <span class="pub-trip-date">{{ trip.tripDate|format_datetime(pattern: 'd MMMM Y') }}</span>
-                                <span class="pub-trip-km">{{ trip.distanceKm|number_format(0) }} km</span>
-                                {% set hasDayPoint = trip.id in dayPointTripIds %}
-                                {% set tripPoints = trip.pointsGenerated + (hasDayPoint ? cityEdition.pointsPerDay : 0) %}
-                                {% set kmRate = trip.mode.value == 'bike' ? cityEdition.pointsPerKmBike : cityEdition.pointsPerKmWalk %}
-                                {% set detail = (hasDayPoint ? (cityEdition.pointsPerDay|number_format(2) ~ ' pt jour actif + ') : '') ~ trip.distanceKm|number_format(2) ~ 'km * ' ~ kmRate|number_format(2) ~ ' pts' %}
-                                <span class="pub-trip-pts" title="{{ detail }}">+{{ tripPoints|number_format(2) }} pts</span>
+                                <span class="mc-trip-date">{{ trip.tripDate|date('d/m/Y') }}</span>
+                                <span class="mc-trip-mode">{{ trip.mode.label() }}</span>
+                                <span class="mc-trip-dist">{{ trip.distanceKm|number_format(2) }} km</span>
+                                {% include 'components/_trip_points.html.twig' with {user: profileUser} %}
                             </div>
                         {% endfor %}
                     </div>
-                    {% if trips|length > 6 %}
-                        <div class="pub-trips-more" data-reveal-target=".pub-trip-row.d-none">
-                            <i class="fas fa-chevron-down fa-xs"></i>
-                            Voir les {{ trips|length - maxTripsAtStartup }} trajets précédents
+                    {% if trips|length > maxTripsAtStartup %}
+                        <div class="text-center mt-12px">
+                            <button type="button" class="orga-link d-inline-flex fs-13 bg-transparent border-0 p-0" data-reveal-target=".mc-trip-row.d-none">
+                                <i class="fas fa-chevron-down"></i> Voir les {{ trips|length - maxTripsAtStartup }} trajets précédents
+                            </button>
                         </div>
                     {% endif %}
                 {% endif %}
             </div>
+
+            {# ── Défis photo ───────────────────────────────────────────────── #}
+            <div class="mc-section">
+                <div class="mc-section-label">
+                    <i class="fas fa-camera fa-xs me-1"></i>Mes défis photo
+                </div>
+                {% if bonusPhotos is empty %}
+                    <p class="text-ink-3 fs-14">Aucun défi photo validé pour cette édition.</p>
+                {% else %}
+                    <div class="mc-photo-list">
+                        {% for photo in bonusPhotos %}
+                            <div class="mc-photo-row">
+                                <div class="mc-photo-info">
+                                    <div class="mc-photo-name">{{ photo.challenge.label() }}</div>
+                                    <div class="mc-photo-desc">Soumis le {{ photo.submittedAt|date('d/m/Y') }}</div>
+                                </div>
+                                <div class="mc-photo-pts">+{{ (photo.pointsAwarded ?? 0)|number_format(0) }} pts</div>
+                                {# Photo visible only if the author consented to publish it (or is viewing their own profile) #}
+                                {% if photo.photo and (photo.consentToPublish or isSelf) %}
+                                    <button type="button" class="pub-photo-btn js-lightbox"
+                                            data-src="{{ asset('uploads/bonus_photos/' ~ photo.photo) }}"
+                                            data-alt="{{ photo.challenge.label() }}"
+                                            title="Voir la photo" aria-label="Voir la photo">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
         </main>
+    </div>{# /pub-layout #}
     </div>
 {% endblock %}
 

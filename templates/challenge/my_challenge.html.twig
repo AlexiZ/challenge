@@ -15,18 +15,18 @@
 {% set challengePct = totalDays > 0 ? min(100, ((daysElapsed / totalDays) * 100)|round) : 0 %}
 
 {# ── Décomposition des points ────────────────────────────────────────── #}
-{% set bikePoints = (stats.km_bike * cityEdition.pointsPerKmBike)|round(1) %}
+{% set bikePoints = (stats.km_bike * cityEdition.pointsPerKmBikeFor(app.user))|round(1) %}
 {% set walkPoints = (stats.km_walk * cityEdition.pointsPerKmWalk)|round(1) %}
 {% set dayPoints  = (stats.active_days * cityEdition.pointsPerDay)|round(1) %}
 
-<div class="home-wrap">
+<div class="page">
     {# ── En-tête de page ──────────────────────────────────────────────── #}
     <div class="mc-page-header">
         <div>
             <h1 class="mc-page-title">Mon challenge</h1>
             <div class="mc-page-sub">
                 <i class="fas fa-map-location-dot fa-sm"></i>
-                {{ city.name }} &middot; Édition {{ cityEdition.edition.year }}
+                {{ city.name }} - Édition {{ cityEdition.edition.year }}
             </div>
         </div>
         {% if cityEdition.tripsEntryOpen %}
@@ -64,13 +64,13 @@
                     {% if cityEdition.edition.startDate and cityEdition.edition.endDate %}
                         du {{ cityEdition.edition.startDate|format_datetime(pattern: 'd MMMM') }}
                         au {{ cityEdition.edition.endDate|format_datetime(pattern: 'd MMMM Y') }}
-                        &nbsp;&middot;&nbsp; {{ totalDays }} jours au total
+                        &nbsp;-&nbsp; {{ totalDays }} jours au total
                     {% endif %}
                     {% if daysLeft > 0 %}
-                        &nbsp;&middot;&nbsp;
+                        &nbsp;-&nbsp;
                         <strong>{{ daysLeft }} jour{{ daysLeft > 1 ? 's' }} restant{{ daysLeft > 1 ? 's' }}</strong>
                     {% elseif endTs > 0 and nowTs > endTs %}
-                        &nbsp;&middot;&nbsp; <em>Challenge terminé</em>
+                        &nbsp;-&nbsp; <em>Challenge terminé</em>
                     {% endif %}
                 </div>
             </div>
@@ -137,7 +137,7 @@
             {# 4. Mes trajets récents #}
             <div class="mc-section">
                 <div class="mc-section-label">
-                    <i class="fas fa-list-ul fa-xs me-1"></i>Mes trajets récents
+                    <i class="fas fa-list-ul fa-xs me-1"></i>Mes trajets
                 </div>
                 {% if trips is empty %}
                     <p class="text-ink-3 fs-14">
@@ -153,7 +153,7 @@
                                 <span class="mc-trip-date">{{ trip.tripDate|date('d/m/Y') }}</span>
                                 <span class="mc-trip-mode">{{ trip.mode.label() }}</span>
                                 <span class="mc-trip-dist">{{ trip.distanceKm|number_format(2) }} km</span>
-                                <span class="mc-trip-pts">+{{ trip.pointsGenerated|number_format(2) }} pts</span>
+                                {% include 'components/_trip_points.html.twig' with {user: app.user} %}
                                 {% if trip.isSuspicious() %}
                                     <span title="{{ trip.suspiciousReason }}" class="text-red flex-shrink-0">
                                         <i class="fas fa-triangle-exclamation fa-xs"></i>
@@ -174,27 +174,23 @@
 
             {# 5. Défis photo #}
             {% if cityEdition.photoChallengesEnabled %}
-                <div class="mc-bonus-cta">
-                    <div class="mc-bonus-cta-body">
-                        <i class="fas fa-camera mc-bonus-icon"></i>
-                        <div>
-                            <div class="mc-bonus-title">Ajoutez des points bonus en partageant vos photos !</div>
-                            <div class="mc-bonus-sub">Participez aux défis photo pour gagner des points supplémentaires.</div>
-                        </div>
-                    </div>
-                    <a href="{{ path('app_bonus_photo_list', {citySlug: city.slug}) }}" class="btn btn--sm btn--orange flex-shrink-0">
-                        <i class="fas fa-camera"></i> Défis photo
-                    </a>
-                </div>
-
                 <div class="mc-section">
                     <div class="mc-section-label">
-                        <i class="fas fa-camera fa-xs me-1"></i>Mes challenges photo
+                        <i class="fas fa-camera fa-xs me-1"></i>Mes défis photo
                     </div>
                     {% if myBonusPhotos is empty %}
-                        <p class="text-ink-3 fs-14">
-                            Vous n'avez pas encore soumis de photo pour un défi.
-                        </p>
+                        <div class="mc-bonus-cta">
+                            <div class="mc-bonus-cta-body">
+                                <i class="fas fa-camera mc-bonus-icon"></i>
+                                <div>
+                                    <div class="mc-bonus-title">Ajoutez des points bonus en partageant vos photos !</div>
+                                    <div class="mc-bonus-sub">Participez aux défis photo pour gagner des points supplémentaires.</div>
+                                </div>
+                            </div>
+                            <a href="{{ path('app_bonus_photo_list', {citySlug: city.slug}) }}" class="btn btn--sm btn--orange flex-shrink-0">
+                                <i class="fas fa-camera"></i> Défis photo
+                            </a>
+                        </div>
                     {% else %}
                         <div class="mc-photo-list">
                             {% for photo in myBonusPhotos %}
@@ -203,7 +199,7 @@
                                         <div class="mc-photo-name">{{ photo.challenge.label() }}</div>
                                         <div class="mc-photo-desc">
                                             Soumis le {{ photo.submittedAt|date('d/m/Y') }}
-                                            &middot;
+                                            -
                                             <span class="bp-status-badge bp-status--{{ photo.status.value }}">
                                                 {{ photo.status.label() }}
                                             </span>
@@ -211,6 +207,15 @@
                                     </div>
                                     {% if photo.status.value == 'approved' and photo.pointsAwarded is not null %}
                                         <div class="mc-photo-pts">+{{ photo.pointsAwarded|number_format(0) }} pts</div>
+                                    {% endif %}
+                                    {# Photo visible only if the author consented to publish it (or is viewing their own profile) #}
+                                    {% if photo.photo and (photo.consentToPublish or isSelf) %}
+                                        <button type="button" class="pub-photo-btn js-lightbox"
+                                                data-src="{{ asset('uploads/bonus_photos/' ~ photo.photo) }}"
+                                                data-alt="{{ photo.challenge.label() }}"
+                                                title="Voir la photo" aria-label="Voir la photo">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
                                     {% endif %}
                                 </div>
                             {% endfor %}
@@ -289,5 +294,5 @@
             </div>
         </div>{# /mc-sidebar #}
     </div>{# /mc-layout #}
-</div>{# /home-wrap #}
+</div>{# /page #}
 {% endblock %}

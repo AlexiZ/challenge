@@ -3,9 +3,14 @@
 {% block title %}Le challenge | {{ parent() }}{% endblock %}
 
 {% block body %}
-    <div class="info-page">
+    <div class="page">
         <div class="info-page__header">
-            <h1 class="info-page__title">Le challenge à <span class="or">{{ city.name }}</span></h1>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h1 class="info-page__title">Le challenge à <span class="or">{{ city.name }}</span></h1>
+                <a href="{{ path('app_home') }}" class="btn btn--outline btn--sm">
+                    <i class="fas fa-globe me-1"></i>Voir les autres villes
+                </a>
+            </div>
             <p class="info-page__sub">Tout ce qu'il faut savoir pour participer à l'édition {{ cityEdition.edition.year }}.</p>
         </div>
 
@@ -79,11 +84,14 @@
                     + <span class="pts-orange">{{ cityEdition.pointsPerKmWalk }} pt</span> × km marche
                     + bonus photo
                 </div>
+                <p class="fs-088rem text-ink-2">
+                    Les cyclistes de niveau <strong>novice</strong> voient leurs points par km à vélo multipliés par {{ constant('App\\Entity\\CityEdition::NOVICE_BIKE_MULTIPLIER') }}.
+                </p>
                 <dl class="formula-dl">
                     <dt class="text-ink-3">Par jour actif</dt>
                     <dd class="fw-semibold">{{ cityEdition.pointsPerDay }} pts</dd>
                     <dt class="text-ink-3">Par km à vélo</dt>
-                    <dd class="fw-semibold">{{ cityEdition.pointsPerKmBike }} pts</dd>
+                    <dd><span class="fw-semibold">{{ cityEdition.pointsPerKmBike }} pts</span> ({{ cityEdition.pointsPerKmBike * constant('App\\Entity\\CityEdition::NOVICE_BIKE_MULTIPLIER') }} pts pour les cyclistes novices)</dd>
                     <dt class="text-ink-3">Par km à pied</dt>
                     <dd class="fw-semibold">{{ cityEdition.pointsPerKmWalk }} pts</dd>
                 </dl>
@@ -210,16 +218,16 @@
                     <p class="fs-088rem text-ink-2 mb-3">
                         Pour remporter des points bonus, relevez un des défis ci-dessous, prenez une photo et partagez-la depuis votre profil. Les photos sont publiées sur le site avec votre accord.
                     </p>
-                    {% if cityEdition.bonusPhotoConfigs is not empty %}
+                    {% if cityEdition.availableBonusChallenges is not empty %}
                         <div class="challenge-grid mb-3">
-                            {% for config in cityEdition.bonusPhotoConfigs %}
+                            {% for challenge in cityEdition.availableBonusChallenges %}
                                 <div class="challenge-card d-flex justify-content-between">
                                     <div>
-                                        <div class="challenge-card__title">{{ config.challenge.label() }}</div>
-                                        <div class="challenge-card__desc">{{ config.challenge.description() }}</div>
+                                        <div class="challenge-card__title">{{ challenge.label() }}</div>
+                                        <div class="challenge-card__desc">{{ challenge.description() }}</div>
                                     </div>
                                     <div class="my-auto">
-                                        <div class="challenge-card__badge">+{{ config.points|number_format(0) }} pts</div>
+                                        <div class="challenge-card__badge">+{{ (cityEdition.bonusPhotoConfig(challenge).points ?? challenge.defaultPoints())|number_format(0) }} pts</div>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -273,11 +281,11 @@
         {# Actions #}
         <div class="d-flex gap-3 flex-wrap mt-4">
             {% if not app.user %}
-                <a href="{{ path('app_register', {citySlug: city.slug}) }}" class="btn btn--primary btn--lg">S'inscrire pour participer</a>
+                <a href="{{ path('app_register', {citySlug: city.slug}) }}" class="btn btn--sm btn--primary">S'inscrire pour participer</a>
             {% else %}
-                <a href="{{ path('app_trip_entry', {citySlug: city.slug}) }}" class="btn btn--primary btn--lg">Saisir un trajet</a>
+                <a href="{{ path('app_trip_entry', {citySlug: city.slug}) }}" class="btn btn--sm btn--primary">Saisir un trajet</a>
             {% endif %}
-            <a href="{{ path('app_city_home', {citySlug: city.slug}) }}" class="btn btn--outline btn--lg">← Retour à l'accueil</a>
+            <a href="{{ path('app_city_home', {citySlug: city.slug}) }}" class="btn btn--sm btn--outline">← Retour à l'accueil</a>
         </div>
 
     </div>

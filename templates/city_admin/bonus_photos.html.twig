@@ -3,11 +3,11 @@
 {% block title %}Défis photo | {{ parent() }}{% endblock %}
 
 {% block body %}
-    <div class="home-wrap">
+    <div class="page">
         <div class="adm-page-header">
             <div>
                 <h1 class="adm-page-title">Défis photo en attente</h1>
-                <div class="adm-page-sub">{{ city.name }} &middot; Édition {{ cityEdition.edition.year }}</div>
+                <div class="adm-page-sub">{{ city.name }} - Édition {{ cityEdition.edition.year }}</div>
             </div>
             {% if pending is not empty %}
                 <span class="badge badge--secondary badge--lg">
@@ -33,13 +33,18 @@
                             </div>
                             <span class="text-xs text-muted">{{ photo.submittedAt|date('d/m/Y H:i') }}</span>
                         </div>
+                        {# Message shown instead of the image when no photo is stored or the file fails to load #}
                         {% if photo.photo %}
                             <div class="bp-admin-photo mb-3">
                                 <img src="{{ asset('uploads/bonus_photos/' ~ photo.photo) }}"
                                      alt="Photo défi"
-                                     class="js-lightbox">
+                                     class="js-lightbox"
+                                     onerror="this.parentElement.hidden = true; this.parentElement.nextElementSibling.hidden = false;">
                             </div>
                         {% endif %}
+                        <div class="alert--warning mb-3" {% if photo.photo %}hidden{% endif %}>
+                            <i class="fas fa-triangle-exclamation me-1"></i> Photo introuvable.
+                        </div>
                         {% if photo.comment %}
                             <p class="text-sm text-ink-2 mb-14px">{{ photo.comment }}</p>
                         {% endif %}

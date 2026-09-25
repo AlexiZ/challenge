@@ -3,7 +3,7 @@
 {% block title %}Mot de passe oublié | {{ parent() }}{% endblock %}
 
 {% block body %}
-<div class="container container--narrow mt-8">
+<div class="page page--narrow">
     <div class="card">
         <h1 class="card__title card__title--lg text-center mb-4">Mot de passe oublié</h1>
 
@@ -13,7 +13,7 @@
                 {{ form_widget(requestForm.email, {attr: {class: 'form-control'}}) }}
                 {{ form_errors(requestForm.email) }}
             </div>
-            <button class="btn btn--primary w-full" type="submit">Envoyer le lien de réinitialisation</button>
+            <button class="btn btn--sm btn--primary w-full" type="submit">Envoyer le lien de réinitialisation</button>
         {{ form_end(requestForm) }}
 
         <div class="text-center mt-4 text-sm">

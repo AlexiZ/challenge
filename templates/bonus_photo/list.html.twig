@@ -15,7 +15,7 @@
 } %}
 
 {% block body %}
-<div class="home-wrap">
+<div class="page">
     <div class="bp-page-header">
         <h1 class="bp-page-title">Défis photo</h1>
         <p class="bp-page-sub">Partagez vos photos et gagnez des points bonus pour votre équipe.</p>
@@ -29,7 +29,7 @@
                 <div class="bp-form-card">
                     <div class="bp-form-header">
                         <span><i class="fas fa-camera me-1"></i> Soumettre une photo</span>
-                        <span class="bp-form-hint">Formats acceptés : JPG, PNG &middot; Taille max : 5 Mo</span>
+                        <span class="bp-form-hint">Formats acceptés : JPG, PNG (Taille max : 5 Mo)</span>
                     </div>
                     <div class="bp-form-body">
                         {{ form_start(submitForm) }}
@@ -114,6 +114,17 @@
                             Connectez-vous pour soumettre un défi photo.
                         </p>
                         <a href="{{ path('app_login') }}" class="btn btn--primary btn--sm">Se connecter</a>
+                    </div>
+                </div>
+            {% else %}
+                <div class="bp-form-card">
+                    <div class="bp-form-header">
+                        <span><i class="fas fa-camera me-1"></i> Soumettre une photo</span>
+                    </div>
+                    <div class="bp-form-body text-center p-2rem">
+                        <p class="text-ink-3 fs-14 mb-0">
+                            Les défis photo ne sont pas ouverts pour le moment.
+                        </p>
                     </div>
                 </div>
             {% endif %}
@@ -223,29 +234,19 @@
             {# Points à gagner #}
             <div class="card card--flat bp-pts-card">
                 <div class="bp-sidebar-label">POINTS À GAGNER</div>
-                {% set configs = cityEdition.bonusPhotoConfigs %}
-                {% if configs is not empty %}
-                    {% for config in configs|sort((a, b) => b.points > a.points ? 1 : -1) %}
-                        <div class="bp-pts-row">
-                            <span class="bp-pts-name">
-                                {{ config.challenge.label() }}
-                                <span class="bp-pts-tip" title="{{ challengeDescriptionMap[config.challenge.value] ?? '' }}">
-                                    <i class="fa-regular fa-circle-question"></i>
-                                </span>
+                {% for challenge in cityEdition.availableBonusChallenges|sort((a, b) => challengePointsMap[b.value] <=> challengePointsMap[a.value]) %}
+                    <div class="bp-pts-row">
+                        <span class="bp-pts-name">
+                            {{ challenge.label() }}
+                            <span class="bp-pts-tip" title="{{ challengeDescriptionMap[challenge.value] ?? '' }}">
+                                <i class="fa-regular fa-circle-question"></i>
                             </span>
-                            <span class="bp-pts-badge">+{{ config.points|number_format(0) }} pts</span>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    {% for case in challengePointsMap|keys %}
-                        <div class="bp-pts-row">
-                            <span class="bp-pts-name">{{ case }}</span>
-                            <span class="bp-pts-badge">+{{ challengePointsMap[case] }} pts</span>
-                        </div>
-                    {% endfor %}
-                {% endif %}
+                        </span>
+                        <span class="bp-pts-badge">+{{ challengePointsMap[challenge.value] }} pts</span>
+                    </div>
+                {% endfor %}
             </div>
         </div>{# /bp-sidebar #}
     </div>{# /bp-layout #}
-</div>{# /home-wrap #}
+</div>{# /page #}
 {% endblock %}

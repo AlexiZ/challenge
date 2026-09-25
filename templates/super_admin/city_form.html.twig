@@ -3,12 +3,12 @@
 {% block title %}{{ city.id ? 'Modifier' : 'Nouvelle' }} ville | {{ parent() }}{% endblock %}
 
 {% block body %}
-<div class="home-wrap">
+<div class="page">
     <div class="adm-page-header">
         <div>
             <h1 class="adm-page-title">{{ city.id ? 'Modifier la ville' : 'Nouvelle ville' }}</h1>
             {% if city.id %}
-                <div class="adm-page-sub">{{ city.name }} &middot; <code>{{ city.slug }}</code></div>
+                <div class="adm-page-sub">{{ city.name }} - <code>{{ city.slug }}</code></div>
             {% endif %}
         </div>
         <a href="{{ path('app_super_admin_dashboard') }}" class="btn btn--sm btn--outline">
@@ -118,7 +118,7 @@
         </div>
     </div>
 
-    <button class="btn btn--primary" type="submit">
+    <button class="btn btn--sm btn--primary" type="submit">
         <i class="fas fa-save me-1"></i> Enregistrer
     </button>
 

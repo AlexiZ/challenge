@@ -3,7 +3,7 @@
 {% block title %}Nouveau mot de passe | {{ parent() }}{% endblock %}
 
 {% block body %}
-<div class="container container--narrow mt-8">
+<div class="page page--narrow">
     <div class="card">
         <h1 class="card__title card__title--lg text-center mb-4">Nouveau mot de passe</h1>
 
@@ -24,7 +24,7 @@
                 </div>
                 {{ form_errors(resetForm.plainPassword.second) }}
             </div>
-            <button class="btn btn--primary w-full" type="submit">Enregistrer mon mot de passe</button>
+            <button class="btn btn--sm btn--primary w-full" type="submit">Enregistrer mon mot de passe</button>
         {{ form_end(resetForm) }}
     </div>
 </div>

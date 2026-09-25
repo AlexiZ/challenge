@@ -3,7 +3,7 @@
 {% block title %}Équipes | {{ parent() }}{% endblock %}
 
 {% block body %}
-<div class="container mt-6">
+<div class="page">
     <div class="page-header">
         <div class="flex justify-between items-center">
             <div>
@@ -11,7 +11,7 @@
                 <p class="page-header__subtitle">{{ city.name }}</p>
             </div>
             {% if app.user %}
-                <a href="{{ path('app_team_create', {citySlug: city.slug}) }}" class="btn btn--primary">+ Créer une équipe</a>
+                <a href="{{ path('app_team_create', {citySlug: city.slug}) }}" class="btn btn--sm btn--primary">+ Créer une équipe</a>
             {% endif %}
         </div>
     </div>

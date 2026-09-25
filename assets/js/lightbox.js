@@ -1,12 +1,12 @@
-// Full-size photo viewer: click any `.js-lightbox` image to open, click anywhere
+// Full-size photo viewer: click any `.js-lightbox` image (or element with `data-src`) to open, click anywhere
 // except the enlarged image (backdrop or close button) or press Escape to close.
 document.addEventListener('click', function (event) {
     const trigger = event.target.closest('.js-lightbox');
     if (trigger) {
         const overlay = document.querySelector('.lightbox');
         const img = overlay.querySelector('.lightbox__img');
-        img.src = trigger.src;
-        img.alt = trigger.alt || '';
+        img.src = trigger.dataset.src || trigger.src;
+        img.alt = trigger.dataset.alt || trigger.alt || '';
         overlay.classList.add('is-open');
         return;
     }

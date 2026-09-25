@@ -3,7 +3,7 @@
 {% block title %}Admininistration | {{ parent() }}{% endblock %}
 
 {% block body %}
-<div class="home-wrap">
+<div class="page">
     {# ── Super admin notice ── #}
     {% if app.user and is_granted('ROLE_SUPER_ADMIN') %}
         <div class="alert alert-info">
@@ -18,10 +18,10 @@
             <div class="adm-page-sub">
                 Édition {{ cityEdition.edition.year }}
                 {% if cityEdition.edition.startDate and cityEdition.edition.endDate %}
-                    &middot; du {{ cityEdition.edition.startDate|date('d/m/Y') }}
+                    - du {{ cityEdition.edition.startDate|date('d/m/Y') }}
                     au {{ cityEdition.edition.endDate|date('d/m/Y') }}
                 {% endif %}
-                &middot;
+                -
                 {% if cityEdition.active %}
                     <span class="adm-status adm-status--active">En cours</span>
                 {% else %}

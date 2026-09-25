@@ -3,7 +3,7 @@
 {% block title %}{{ city.name }} | Challenge à Pied et à Vélo{% endblock %}
 
 {% block body %}
-    <div class="home-wrap">
+    <div class="page">
         {# ── Hero ──────────────────────────────────────────────────────────── #}
         <section class="hero-section">
             <div class="hero-left">
@@ -24,24 +24,24 @@
                 </p>
                 <div class="hero-cta">
                     {% if not app.user %}
-                        <a href="{{ path('app_register', {citySlug: city.slug}) }}" class="btn btn--primary btn--lg">
+                        <a href="{{ path('app_register', {citySlug: city.slug}) }}" class="btn btn--sm btn--primary">
                             <i class="fas fa-user-plus"></i> Je m'inscris gratuitement
                         </a>
-                        <a href="{{ path('app_challenge_info', {citySlug: city.slug}) }}" class="btn btn--outline btn--lg">
+                        <a href="{{ path('app_challenge_info', {citySlug: city.slug}) }}" class="btn btn--sm btn--outline">
                             Voir les règles
                         </a>
                     {% else %}
-                        <a href="{{ path('app_trip_entry', {citySlug: city.slug}) }}" class="btn btn--primary btn--lg">
+                        <a href="{{ path('app_trip_entry', {citySlug: city.slug}) }}" class="btn btn--sm btn--primary">
                             <i class="fas fa-plus"></i> Saisir un trajet
                         </a>
-                        <a href="{{ path('app_participants', {citySlug: city.slug}) }}" class="btn btn--outline btn--lg">
+                        <a href="{{ path('app_participants', {citySlug: city.slug}) }}" class="btn btn--sm btn--outline">
                             <i class="fas fa-trophy"></i> Classements
                         </a>
                     {% endif %}
                 </div>
                 <div class="hero-cta-note">
-                    <span><i class="fas fa-check"></i></span> Gratuit &nbsp;&middot;&nbsp;
-                    <span><i class="fas fa-check"></i></span> Ouvert à tous &nbsp;&middot;&nbsp;
+                    <span><i class="fas fa-check"></i></span> Gratuit &nbsp;&nbsp;
+                    <span><i class="fas fa-check"></i></span> Ouvert à tous &nbsp;&nbsp;
                     <span><i class="fas fa-check"></i></span> VAE acceptés
                 </div>
             </div>

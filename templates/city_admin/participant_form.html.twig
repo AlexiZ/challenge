@@ -3,11 +3,11 @@
 {% block title %}Modifier {{ participant.fullName }} | {{ parent() }}{% endblock %}
 
 {% block body %}
-    <div class="home-wrap">
+    <div class="page">
         <div class="adm-page-header">
             <div>
                 <h1 class="adm-page-title">Modifier un participant</h1>
-                <div class="adm-page-sub">{{ participant.fullName }} &middot; {{ city.name }}</div>
+                <div class="adm-page-sub">{{ participant.fullName }} - {{ city.name }}</div>
             </div>
             <a href="{{ path('app_city_admin_participants', {citySlug: city.slug}) }}"
                class="btn btn--sm btn--outline">
@@ -95,7 +95,7 @@
             </div>
         </div>
 
-        <button class="btn btn--primary" type="submit">
+        <button class="btn btn--sm btn--primary" type="submit">
             <i class="fas fa-save me-1"></i> Enregistrer
         </button>
 
