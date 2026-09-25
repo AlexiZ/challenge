@@ -15,7 +15,7 @@ set('application', 'challenge');
 set('repository', 'git@github.com:AlexiZ/challenge.git');
 set('branch', 'main');
 set('keep_releases', 5);
-add('shared_dirs', ['public/uploads']);
+add('shared_dirs', ['public/uploads', 'var/sessions']);
 // deploy:vendors passe --no-scripts en dur ; le recipe Symfony ne lance deploy:cache:clear
 // que si "composer_options" contient --no-scripts (cf. vendor/deployer/deployer/recipe/symfony.php).
 set('composer_options', '--no-scripts');

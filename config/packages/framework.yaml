@@ -3,7 +3,14 @@ framework:
     secret: '%env(APP_SECRET)%'
 
     # Note that the session will be started ONLY if you read or write from it.
-    session: true
+    # Sessions stored in the project (not PHP's default dir) so the system/hosting GC
+    # (24 min by default on Debian/cPanel) doesn't wipe them. var/sessions is a Deployer
+    # shared dir so deploys don't log everyone out.
+    session:
+        handler_id: null
+        save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
+        cookie_lifetime: 0
+        gc_maxlifetime: 86400
 
     #esi: true
     #fragments: true
