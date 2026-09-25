@@ -3,15 +3,25 @@
 {% block title %}Trajets suspects | {{ parent() }}{% endblock %}
 
 {% block body %}
-<div class="home-wrap">
+<div class="page">
     <div class="adm-page-header">
         <div>
             <h1 class="adm-page-title">Trajets suspects</h1>
-            <div class="adm-page-sub">{{ city.name }} &middot; Édition {{ cityEdition.edition.year }}</div>
+            <div class="adm-page-sub">{{ city.name }} - Édition {{ cityEdition.edition.year }}</div>
         </div>
     </div>
 
     {% include 'city_admin/_nav.html.twig' %}
+
+    <div class="alert--info">
+        <p class="font-semibold mb-1"><i class="fas fa-circle-info me-1"></i> Comment un trajet est-il jugé suspect ?</p>
+        <p class="mb-1">Un trajet est signalé s'il remplit au moins une de ces conditions :</p>
+        <ul class="mb-1">
+            <li><span class="badge badge--red">Hors période</span> la date du trajet est en dehors de l'édition (du {{ cityEdition.edition.startDate|date('d/m/Y') }} au {{ cityEdition.edition.endDate|date('d/m/Y') }}) ;</li>
+            <li><span class="badge badge--yellow">Distance suspecte</span> la distance déclarée dépasse le seuil du mode : plus de {{ cityEdition.suspiciousDistanceBike|number_format(0) }} km à vélo, ou plus de {{ cityEdition.suspiciousDistanceWalk|number_format(0) }} km à pied.</li>
+        </ul>
+        <p class="mb-0">Si les deux conditions sont réunies, les deux badges sont affichés. Les seuils de distance sont modifiables à tout moment dans la <a href="{{ path('app_city_admin_config', {citySlug: city.slug}) }}">configuration</a>.</p>
+    </div>
 
     {% if suspicious is empty %}
         <div class="alert--success">
@@ -38,12 +48,11 @@
                                 <td>{{ trip.mode.icon() }} {{ trip.mode.label() }}</td>
                                 <td class="font-bold">{{ trip.distanceKm|number_format(2) }} km</td>
                                 <td>
-                                    {% if trip.suspiciousReason == 'out_of_period' %}
+                                    {% if 'out_of_period' in trip.suspiciousReasons %}
                                         <span class="badge badge--red">Hors période</span>
-                                    {% elseif trip.suspiciousReason == 'suspicious_distance' %}
+                                    {% endif %}
+                                    {% if 'suspicious_distance' in trip.suspiciousReasons %}
                                         <span class="badge badge--yellow">Distance suspecte</span>
-                                    {% else %}
-                                        <span class="badge badge--yellow">{{ trip.suspiciousReason }}</span>
                                     {% endif %}
                                 </td>
                             </tr>

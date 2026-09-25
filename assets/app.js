@@ -3,6 +3,7 @@ import 'bootstrap';
 import './styles/app.css';
 import './js/confirm-submit.js';
 import './js/row-link.js';
+import './js/row-toggle.js';
 import './js/reveal-more.js';
 import './js/radio-toggle.js';
 import './js/password-toggle.js';

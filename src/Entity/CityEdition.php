@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\BonusChallengeEnum;
 use App\Enum\CyclistProfileEnum;
 use App\Repository\CityEditionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -168,6 +169,34 @@ class CityEdition
 
     /** @return Collection<int, BonusPhotoConfig> */
     public function getBonusPhotoConfigs(): Collection { return $this->bonusPhotoConfigs; }
+
+    public function getBonusPhotoConfig(BonusChallengeEnum $challenge): ?BonusPhotoConfig
+    {
+        return $this->bonusPhotoConfigs->findFirst(fn ($k, BonusPhotoConfig $c) => $c->getChallenge() === $challenge);
+    }
+
+    public function addBonusPhotoConfig(BonusPhotoConfig $config): static
+    {
+        if (!$this->bonusPhotoConfigs->contains($config)) {
+            $this->bonusPhotoConfigs->add($config);
+            $config->setCityEdition($this);
+        }
+        return $this;
+    }
+
+    /**
+     * Défis photo proposés aux participants. Un défi sans configuration reste
+     * disponible (points par défaut) : seul un défi explicitement décoché est exclu.
+     *
+     * @return list<BonusChallengeEnum>
+     */
+    public function getAvailableBonusChallenges(): array
+    {
+        return array_values(array_filter(
+            BonusChallengeEnum::cases(),
+            fn (BonusChallengeEnum $c) => $this->getBonusPhotoConfig($c)?->isEnabled() ?? true,
+        ));
+    }
 
     public function isActive(): bool
     {

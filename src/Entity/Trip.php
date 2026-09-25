@@ -71,44 +71,37 @@ class Trip
 
     public function isSuspicious(): bool
     {
-        if ($this->cityEdition === null) {
-            return false;
-        }
+        return $this->getSuspiciousReasons() !== [];
+    }
 
-        $edition = $this->cityEdition->getEdition();
+    /** @return list<'out_of_period'|'suspicious_distance'> */
+    public function getSuspiciousReasons(): array
+    {
+        $edition = $this->cityEdition?->getEdition();
         if ($edition === null) {
-            return false;
+            return [];
         }
 
-        // Hors période
+        $reasons = [];
+
         $tripTs = $this->tripDate->getTimestamp();
         if ($tripTs < $edition->getStartDate()->getTimestamp() || $tripTs > $edition->getEndDate()->getTimestamp()) {
-            return true;
+            $reasons[] = 'out_of_period';
         }
 
-        // Distance suspecte
-        return match($this->mode) {
-            TripModeEnum::Bike => $this->distanceKm > $this->cityEdition->getSuspiciousDistanceBike(),
-            TripModeEnum::Walk => $this->distanceKm > $this->cityEdition->getSuspiciousDistanceWalk(),
+        $maxDistance = match($this->mode) {
+            TripModeEnum::Bike => $this->cityEdition->getSuspiciousDistanceBike(),
+            TripModeEnum::Walk => $this->cityEdition->getSuspiciousDistanceWalk(),
         };
+        if ($this->distanceKm > $maxDistance) {
+            $reasons[] = 'suspicious_distance';
+        }
+
+        return $reasons;
     }
 
     public function getSuspiciousReason(): ?string
     {
-        if (!$this->isSuspicious()) {
-            return null;
-        }
-
-        $edition = $this->cityEdition?->getEdition();
-        if ($edition === null) {
-            return null;
-        }
-
-        $tripTs = $this->tripDate->getTimestamp();
-        if ($tripTs < $edition->getStartDate()->getTimestamp() || $tripTs > $edition->getEndDate()->getTimestamp()) {
-            return 'out_of_period';
-        }
-
-        return 'suspicious_distance';
+        return implode(', ', $this->getSuspiciousReasons()) ?: null;
     }
 }

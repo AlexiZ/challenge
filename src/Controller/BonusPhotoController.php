@@ -53,7 +53,9 @@ class BonusPhotoController extends AbstractController
             $bonusPhoto->setUser($user);
             $bonusPhoto->setCityEdition($cityEdition);
 
-            $submitForm = $this->createForm(BonusPhotoType::class, $bonusPhoto);
+            $submitForm = $this->createForm(BonusPhotoType::class, $bonusPhoto, [
+                'challenges' => $cityEdition->getAvailableBonusChallenges(),
+            ]);
             $submitForm->handleRequest($request);
 
             if ($submitForm->isSubmitted() && $submitForm->isValid()) {

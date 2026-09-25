@@ -3,112 +3,106 @@
 {% block title %}Configuration | {{ parent() }}{% endblock %}
 
 {% block body %}
-<div class="home-wrap">
+<div class="page">
 
     <div class="adm-page-header">
         <div>
             <h1 class="adm-page-title">Configuration</h1>
-            <div class="adm-page-sub">{{ city.name }} &middot; Édition {{ cityEdition.edition.year }}</div>
+            <div class="adm-page-sub">{{ city.name }} - Édition {{ cityEdition.edition.year }}</div>
         </div>
     </div>
 
     {% include 'city_admin/_nav.html.twig' %}
 
-    <div class="adm-color-grid align-items-start">
+    {% if locked %}
+        <div class="alert--warning">
+            <i class="fas fa-lock me-1"></i> L'édition est en cours : seuls les seuils de distance suspecte sont modifiables.
+        </div>
+    {% endif %}
 
+    {{ form_start(form) }}
+
+    <div class="adm-color-grid align-items-start">
         {# ── Paramètres de l'édition ── #}
         <div class="card card--flat">
             <div class="adm-section-label mb-14px">
                 <i class="fas fa-sliders fa-xs me-1"></i>Paramètres de l'édition
             </div>
             <div class="adm-param-list">
-                <div class="adm-param-row">
-                    <span class="adm-param-label">Inscriptions</span>
-                    <span>
-                        {% if cityEdition.registrationsOpen %}
-                            <span class="badge badge--green">Ouvertes</span>
-                        {% else %}
-                            <span class="badge badge--yellow">Fermées</span>
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="adm-param-row">
-                    <span class="adm-param-label">Saisie des trajets</span>
-                    <span>
-                        {% if cityEdition.tripsEntryOpen %}
-                            <span class="badge badge--green">Ouverte</span>
-                        {% else %}
-                            <span class="badge badge--yellow">Fermée</span>
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="adm-param-row">
-                    <span class="adm-param-label">Défis photo</span>
-                    <span>
-                        {% if cityEdition.photoChallengesEnabled %}
-                            <span class="badge badge--primary">Activés</span>
-                        {% else %}
-                            <span class="badge badge--yellow">Désactivés</span>
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="adm-param-row">
-                    <span class="adm-param-label">Classements publics</span>
-                    <span>
-                        {% if cityEdition.rankingsPublic %}
-                            <span class="badge badge--green">Oui</span>
-                        {% else %}
-                            <span class="badge badge--yellow">Non</span>
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="adm-param-row">
-                    <span class="adm-param-label">Points / jour actif</span>
-                    <span class="font-bold">{{ cityEdition.pointsPerDay }}</span>
-                </div>
-                <div class="adm-param-row">
-                    <span class="adm-param-label">Points / km vélo</span>
-                    <span class="font-bold">{{ cityEdition.pointsPerKmBike }}</span>
-                </div>
-                <div class="adm-param-row">
-                    <span class="adm-param-label">Points / km marche</span>
-                    <span class="font-bold">{{ cityEdition.pointsPerKmWalk }}</span>
-                </div>
+                {% for field in [form.registrationsOpen, form.tripsEntryOpen, form.photoChallengesEnabled, form.rankingsPublic] %}
+                    <div class="adm-check-row adm-param-row justify-content-start">
+                        {{ form_widget(field) }}
+                        {{ form_label(field) }}
+                    </div>
+                {% endfor %}
+                {# Barème commun à toute l'édition, modifiable uniquement par le super admin #}
+                {% for label, value in {
+                    'Points / jour actif': cityEdition.pointsPerDay,
+                    'Points / km vélo': cityEdition.pointsPerKmBike,
+                    'Points / km marche': cityEdition.pointsPerKmWalk,
+                } %}
+                    <div class="adm-param-row">
+                        <span class="adm-param-label">{{ label }}</span>
+                        <span class="fw-semibold">{{ value|number_format(2, ',') }}</span>
+                    </div>
+                {% endfor %}
+
+                {# ── Seuils de sécurité ── #}
+                {% for field in [form.suspiciousDistanceBike, form.suspiciousDistanceWalk] %}
+                    <div class="adm-param-row">
+                        {{ form_label(field, null, {label_attr: {class: 'adm-param-label mb-0'}}) }}
+                        <span>
+                            {{ form_widget(field, {attr: {class: 'form-control w-auto', size: 6}}) }}
+                            {{ form_errors(field) }}
+                        </span>
+                    </div>
+                {% endfor %}
             </div>
-            <p class="text-muted fs-080rem mt-14px mb-0">
-                Pour modifier ces paramètres, contactez l'administrateur global.
+            <p class="text-muted fs-080rem mb-0">
+                Au-delà de ces distances, un trajet apparaît dans les <a href="{{ path('app_city_admin_suspicious_trips', {citySlug: city.slug}) }}">trajets suspects</a>.
             </p>
         </div>
 
-        {# ── Points par défi photo ── #}
+        {# ── Défis photo ── #}
         <div class="card card--flat">
             <div class="adm-section-label mb-14px">
-                <i class="fas fa-camera fa-xs me-1"></i>Points par défi photo
+                <i class="fas fa-camera fa-xs me-1"></i>Défis photo
             </div>
-            {% if cityEdition.bonusPhotoConfigs is not empty %}
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>Défi</th><th>Points</th></tr></thead>
-                        <tbody>
-                            {% for config in cityEdition.bonusPhotoConfigs %}
-                            <tr>
-                                <td>
-                                    {{ config.challenge.label() }}
-                                    <div class="text-xs text-muted mt-2px">{{ config.challenge.description() }}</div>
-                                </td>
-                                <td class="font-bold text-nowrap">{{ config.points }} pts</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p class="text-muted fs-090rem">Aucun défi photo configuré.</p>
-            {% endif %}
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th><span class="visually-hidden">Disponible</span></th><th>Défi</th><th>Points</th></tr></thead>
+                    <tbody>
+                        {% for configForm in form.bonusPhotoConfigs|sort((a, b) => a.vars.data.challenge.label() <=> b.vars.data.challenge.label()) %}
+                        {% set config = configForm.vars.data %}
+                        <tr class="adm-toggle-row" data-row-toggle>
+                            <td>
+                                {{ form_widget(configForm.enabled, {attr: {'aria-label': 'Défi « ' ~ config.challenge.label() ~ ' » disponible'}}) }}
+                            </td>
+                            <td>
+                                <label for="{{ configForm.enabled.vars.id }}" class="mb-0">{{ config.challenge.label() }}</label>
+                                <div class="text-xs text-muted mt-2px">{{ config.challenge.description() }}</div>
+                            </td>
+                            <td class="text-nowrap">
+                                {{ form_widget(configForm.points, {attr: {class: 'form-control w-auto', size: 5}}) }}
+                                {{ form_errors(configForm.points) }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted fs-080rem mt-14px mb-0">
+                Seuls les défis cochés sont proposés aux participants.
+            </p>
         </div>
-
     </div>
 
-</div>
+    <div class="text-center">
+        <button class="btn btn--sm btn--primary mt-3" type="submit">
+            <i class="fas fa-save me-1"></i> Enregistrer
+        </button>
+    </div>
 
+    {{ form_end(form) }}
+</div>
 {% endblock %}

@@ -3,10 +3,13 @@
 namespace App\Controller;
 
 use App\Entity\BonusPhoto;
+use App\Entity\BonusPhotoConfig;
 use App\Entity\CityEdition;
 use App\Entity\User;
+use App\Enum\BonusChallengeEnum;
 use App\Enum\BonusPhotoStatusEnum;
 use App\Form\AdminUserType;
+use App\Form\CityAdminConfigType;
 use App\Form\CityType;
 use App\Repository\BonusPhotoRepository;
 use App\Repository\TripRepository;
@@ -14,6 +17,7 @@ use App\Repository\UserRepository;
 use App\Security\Voter\ParticipantVoter;
 use App\Service\ActiveCityEditionResolver;
 use App\Service\StatsCalculator;
+use App\Service\TripPointsCalculator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -181,10 +185,35 @@ class CityAdminController extends AbstractController
         string $citySlug,
         Request $request,
         EntityManagerInterface $em,
+        TripPointsCalculator $tripPointsCalculator,
     ): Response {
         $cityEdition = $this->resolveManagedCityEdition($citySlug);
+        $locked = $cityEdition->isActive();
+
+        // Afficher tous les défis possibles, même ceux sans configuration en base
+        // (enregistrés seulement à la soumission, via cascade persist).
+        foreach (BonusChallengeEnum::cases() as $challenge) {
+            if ($cityEdition->getBonusPhotoConfig($challenge) === null) {
+                $cityEdition->addBonusPhotoConfig(new BonusPhotoConfig($challenge, $challenge->defaultPoints()));
+            }
+        }
+
+        $form = $this->createForm(CityAdminConfigType::class, $cityEdition, ['edition_locked' => $locked]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            if (!$locked) {
+                // Le barème a pu changer : les points déjà stockés (trajets d'échauffement) doivent suivre.
+                $tripPointsCalculator->recalculateForCityEdition($cityEdition);
+            }
+            $em->flush();
+            $this->addFlash('success', 'Configuration mise à jour.');
+            return $this->redirectToRoute('app_city_admin_config', ['citySlug' => $citySlug]);
+        }
 
         return $this->render('city_admin/config.html.twig', [
+            'form' => $form,
+            'locked' => $locked,
             'cityEdition' => $cityEdition,
             'city' => $cityEdition->getCity(),
         ]);

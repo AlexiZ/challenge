@@ -26,6 +26,9 @@ class BonusPhotoConfig
     #[ORM\Column]
     private float $points;
 
+    #[ORM\Column(options: ['default' => true])]
+    private bool $enabled = true;
+
     public function __construct(BonusChallengeEnum $challenge, float $points)
     {
         $this->challenge = $challenge;
@@ -42,4 +45,7 @@ class BonusPhotoConfig
 
     public function getPoints(): float { return $this->points; }
     public function setPoints(float $points): static { $this->points = $points; return $this; }
+
+    public function isEnabled(): bool { return $this->enabled; }
+    public function setEnabled(bool $enabled): static { $this->enabled = $enabled; return $this; }
 }

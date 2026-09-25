@@ -21,6 +21,7 @@ class BonusPhotoType extends AbstractType
         $builder
             ->add('challenge', EnumType::class, [
                 'class'        => BonusChallengeEnum::class,
+                'choices'      => $options['challenges'],
                 'label'        => false,
                 'choice_label' => fn (BonusChallengeEnum $e) => $e->label(),
                 'expanded'     => true,
@@ -53,6 +54,7 @@ class BonusPhotoType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => BonusPhoto::class,
+            'challenges' => BonusChallengeEnum::cases(),
         ]);
     }
 }
