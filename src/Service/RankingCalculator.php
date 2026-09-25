@@ -139,10 +139,15 @@ class RankingCalculator
             $active = 0;
             foreach ($team->getMembers() as $member) {
                 $uid = $member->getId();
+                $bonus = (float) ($bonusPoints[$uid] ?? 0.0);
                 if (!isset($userTripData[$uid])) {
+                    // Members with approved bonus photos but no trips still earn points
+                    if ($bonus > 0) {
+                        $points += $bonus;
+                        ++$active;
+                    }
                     continue;
                 }
-                $bonus = (float) ($bonusPoints[$uid] ?? 0.0);
                 $km += $userTripData[$uid]['km'];
                 $points += $userTripData[$uid]['tripPoints'] + count($userTripData[$uid]['dates']) * $cityEdition->getPointsPerDay() + $bonus;
                 $days += count($userTripData[$uid]['dates']);

@@ -28,7 +28,7 @@ class StatsCalculator
         $co2 = $this->co2Calculator->calculateForUser($user, $cityEdition);
 
         $dayPoints = $activeDays * $cityEdition->getPointsPerDay();
-        $bikePoints = $kmBike * $cityEdition->getPointsPerKmBike();
+        $bikePoints = $kmBike * $cityEdition->getPointsPerKmBikeFor($user);
         $walkPoints = $kmWalk * $cityEdition->getPointsPerKmWalk();
         $totalPoints = round($dayPoints + $bikePoints + $walkPoints + $bonusPoints, 2);
 
@@ -89,19 +89,16 @@ class StatsCalculator
      */
     public function getCityEditionRankingStats(CityEdition $cityEdition): array
     {
-        $perUser = $this->rankingCalculator->buildUserTripData($cityEdition);
-        $bonusPoints = $this->bonusPhotoRepository->getBonusPointsPerUserByCityEdition($cityEdition);
+        // Every participant with trips or approved bonus photos (users with bonus only still score)
+        $active = array_filter(
+            $this->rankingCalculator->buildIndividualRanking($cityEdition, $this->rankingCalculator->buildUserTripData($cityEdition)),
+            fn (array $entry) => $entry['activeDays'] > 0 || $entry['points'] > 0,
+        );
 
-        $participantCount = count($perUser);
-        $totalPoints = 0.0;
-        $totalKm = 0.0;
-        $totalActiveDays = 0;
-        foreach ($perUser as $uid => $data) {
-            $dayPoints = count($data['dates']) * $cityEdition->getPointsPerDay();
-            $totalPoints += $data['tripPoints'] + $dayPoints + (float) ($bonusPoints[$uid] ?? 0.0);
-            $totalKm += $data['km'];
-            $totalActiveDays += count($data['dates']);
-        }
+        $participantCount = count($active);
+        $totalPoints = array_sum(array_column($active, 'points'));
+        $totalKm = array_sum(array_column($active, 'km'));
+        $totalActiveDays = array_sum(array_column($active, 'activeDays'));
 
         return [
             'participant_count' => $participantCount,

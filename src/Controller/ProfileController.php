@@ -3,12 +3,16 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Enum\BonusPhotoStatusEnum;
 use App\Form\ProfileFormType;
+use App\Repository\BonusPhotoRepository;
+use App\Repository\CityEditionRepository;
 use App\Repository\TripRepository;
 use App\Repository\UserRepository;
 use App\Service\ActiveCityEditionResolver;
 use App\Service\FileUploader;
 use App\Service\StatsCalculator;
+use App\Service\TripPointsCalculator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
@@ -32,16 +36,23 @@ class ProfileController extends AbstractController
         string $citySlug,
         Request $request,
         EntityManagerInterface $em,
-        StatsCalculator $statsCalculator,
         UserPasswordHasherInterface $passwordHasher,
         FileUploader $fileUploader,
+        TripPointsCalculator $tripPointsCalculator,
+        CityEditionRepository $cityEditionRepository,
     ): Response {
         $cityEdition = $this->cityEditionResolver->resolve($citySlug);
 
         /** @var User $user */
         $user = $this->getUser();
 
-        $form = $this->createForm(ProfileFormType::class, $user);
+        // Check the user's own city too, so switching the URL slug can't bypass the lock.
+        $lockCyclistProfile = $cityEdition->isActive()
+            || (null !== $user->getCity() && null !== $cityEditionRepository->findActiveByCitySlug($user->getCity()->getSlug()));
+
+        $form = $this->createForm(ProfileFormType::class, $user, [
+            'lock_cyclist_profile' => $lockCyclistProfile,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -68,19 +79,21 @@ class ProfileController extends AbstractController
                     $user->setPassword($passwordHasher->hashPassword($user, $newPassword));
                 }
 
+                // Cyclist profile affects bike points (novice bonus): keep stored trip points in sync.
+                foreach ($user->getTrips() as $trip) {
+                    $trip->setPointsGenerated($tripPointsCalculator->calculateTripPoints($trip));
+                }
+
                 $em->flush();
                 $this->addFlash('success', 'Profil mis à jour.');
                 return $this->redirectToRoute('app_profile', ['citySlug' => $citySlug]);
             }
         }
 
-        $stats = $statsCalculator->getUserStats($user, $cityEdition);
-
         return $this->render('profile/index.html.twig', [
             'cityEdition' => $cityEdition,
             'city' => $cityEdition->getCity(),
             'form' => $form,
-            'stats' => $stats,
         ]);
     }
 
@@ -108,6 +121,7 @@ class ProfileController extends AbstractController
         UserRepository $userRepository,
         StatsCalculator $statsCalculator,
         TripRepository $tripRepository,
+        BonusPhotoRepository $bonusPhotoRepository,
     ): Response {
         $cityEdition = $this->cityEditionResolver->resolve($citySlug);
 
@@ -121,6 +135,10 @@ class ProfileController extends AbstractController
         $trips = $tripRepository->findByUserAndCityEdition($profileUser, $cityEdition);
         $heatmapData = $tripRepository->getDailyDistanceForHeatmap($profileUser, $cityEdition);
         $dayPointTripIds = $statsCalculator->getDayPointTripIds($trips);
+        $bonusPhotos = $bonusPhotoRepository->findBy(
+            ['user' => $profileUser, 'cityEdition' => $cityEdition, 'status' => BonusPhotoStatusEnum::Approved],
+            ['submittedAt' => 'DESC'],
+        );
 
         /** @var User|null $currentUser */
         $currentUser = $this->getUser();
@@ -133,6 +151,7 @@ class ProfileController extends AbstractController
             'trips' => $trips,
             'heatmapData' => $heatmapData,
             'dayPointTripIds' => $dayPointTripIds,
+            'bonusPhotos' => $bonusPhotos,
             'isSelf' => $currentUser !== null && $currentUser->getId() === $profileUser->getId(),
         ]);
     }

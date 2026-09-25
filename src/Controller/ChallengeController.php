@@ -106,6 +106,7 @@ class ChallengeController extends AbstractController
             'cityStats' => $cityStats,
             'cityRanking' => $cityRanking,
             'myBonusPhotos' => $myBonusPhotos,
+            'dayPointTripIds' => $statsCalculator->getDayPointTripIds($trips),
         ]);
     }
 
@@ -204,7 +205,6 @@ class ChallengeController extends AbstractController
         Request $request,
         TripRepository $tripRepository,
         RankingCalculator $rankingCalculator,
-        BonusPhotoRepository $bonusPhotoRepository,
     ): Response {
         $cityEdition = $this->cityEditionResolver->resolve($citySlug);
 
@@ -237,15 +237,9 @@ class ChallengeController extends AbstractController
         }
         $totalActive = count($allUserTripData);
 
-        $bonusPoints = $bonusPhotoRepository->getBonusPointsPerUserByCityEdition($cityEdition);
-        $bestAllModesPoints = 0.0;
-        foreach ($allUserTripData as $uid => $data) {
-            $dayPoints = count($data['dates']) * $cityEdition->getPointsPerDay();
-            $total = $data['tripPoints'] + $dayPoints + (float) ($bonusPoints[$uid] ?? 0.0);
-            $bestAllModesPoints = max($bestAllModesPoints, $total);
-        }
-
         $individualRanking = $rankingCalculator->buildIndividualRanking($cityEdition, $userTripData);
+        $allModesRanking = null !== $mode ? $rankingCalculator->buildIndividualRanking($cityEdition, $allUserTripData) : $individualRanking;
+        $bestAllModesPoints = $allModesRanking[0]['points'] ?? 0.0;
 
         // Current user individual position
         $myPosition = null;

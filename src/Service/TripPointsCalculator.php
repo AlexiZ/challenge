@@ -22,7 +22,7 @@ class TripPointsCalculator
         }
 
         return match ($trip->getMode()) {
-            TripModeEnum::Bike => round($trip->getDistanceKm() * $ce->getPointsPerKmBike(), 2),
+            TripModeEnum::Bike => round($trip->getDistanceKm() * $ce->getPointsPerKmBikeFor($trip->getUser()), 2),
             TripModeEnum::Walk => round($trip->getDistanceKm() * $ce->getPointsPerKmWalk(), 2),
         };
     }
@@ -34,7 +34,7 @@ class TripPointsCalculator
         $kmWalk = $this->tripRepository->getTotalDistanceByUserAndCityEdition($user, $cityEdition, TripModeEnum::Walk);
 
         $dayPoints = $activeDays * $cityEdition->getPointsPerDay();
-        $bikePoints = $kmBike * $cityEdition->getPointsPerKmBike();
+        $bikePoints = $kmBike * $cityEdition->getPointsPerKmBikeFor($user);
         $walkPoints = $kmWalk * $cityEdition->getPointsPerKmWalk();
 
         return round($dayPoints + $bikePoints + $walkPoints, 2);

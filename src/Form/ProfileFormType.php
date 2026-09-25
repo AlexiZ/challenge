@@ -48,6 +48,9 @@ class ProfileFormType extends AbstractType
                 'required' => false,
                 'placeholder' => 'Non précisé',
                 'choice_label' => fn (CyclistProfileEnum $e) => $e->label(),
+                // Affects bike points (novice bonus): frozen while an edition is running.
+                'disabled' => $options['lock_cyclist_profile'],
+                'help' => $options['lock_cyclist_profile'] ? 'Non modifiable pendant une édition en cours.' : null,
             ])
             ->add('bikeType', EnumType::class, [
                 'class' => BikeTypeEnum::class,
@@ -109,6 +112,10 @@ class ProfileFormType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => User::class,
+            // Names and username are optional at signup but required once the account exists.
+            'validation_groups' => ['Default', 'Profile'],
+            'lock_cyclist_profile' => false,
         ]);
+        $resolver->setAllowedTypes('lock_cyclist_profile', 'bool');
     }
 }

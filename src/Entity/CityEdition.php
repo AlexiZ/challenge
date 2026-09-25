@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\CyclistProfileEnum;
 use App\Repository\CityEditionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -30,15 +31,6 @@ class CityEdition
 
     #[ORM\Column]
     private int $targetDistanceKm = 5000;
-
-    #[ORM\Column]
-    private float $pointsPerDay = 1.0;
-
-    #[ORM\Column]
-    private float $pointsPerKmBike = 0.1;
-
-    #[ORM\Column]
-    private float $pointsPerKmWalk = 0.2;
 
     #[ORM\Column]
     private float $suspiciousDistanceBike = 200.0;
@@ -109,14 +101,20 @@ class CityEdition
     public function getTargetDistanceKm(): int { return $this->targetDistanceKm; }
     public function setTargetDistanceKm(int $targetDistanceKm): static { $this->targetDistanceKm = $targetDistanceKm; return $this; }
 
-    public function getPointsPerDay(): float { return $this->pointsPerDay; }
-    public function setPointsPerDay(float $pointsPerDay): static { $this->pointsPerDay = $pointsPerDay; return $this; }
+    /** Le barème des points est commun à toutes les villes d'une édition. */
+    public function getPointsPerDay(): float { return $this->edition?->getPointsPerDay() ?? 0.0; }
 
-    public function getPointsPerKmBike(): float { return $this->pointsPerKmBike; }
-    public function setPointsPerKmBike(float $pointsPerKmBike): static { $this->pointsPerKmBike = $pointsPerKmBike; return $this; }
+    public function getPointsPerKmBike(): float { return $this->edition?->getPointsPerKmBike() ?? 0.0; }
 
-    public function getPointsPerKmWalk(): float { return $this->pointsPerKmWalk; }
-    public function setPointsPerKmWalk(float $pointsPerKmWalk): static { $this->pointsPerKmWalk = $pointsPerKmWalk; return $this; }
+    public const NOVICE_BIKE_MULTIPLIER = 2;
+
+    /** Novice cyclists earn NOVICE_BIKE_MULTIPLIER × the bike points per km. */
+    public function getPointsPerKmBikeFor(?User $user): float
+    {
+        return $this->getPointsPerKmBike() * ($user?->getCyclistProfile() === CyclistProfileEnum::Novice ? self::NOVICE_BIKE_MULTIPLIER : 1);
+    }
+
+    public function getPointsPerKmWalk(): float { return $this->edition?->getPointsPerKmWalk() ?? 0.0; }
 
     public function getSuspiciousDistanceBike(): float { return $this->suspiciousDistanceBike; }
     public function setSuspiciousDistanceBike(float $v): static { $this->suspiciousDistanceBike = $v; return $this; }

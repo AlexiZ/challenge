@@ -7,6 +7,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -37,7 +38,10 @@ class EditionType extends AbstractType
                 'required' => false,
             ])
             ->add('bikeModeEnabled', CheckboxType::class, ['label' => 'Vélo', 'required' => false])
-            ->add('walkModeEnabled', CheckboxType::class, ['label' => 'Marche', 'required' => false]);
+            ->add('walkModeEnabled', CheckboxType::class, ['label' => 'Marche', 'required' => false])
+            ->add('pointsPerDay', NumberType::class, ['label' => 'Points / jour actif', 'scale' => 2])
+            ->add('pointsPerKmBike', NumberType::class, ['label' => 'Points / km vélo', 'scale' => 2])
+            ->add('pointsPerKmWalk', NumberType::class, ['label' => 'Points / km marche', 'scale' => 2]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

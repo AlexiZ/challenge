@@ -3,6 +3,7 @@
 namespace App\Tests\Service;
 
 use App\Entity\CityEdition;
+use App\Entity\Edition;
 use App\Entity\Trip;
 use App\Entity\User;
 use App\Enum\TripModeEnum;
@@ -37,12 +38,14 @@ class StatsCalculatorTest extends TestCase
 
     public function testActiveDayPointsAreCountedOncePerDayAndIncludedInTotal(): void
     {
-        $cityEdition = (new CityEdition())
+        $cityEdition = (new CityEdition())->setEdition((new Edition())
             ->setPointsPerDay(2.0)
             ->setPointsPerKmBike(1.0)
-            ->setPointsPerKmWalk(1.0);
+            ->setPointsPerKmWalk(1.0));
 
         $user = $this->makeUser(1);
+        $photoOnlyUser = $this->makeUser(2);
+        $cityEdition->addParticipant($user)->addParticipant($photoOnlyUser);
 
         // Two trips on the same day (different modes) must yield only one active-day point.
         $trips = [
@@ -55,7 +58,7 @@ class StatsCalculatorTest extends TestCase
         $tripRepository->method('findByCityEditionWithUsers')->willReturn($trips);
 
         $bonusPhotoRepository = $this->createMock(BonusPhotoRepository::class);
-        $bonusPhotoRepository->method('getBonusPointsPerUserByCityEdition')->willReturn([]);
+        $bonusPhotoRepository->method('getBonusPointsPerUserByCityEdition')->willReturn([2 => 6.0]);
 
         $rankingCalculator = new RankingCalculator($tripRepository, $bonusPhotoRepository, $this->createMock(TeamRepository::class));
 
@@ -63,8 +66,10 @@ class StatsCalculatorTest extends TestCase
 
         $stats = $calculator->getCityEditionRankingStats($cityEdition);
 
-        // tripPoints: 10 + 5 + 3 = 18, dayPoints: 2 active days * 2.0 = 4 -> total 22
-        self::assertSame(22.0, $stats['total_points']);
-        self::assertSame(22.0, $stats['avg_score']);
+        // user 1: tripPoints 10 + 5 + 3 = 18, dayPoints 2 active days * 2.0 = 4 -> 22
+        // user 2: no trips, 6 approved bonus points -> still counted
+        self::assertSame(2, $stats['participant_count']);
+        self::assertSame(28.0, $stats['total_points']);
+        self::assertSame(14.0, $stats['avg_score']);
     }
 }

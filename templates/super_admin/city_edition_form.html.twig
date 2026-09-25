@@ -3,12 +3,12 @@
 {% block title %}Participation ville / édition | {{ parent() }}{% endblock %}
 
 {% block body %}
-<div class="home-wrap">
+<div class="page">
     <div class="adm-page-header">
         <div>
             <h1 class="adm-page-title">Participation ville / édition</h1>
             {% if cityEdition is defined and cityEdition.id %}
-                <div class="adm-page-sub">{{ cityEdition.city.name }} &middot; {{ cityEdition.edition.name }}</div>
+                <div class="adm-page-sub">{{ cityEdition.city.name }} - {{ cityEdition.edition.name }}</div>
             {% endif %}
         </div>
         <a href="{{ path('app_super_admin_dashboard') }}" class="btn btn--sm btn--outline">
@@ -52,30 +52,6 @@
                 {{ form_label(form.targetDistanceKm) }}
                 {{ form_widget(form.targetDistanceKm, {attr: {class: 'form-control'}}) }}
                 {{ form_errors(form.targetDistanceKm) }}
-            </div>
-        </div>
-    </div>
-
-    {# ── Points ── #}
-    <div class="card card--flat adm-card-gap">
-        <div class="adm-section-label mb-16px">
-            <i class="fas fa-star me-1"></i>Barème des points
-        </div>
-        <div class="form-grid-3">
-            <div class="form-group">
-                {{ form_label(form.pointsPerDay) }}
-                {{ form_widget(form.pointsPerDay, {attr: {class: 'form-control'}}) }}
-                {{ form_errors(form.pointsPerDay) }}
-            </div>
-            <div class="form-group">
-                {{ form_label(form.pointsPerKmBike) }}
-                {{ form_widget(form.pointsPerKmBike, {attr: {class: 'form-control'}}) }}
-                {{ form_errors(form.pointsPerKmBike) }}
-            </div>
-            <div class="form-group">
-                {{ form_label(form.pointsPerKmWalk) }}
-                {{ form_widget(form.pointsPerKmWalk, {attr: {class: 'form-control'}}) }}
-                {{ form_errors(form.pointsPerKmWalk) }}
             </div>
         </div>
     </div>
@@ -140,7 +116,7 @@
         </div>
     </div>
 
-    <button class="btn btn--primary" type="submit">
+    <button class="btn btn--sm btn--primary" type="submit">
         <i class="fas fa-save me-1"></i> Enregistrer
     </button>
 

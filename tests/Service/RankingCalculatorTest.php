@@ -3,6 +3,7 @@
 namespace App\Tests\Service;
 
 use App\Entity\CityEdition;
+use App\Entity\Edition;
 use App\Entity\Team;
 use App\Entity\Trip;
 use App\Entity\User;
@@ -36,10 +37,10 @@ class RankingCalculatorTest extends TestCase
 
     public function testIndividualRankingExcludesAdminsAndSortsByPoints(): void
     {
-        $cityEdition = (new CityEdition())
+        $cityEdition = (new CityEdition())->setEdition((new Edition())
             ->setPointsPerDay(2.0)
             ->setPointsPerKmBike(1.0)
-            ->setPointsPerKmWalk(1.0);
+            ->setPointsPerKmWalk(1.0));
 
         $participant = $this->makeUser(1);
         $admin = $this->makeUser(2);
@@ -76,10 +77,10 @@ class RankingCalculatorTest extends TestCase
 
     public function testTeamMemberRankingUsesSharedFormula(): void
     {
-        $cityEdition = (new CityEdition())
+        $cityEdition = (new CityEdition())->setEdition((new Edition())
             ->setPointsPerDay(2.0)
             ->setPointsPerKmBike(1.0)
-            ->setPointsPerKmWalk(1.0);
+            ->setPointsPerKmWalk(1.0));
 
         $member = $this->makeUser(1);
         $team = new Team();

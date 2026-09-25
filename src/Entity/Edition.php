@@ -43,6 +43,18 @@ class Edition
     #[ORM\Column(options: ['default' => true])]
     private bool $walkModeEnabled = true;
 
+    #[ORM\Column(options: ['default' => 1.0])]
+    #[Assert\PositiveOrZero]
+    private float $pointsPerDay = 1.0;
+
+    #[ORM\Column(options: ['default' => 0.1])]
+    #[Assert\PositiveOrZero]
+    private float $pointsPerKmBike = 0.1;
+
+    #[ORM\Column(options: ['default' => 0.2])]
+    #[Assert\PositiveOrZero]
+    private float $pointsPerKmWalk = 0.2;
+
     /** @var Collection<int, CityEdition> */
     #[ORM\OneToMany(targetEntity: CityEdition::class, mappedBy: 'edition', cascade: ['persist', 'remove'])]
     private Collection $cityEditions;
@@ -82,6 +94,15 @@ class Edition
 
     public function isWalkModeEnabled(): bool { return $this->walkModeEnabled; }
     public function setWalkModeEnabled(bool $walkModeEnabled): static { $this->walkModeEnabled = $walkModeEnabled; return $this; }
+
+    public function getPointsPerDay(): float { return $this->pointsPerDay; }
+    public function setPointsPerDay(float $pointsPerDay): static { $this->pointsPerDay = $pointsPerDay; return $this; }
+
+    public function getPointsPerKmBike(): float { return $this->pointsPerKmBike; }
+    public function setPointsPerKmBike(float $pointsPerKmBike): static { $this->pointsPerKmBike = $pointsPerKmBike; return $this; }
+
+    public function getPointsPerKmWalk(): float { return $this->pointsPerKmWalk; }
+    public function setPointsPerKmWalk(float $pointsPerKmWalk): static { $this->pointsPerKmWalk = $pointsPerKmWalk; return $this; }
 
     #[Assert\Callback]
     public function validateTransportModes(ExecutionContextInterface $context): void
