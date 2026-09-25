@@ -11,6 +11,7 @@ import './js/avatar-preview.js';
 import './js/bonus-photo.js';
 import './js/lightbox.js';
 import './js/table-sort.js';
+import './js/registration-teams.js';
 
 // Mobile navbar burger menu
 // Delegated on `document` (rather than wired once on the elements captured at module load)

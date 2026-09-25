@@ -65,6 +65,8 @@ class AdminUserType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => User::class,
+            // Names and username are optional at signup but required once the account exists.
+            'validation_groups' => ['Default', 'Profile'],
             'require_password' => false,
         ]);
         $resolver->setAllowedTypes('require_password', 'bool');

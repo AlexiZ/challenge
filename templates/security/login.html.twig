@@ -3,37 +3,60 @@
 {% block title %}Connexion | {{ parent() }}{% endblock %}
 
 {% block body %}
-    <div class="container container--narrow mt-8">
+    <div class="page">
         <div class="card">
-            <h1 class="card__title card__title--lg text-center mb-4">Connexion</h1>
+            <h1 class="card__title card__title--lg text-center">Connexion</h1>
+            <p class="text-muted text-center text-sm mb-4">Connectez-vous à votre compte, que vous ayez déjà ajouté un mot de passe ou non.</p>
 
             {% if error %}
                 <div class="alert alert--danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
             {% endif %}
 
-            <form method="post">
+            <form method="post" class="register-form">
+                <p class="text-muted text-sm mb-3"><span class="required-mark">*</span> Champs obligatoires</p>
                 <div class="form-group">
-                    <label for="inputEmail">Adresse email</label>
+                    <label for="inputEmail" class="required">Adresse email</label>
                     <input type="email" id="inputEmail" name="_username" value="{{ last_username }}" autocomplete="email" autofocus class="form-control" required>
                 </div>
-                <div class="form-group">
-                    <label for="inputPassword">Mot de passe</label>
-                    <div class="password-field">
-                        <input type="password" id="inputPassword" name="_password" autocomplete="current-password" class="form-control" required>
-                        <button type="button" class="password-toggle-btn" data-password-toggle aria-label="Afficher le mot de passe">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                    <div class="form-text text-end">
-                        <a href="{{ path('app_forgot_password_request') }}">Mot de passe oublié ?</a>
-                    </div>
-                </div>
-                <div class="form-check mb-4">
-                    <input type="checkbox" name="_remember_me" id="remember_me">
-                    <label for="remember_me">Se souvenir de moi</label>
-                </div>
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
-                <button class="btn btn--primary w-full" type="submit">Connexion</button>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <fieldset class="register-password h-100 pb-3">
+                            <legend class="register-column__label">J'ai déjà un mot de passe pour mon compte</legend>
+                            <div class="form-group">
+                                <label for="inputPassword">Mot de passe</label>
+                                <div class="password-field">
+                                    <input type="password" id="inputPassword" name="_password" autocomplete="current-password" class="form-control">
+                                    <button type="button" class="password-toggle-btn" data-password-toggle aria-label="Afficher le mot de passe">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-check mb-4 ps-0 d-flex justify-content-between">
+                                <div>
+                                    <input type="checkbox" name="_remember_me" id="remember_me">
+                                    <label for="remember_me">Se souvenir de moi</label>
+                                </div>
+                                <div class="form-text text-end">
+                                    <a href="{{ path('app_forgot_password_request') }}">Mot de passe oublié ?</a>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <button class="btn btn--sm btn--primary w-full" type="submit">Connexion</button>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <fieldset class="register-password h-100 pb-3 d-flex flex-column justify-content-center">
+                            <legend class="register-column__label">Je n'ai pas de mot de passe</legend>
+                            <div>
+                                <button class="btn btn--sm btn--primary w-full" type="submit" formaction="{{ path('app_login_link_send') }}">
+                                    <i class="fas fa-envelope me-1"></i> Recevoir mon lien de connexion par email
+                                </button>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
             </form>
 
             <div class="text-center mt-4 text-sm">

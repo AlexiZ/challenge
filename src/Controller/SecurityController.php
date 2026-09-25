@@ -3,9 +3,12 @@
 namespace App\Controller;
 
 use App\Repository\UserRepository;
+use App\Service\UserRegistrar;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
@@ -38,6 +41,28 @@ class SecurityController extends AbstractController
     public function loginTokenConfirm(): never
     {
         throw new \LogicException('This method can be blank, it will be intercepted by the TokenLoginAuthenticator on the firewall.');
+    }
+
+    #[Route('/connexion/lien', name: 'app_login_link_send', methods: ['POST'])]
+    public function sendLoginLink(Request $request, UserRepository $userRepository, UserRegistrar $userRegistrar, RateLimiterFactory $loginLinkLimiter): Response
+    {
+        if (!$this->isCsrfTokenValid('authenticate', $request->request->getString('_csrf_token'))) {
+            throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+        }
+
+        if (!$loginLinkLimiter->create($request->getClientIp())->consume()->isAccepted()) {
+            throw new TooManyRequestsHttpException();
+        }
+
+        $user = $userRepository->findOneBy(['email' => $request->request->getString('_username')]);
+        if ($user) {
+            $userRegistrar->sendMagicLinkEmail($user);
+        }
+
+        // Same message whether the account exists or not, to avoid email enumeration.
+        $this->addFlash('success', 'Si un compte existe pour cette adresse, un lien de connexion vient de lui être envoyé.');
+
+        return $this->redirectToRoute('app_login');
     }
 
     #[Route('/deconnexion', name: 'app_logout')]

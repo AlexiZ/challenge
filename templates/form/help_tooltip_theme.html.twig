@@ -1,0 +1,14 @@
+{% use 'form_div_layout.html.twig' %}
+
+{# Renders the field's "help" option as a hover/focus tooltip on a question icon inside the label. #}
+{%- block form_label_content -%}
+    {{- parent() -}}
+    {%- if help -%}
+        <span class="help-tip" tabindex="0">
+            <i class="fas fa-circle-question" aria-hidden="true"></i>
+            <span class="help-tip__text" id="{{ id }}_help" role="tooltip">
+                {{- translation_domain is same as(false) ? help : help|trans(help_translation_parameters, translation_domain) -}}
+            </span>
+        </span>
+    {%- endif -%}
+{%- endblock form_label_content -%}

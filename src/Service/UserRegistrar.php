@@ -14,10 +14,10 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
- * The two account-creation paths offered on the registration page: a quick,
- * passwordless signup that emails a magic login link, and the full form with a
- * chosen password. Kept as a service (rather than controller-private methods)
- * so username generation and the magic-link email can be unit-tested in isolation.
+ * Creates accounts from the registration form. The password is optional: without
+ * one, the user gets a magic login link by email instead. Kept as a service
+ * (rather than controller-private methods) so username generation and the
+ * magic-link email can be unit-tested in isolation.
  */
 class UserRegistrar
 {
@@ -32,31 +32,24 @@ class UserRegistrar
         private readonly string $mailerFromAddress,
     ) {}
 
-    public function registerQuick(string $email, ?City $city): User
+    public function register(User $user, ?string $plainPassword): User
     {
-        $user = new User();
-        $user->setEmail($email);
-        $user->setCity($city);
-        $user->setUsername($this->generateUniqueUsername($email));
+        if ($user->getUsername() === '') {
+            $user->setUsername($this->generateUniqueUsername($user->getEmail()));
+        }
 
-        $this->addAsParticipant($user, $city);
-
-        $this->em->persist($user);
-        $this->em->flush();
-
-        $this->sendMagicLinkEmail($user);
-
-        return $user;
-    }
-
-    public function registerWithPassword(User $user, string $plainPassword): User
-    {
-        $user->setPassword($this->passwordHasher->hashPassword($user, $plainPassword));
+        if ($plainPassword !== null && $plainPassword !== '') {
+            $user->setPassword($this->passwordHasher->hashPassword($user, $plainPassword));
+        }
 
         $this->addAsParticipant($user, $user->getCity());
 
         $this->em->persist($user);
         $this->em->flush();
+
+        if ($user->getPassword() === null) {
+            $this->sendMagicLinkEmail($user);
+        }
 
         return $user;
     }
@@ -86,7 +79,7 @@ class UserRegistrar
         return $username;
     }
 
-    private function sendMagicLinkEmail(User $user): void
+    public function sendMagicLinkEmail(User $user): void
     {
         $this->mailer->send(
             (new TemplatedEmail())

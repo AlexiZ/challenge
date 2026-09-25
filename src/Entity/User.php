@@ -40,15 +40,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 100)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(groups: ['Profile'])]
     private string $firstName = '';
 
     #[ORM\Column(length: 100)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(groups: ['Profile'])]
     private string $lastName = '';
 
     #[ORM\Column(length: 100, unique: true)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(groups: ['Profile'])]
     #[Assert\Regex(pattern: '/^[a-z0-9._-]+$/', message: 'Le pseudo ne peut contenir que des lettres minuscules, chiffres, points, tirets et underscores.')]
     private string $username = '';
 
