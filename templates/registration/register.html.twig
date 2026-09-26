@@ -35,6 +35,8 @@
                 {% endfor %}
             </div>
             {{ form_errors(registrationForm.teams) }}
+            {# No choices before a city is picked: mark rendered so form_end doesn't output a stray label #}
+            {% do registrationForm.teams.setRendered %}
         </div>
         <div class="form-grid-2-wide">
             <div class="form-group">
