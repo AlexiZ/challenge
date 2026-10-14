@@ -97,6 +97,8 @@ class ResetPasswordController extends AbstractController
 
             /** @var User $user */
             $user->setPassword($passwordHasher->hashPassword($user, $form->get('plainPassword')->getData()));
+            // The magic link is a credential too: a reset must revoke it as well.
+            $user->regeneratePersonalToken();
             $em->flush();
 
             // Invalidate this browser's session and remember-me cookie so a
