@@ -129,6 +129,9 @@ class CityEdition
     public function isTripsEntryOpen(): bool { return $this->tripsEntryOpen; }
     public function setTripsEntryOpen(bool $v): static { $this->tripsEntryOpen = $v; return $this; }
 
+    // Trips can only be added or deleted while entry is open AND the edition is running.
+    public function canEditTrips(): bool { return $this->tripsEntryOpen && $this->isActive(); }
+
     public function isPhotoChallengesEnabled(): bool { return $this->photoChallengesEnabled; }
     public function setPhotoChallengesEnabled(bool $v): static { $this->photoChallengesEnabled = $v; return $this; }
 

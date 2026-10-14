@@ -186,8 +186,14 @@ class ChallengeController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        if ($trip->getUser() !== $user) {
+        if ($trip->getUser() !== $user || $trip->getCityEdition() !== $cityEdition) {
             throw $this->createAccessDeniedException();
+        }
+
+        if (!$cityEdition->canEditTrips()) {
+            $this->addFlash('warning', 'La saisie des trajets est actuellement fermée.');
+
+            return $this->redirectToRoute('app_my_challenge', ['citySlug' => $citySlug]);
         }
 
         if ($this->isCsrfTokenValid('delete_trip_' . $trip->getId(), $request->request->get('_token'))) {
