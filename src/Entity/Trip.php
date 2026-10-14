@@ -7,6 +7,7 @@ use App\Repository\TripRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: TripRepository::class)]
 class Trip
@@ -68,6 +69,17 @@ class Trip
 
     public function getPointsGenerated(): float { return $this->pointsGenerated; }
     public function setPointsGenerated(float $pointsGenerated): static { $this->pointsGenerated = $pointsGenerated; return $this; }
+
+    // Past dates are fine as long as they fall within the edition; future ones never are.
+    #[Assert\Callback]
+    public function validateTripDate(ExecutionContextInterface $context): void
+    {
+        if ($this->tripDate > new \DateTime('today') || \in_array('out_of_period', $this->getSuspiciousReasons(), true)) {
+            $context->buildViolation('La date du trajet doit être comprise dans la période de l\'édition, et ne pas être dans le futur.')
+                ->atPath('tripDate')
+                ->addViolation();
+        }
+    }
 
     public function isSuspicious(): bool
     {
