@@ -59,6 +59,12 @@ class AdminUserType extends AbstractType
             ])
             ->add('receiveEmails', CheckboxType::class, ['label' => 'Recevoir les emails', 'required' => false])
             ->add('publicProfile', CheckboxType::class, ['label' => 'Profil public', 'required' => false]);
+
+        // City admins must not grant roles, move a participant to another city or set
+        // their password: that would let them take over accounts or administer other cities.
+        if ($options['city_admin']) {
+            $builder->remove('city')->remove('roles')->remove('plainPassword');
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -68,7 +74,9 @@ class AdminUserType extends AbstractType
             // Names and username are optional at signup but required once the account exists.
             'validation_groups' => ['Default', 'Profile'],
             'require_password' => false,
+            'city_admin' => false,
         ]);
         $resolver->setAllowedTypes('require_password', 'bool');
+        $resolver->setAllowedTypes('city_admin', 'bool');
     }
 }

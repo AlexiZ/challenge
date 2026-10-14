@@ -22,7 +22,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -269,19 +268,14 @@ class CityAdminController extends AbstractController
         User $participant,
         Request $request,
         EntityManagerInterface $em,
-        UserPasswordHasherInterface $hasher,
     ): Response {
         $cityEdition = $this->resolveManagedCityEdition($citySlug);
         $this->denyAccessUnlessGranted(ParticipantVoter::MANAGE, $participant);
 
-        $form = $this->createForm(AdminUserType::class, $participant);
+        $form = $this->createForm(AdminUserType::class, $participant, ['city_admin' => true]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $plain = $form->get('plainPassword')->getData();
-            if ($plain) {
-                $participant->setPassword($hasher->hashPassword($participant, $plain));
-            }
             $em->flush();
             $this->addFlash('success', 'Participant mis à jour.');
             return $this->redirectToRoute('app_city_admin_participants', ['citySlug' => $citySlug]);
