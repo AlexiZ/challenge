@@ -119,6 +119,9 @@ task('db:pull', function () {
     $host = currentHost()->getHostname();
     $user = currentHost()->getRemoteUser();
     $sshArgs = ['-F /dev/null'];
+    if ($identity = getenv('DEPLOY_IDENTITY_FILE')) {
+        $sshArgs[] = '-i '.escapeshellarg($identity);
+    }
     if ($port = getenv('DEPLOY_PORT')) {
         $sshArgs[] = '-P '.escapeshellarg($port);
     }
@@ -147,6 +150,9 @@ task('deploy:assets', function () {
 
     // Arguments SSH dynamiques
     $sshArgs = ['-F /dev/null'];
+    if ($identity = getenv('DEPLOY_IDENTITY_FILE')) {
+        $sshArgs[] = '-i '.escapeshellarg($identity);
+    }
     if ($port = getenv('DEPLOY_PORT')) {
         $sshArgs[] = '-P '.escapeshellarg($port);
     }
@@ -189,6 +195,9 @@ task('download_medias', function () {
 
     // Options SSH dynamiques
     $sshOptions = ['-F /dev/null'];
+    if ($identity = getenv('DEPLOY_IDENTITY_FILE')) {
+        $sshOptions[] = '-i '.escapeshellarg($identity);
+    }
     if ($port) {
         $sshOptions[] = '-p '.escapeshellarg($port);
     }
@@ -217,6 +226,9 @@ task('upload_medias', function () {
 
     // Construction des options SSH dynamiques
     $sshOptions = ['-F /dev/null'];
+    if ($identity = getenv('DEPLOY_IDENTITY_FILE')) {
+        $sshOptions[] = '-i '.escapeshellarg($identity);
+    }
     if ($port) {
         $sshOptions[] = '-p '.escapeshellarg($port);
     }
