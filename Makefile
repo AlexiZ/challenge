@@ -39,6 +39,7 @@ ssh: ## Connect to server with SSH
 ## —— Composer 🧙‍♂️ ————————————————————————————————————————————————————————————
 install: composer.lock ## Install vendors according to the current composer.lock file
 	@$(COMPOSER) install --no-progress --prefer-dist --optimize-autoloader
+	@docker compose exec -u $(shell id -u):$(shell id -g) -e HOME=/tmp php npm ci
 
 update: ## Update vendors
 	@$(COMPOSER) update
