@@ -14,7 +14,7 @@ REMOTE        ?= $(remote)
 
 # Executables
 EXEC_PHP      = docker compose exec php
-COMPOSER      = composer
+COMPOSER      = docker compose exec -u $(shell id -u):$(shell id -g) php composer
 GIT           = git
 DEP           = docker compose exec -u $(shell id -u):$(shell id -g) php vendor/bin/dep
 

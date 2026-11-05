@@ -14,7 +14,7 @@ function php() {
 }
 
 function composer() {
-    docker_compose_exec php php -d memory_limit=-1 /usr/bin/composer "$@"
+    docker_compose_exec php env COMPOSER_MEMORY_LIMIT=-1 composer "$@"
 }
 
 function sf() {
