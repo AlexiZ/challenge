@@ -5,7 +5,7 @@ Application Symfony de gestion d'un défi de mobilité douce (vélo / marche) en
 ## Stack technique
 
 - PHP 8.3 / Symfony 7.4
-- PostgreSQL (via Doctrine ORM + Migrations)
+- MySQL 8.4 (via Doctrine ORM + Migrations)
 - AssetMapper + Bootstrap 5 + Font Awesome 6 (npm)
 - Docker Compose, FrankenPHP (Caddy) — HTTPS local automatique
 
@@ -26,7 +26,7 @@ cp .env .env.local
 # Éditer .env.local : APP_SECRET, DATABASE_URL, MAILER_DSN, etc.
 # Ce fichier est ignoré par git et ne doit jamais être commité.
 
-# Construire les images et démarrer la stack (PHP, PostgreSQL, Adminer, Mailpit)
+# Construire les images et démarrer la stack (PHP, MySQL, Adminer, Mailpit)
 make docker-up
 # équivalent à : docker compose up --build -d
 

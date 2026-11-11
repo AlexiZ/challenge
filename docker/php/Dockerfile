@@ -3,7 +3,7 @@ FROM dunglas/frankenphp:php8.3 AS frankenphp_base
 WORKDIR /var/www/html
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-		acl file gettext git openssh-client unzip nodejs npm postgresql-client \
+		acl file gettext git openssh-client unzip nodejs npm default-mysql-client \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
@@ -13,7 +13,7 @@ RUN set -eux; \
 		intl \
 		opcache \
 		zip \
-		pdo_pgsql \
+		pdo_mysql \
 		gd \
 		curl
 

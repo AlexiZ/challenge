@@ -64,7 +64,7 @@ purge: ## Purge cache and logs
 	@rm -rf var/cache/* var/logs/*
 
 ## —— Docker 🐳 ————————————————————————————————————————————————————————————————
-docker-up: ## Build and start the app (PHP, PostgreSQL, Adminer, Mailpit) in Docker, HTTPS included
+docker-up: ## Build and start the app (PHP, MySQL, Adminer, Mailpit) in Docker, HTTPS included
 	@docker compose up --build -d
 
 docker-down: ## Stop the Docker stack
@@ -82,9 +82,6 @@ load-fixtures: ## Create the DB if needed and apply migrations
 
 migrate: ## Display all commands in the project namespace
 	@$(SYMFONY) doctrine:migrations:migrate
-
-database: ## Pull REMOTE database to local instance
-	@$(DEP) db:pull $(REMOTE)
 
 medias: ## Download uploaded medias from REMOTE
 	@$(DEP) download_medias $(REMOTE)

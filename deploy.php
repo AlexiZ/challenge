@@ -77,72 +77,6 @@ task('deploy:release-date', function () {
     run('date -u +"%Y-%m-%dT%H:%M:%SZ" > {{release_path}}/RELEASE_DATE');
 });
 
-function parsePostgresUrl(string $url): array
-{
-    $parts = parse_url($url);
-
-    return [
-        'host' => $parts['host'],
-        'port' => $parts['port'] ?? 5432,
-        'user' => rawurldecode($parts['user'] ?? ''),
-        'password' => rawurldecode($parts['pass'] ?? ''),
-        'dbname' => ltrim($parts['path'] ?? '', '/'),
-    ];
-}
-
-task('db:pull', function () {
-    // La cible (get('release_path')) a déjà .env.local.php (généré par deploy:dump-env),
-    // qui contient la DATABASE_URL résolue telle que l'app la lit vraiment en prod.
-    $remote = parsePostgresUrl(run(
-        '{{bin/php}} -r '
-        .escapeshellarg("echo (require '{{current_path}}/.env.local.php')['DATABASE_URL'];")
-    ));
-
-    $dotenv = new \Symfony\Component\Dotenv\Dotenv();
-    $dotenv->usePutenv()->loadEnv(getcwd().'/.env');
-    $local = parsePostgresUrl(getenv('DATABASE_URL'));
-
-    $remoteDumpPath = get('deploy_path').'/.dep/database/dump.sql';
-    $localDumpPath = 'var/db_pull_dump.sql';
-
-    run('mkdir -p '.escapeshellarg(dirname($remoteDumpPath)));
-    run(sprintf(
-        'pg_dump --no-owner --no-privileges --clean --if-exists -h %s -p %s -U %s %s -f %s',
-        escapeshellarg($remote['host']),
-        escapeshellarg((string) $remote['port']),
-        escapeshellarg($remote['user']),
-        escapeshellarg($remote['dbname']),
-        escapeshellarg($remoteDumpPath)
-    ), env: ['PGPASSWORD' => $remote['password']], timeout: null);
-
-    // Pas de rsync côté hébergement cPanel (cf. download_medias/upload_medias plus bas) : scp comme le reste du fichier.
-    $host = currentHost()->getHostname();
-    $user = currentHost()->getRemoteUser();
-    $sshArgs = ['-F /dev/null'];
-    if ($identity = getenv('DEPLOY_IDENTITY_FILE')) {
-        $sshArgs[] = '-i '.escapeshellarg($identity);
-    }
-    if ($port = getenv('DEPLOY_PORT')) {
-        $sshArgs[] = '-P '.escapeshellarg($port);
-    }
-    if ($knownHosts = getenv('DEPLOY_KNOWN_HOSTS')) {
-        $sshArgs[] = '-o UserKnownHostsFile='.escapeshellarg($knownHosts);
-    }
-    $scpArgs = implode(' ', $sshArgs);
-    runLocally("scp $scpArgs {$user}@{$host}:".escapeshellarg($remoteDumpPath)." ".escapeshellarg($localDumpPath));
-    run('rm -f '.escapeshellarg($remoteDumpPath));
-
-    runLocally(sprintf(
-        'psql -h %s -p %s -U %s -d %s -f %s',
-        escapeshellarg($local['host']),
-        escapeshellarg((string) $local['port']),
-        escapeshellarg($local['user']),
-        escapeshellarg($local['dbname']),
-        escapeshellarg($localDumpPath)
-    ), env: ['PGPASSWORD' => $local['password']], timeout: null);
-    runLocally('rm -f '.escapeshellarg($localDumpPath));
-})->desc('Pull the remote PostgreSQL database and restore it locally.');
-
 task('deploy:assets', function () {
     $host = currentHost()->getHostname();
     $user = currentHost()->getRemoteUser();
@@ -259,4 +193,3 @@ task('deploy', [
 ]);
 
 after('deploy:failed', 'deploy:unlock');
-after('db:pull', 'download_medias');

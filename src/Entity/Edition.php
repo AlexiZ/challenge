@@ -43,15 +43,15 @@ class Edition
     #[ORM\Column(options: ['default' => true])]
     private bool $walkModeEnabled = true;
 
-    #[ORM\Column(options: ['default' => 1.0])]
+    #[ORM\Column]
     #[Assert\PositiveOrZero]
     private float $pointsPerDay = 1.0;
 
-    #[ORM\Column(options: ['default' => 0.1])]
+    #[ORM\Column]
     #[Assert\PositiveOrZero]
     private float $pointsPerKmBike = 0.1;
 
-    #[ORM\Column(options: ['default' => 0.2])]
+    #[ORM\Column]
     #[Assert\PositiveOrZero]
     private float $pointsPerKmWalk = 0.2;
 
