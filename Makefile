@@ -9,14 +9,12 @@ SHELL         = sh
 PROJECT       = Challenge Vélo & Marche
 GIT_AUTHOR    = AlexiZ
 HTTP_PORT     = 8080
-remote        ?= preprod
-REMOTE        ?= $(remote)
 
 # Executables
 EXEC_PHP      = docker compose exec php
 COMPOSER      = docker compose exec -u $(shell id -u):$(shell id -g) php composer
 GIT           = git
-DEP           = docker compose exec -u $(shell id -u):$(shell id -g) php vendor/bin/dep
+DEPLOY        = docker compose exec -u $(shell id -u):$(shell id -g) -e HOME=$(HOME) php bin/deploy
 
 # Alias
 SYMFONY       = $(EXEC_PHP) bin/console
@@ -32,9 +30,6 @@ PHPUNIT       = $(EXEC_PHP) vendor/bin/phpunit
 ## —— 🐝 The Symfony Makefile 🐝 ———————————————————————————————————
 help: ## Outputs this help screen
 	@grep -E '(^[a-zA-Z0-9_-]+:.*?##.*$$)|(^##)' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}{printf "\033[32m%-30s\033[0m %s\n", $$1, $$2}' | sed -e 's/\[32m##/[33m/'
-
-ssh: ## Connect to server with SSH
-	@$(DEP) ssh $(REMOTE)
 
 ## —— Composer 🧙‍♂️ ————————————————————————————————————————————————————————————
 install: composer.lock ## Install vendors according to the current composer.lock file
@@ -83,21 +78,21 @@ load-fixtures: ## Create the DB if needed and apply migrations
 migrate: ## Display all commands in the project namespace
 	@$(SYMFONY) doctrine:migrations:migrate
 
-medias: ## Download uploaded medias from REMOTE
-	@$(DEP) download_medias $(REMOTE)
+medias: ## Download uploaded medias from prod
+	@$(DEPLOY) medias
 
-push-uploads: ## Push local uploaded medias to REMOTE
-	@$(DEP) upload_medias $(REMOTE)
+push-uploads: ## Push local uploaded medias to prod
+	@$(DEPLOY) push-uploads
 
 ## —— Tests ✅ —————————————————————————————————————————————————————————————————
 test: ## Run tests
 	@$(PHPUNIT) --stop-on-failure --configuration phpunit.dist.xml
 
 ## —— Deploy 🚀 ————————————————————————————————————————————————————————————————
-deploy: ## Full no-downtime deployment with deployphp/deployer
+deploy: ## Build locally and upload to OVH over SFTP (see bin/deploy)
 	@test -z "`git status --porcelain`"                 # Prevent deploy if there are modified or added files
 	@test -z "`git diff --stat --cached origin/main`"   # Prevent deploy if there is something to push on main
-	@$(DEP) deploy $(REMOTE)		                	# Deploy with deployphp/deployer
+	@$(DEPLOY)
 
 ## —— Stats 📜 —————————————————————————————————————————————————————————————————
 stats: ## Commits by the hour for the main author of this project

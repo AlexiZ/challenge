@@ -26,6 +26,7 @@
 
 .dep/
 deploy_secrets.php
+deploy.env
 
 .claude/agent-memory/
 

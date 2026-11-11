@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+# Déploiement vers l'hébergement mutualisé OVH (offre Perso : SFTP seulement, pas de SSH).
+# Tout est construit localement, envoyé par SFTP, puis les migrations sont lancées via un
+# script PHP temporaire au nom aléatoire, appelé en HTTP puis supprimé.
+#
+# Usage (dans le conteneur php, cf. Makefile) :
+#   bin/deploy              build + upload + migrations
+#   bin/deploy build        build seul, dans var/deploy/build
+#   bin/deploy medias       télécharge public/uploads depuis la prod
+#   bin/deploy push-uploads envoie public/uploads local vers la prod
+#
+# Fichiers locaux non versionnés requis :
+#   deploy.env       SFTP_HOST, SFTP_USER, SFTP_PASSWORD, REMOTE_PATH, SITE_URL
+#   .env.prod.local  APP_SECRET, DATABASE_URL, MAILER_DSN... de la prod
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+BUILD=var/deploy/build
+
+remote() {
+    [[ -f deploy.env ]] || { echo "deploy.env manquant (voir README, section Déploiement)" >&2; exit 1; }
+    # shellcheck source=/dev/null
+    source deploy.env
+    LFTP_PASSWORD="$SFTP_PASSWORD" lftp -u "$SFTP_USER" --env-password "sftp://$SFTP_HOST" -e "
+        set cmd:fail-exit yes
+        set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=accept-new'
+        $1
+        bye"
+}
+
+build() {
+    [[ -f .env.prod.local ]] || { echo ".env.prod.local manquant (secrets de prod)" >&2; exit 1; }
+    mkdir -p "$BUILD"
+
+    # Répertoire de build persistant : rsync --checksum ne réécrit que les fichiers modifiés,
+    # leurs dates restent stables et lftp mirror n'envoie ensuite que la différence.
+    local src
+    src=$(mktemp -d)
+    git archive HEAD | tar -x -C "$src"
+    rsync -a --checksum --delete \
+        --exclude /vendor/ --exclude /node_modules/ --exclude /var/ --exclude /assets/vendor/ \
+        --exclude /public/assets/ --exclude /public/bundles/ \
+        "$src"/ "$BUILD"/
+    rm -rf "$src"
+
+    cp .env.prod.local "$BUILD"/
+    git rev-parse --short HEAD > "$BUILD"/REVISION
+    date -u +%Y-%m-%dT%H:%M:%SZ > "$BUILD"/RELEASE_DATE
+
+    (
+        cd "$BUILD"
+        # Une variable d'environnement réelle l'emporte sur .env.local.php (le conteneur fixe APP_ENV=dev).
+        export APP_ENV=prod APP_DEBUG=0
+        COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --no-interaction --prefer-dist \
+            --optimize-autoloader --classmap-authoritative --no-scripts
+        composer dump-env prod
+        rm .env.prod.local
+        npm ci --no-audit --no-fund --cache var/npm-cache
+        php bin/console importmap:install
+        php bin/console assets:install public
+        # Le cache de compilation AssetMapper n'est jamais revalidé en prod : on repart de zéro.
+        rm -rf var/cache/prod
+        php bin/console asset-map:compile
+    )
+}
+
+deploy() {
+    build
+
+    local token
+    token=$(php -r 'echo bin2hex(random_bytes(16));')
+    local runner="public/_migrate_$token.php"
+    cat > "$BUILD/$runner" <<'PHP'
+<?php
+// Généré par bin/deploy, supprimé juste après son appel.
+use App\Kernel;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Dotenv\Dotenv;
+
+require dirname(__DIR__).'/vendor/autoload.php';
+(new Dotenv())->bootEnv(dirname(__DIR__).'/.env');
+
+$app = new Application(new Kernel($_SERVER['APP_ENV'], (bool) $_SERVER['APP_DEBUG']));
+$app->setAutoExit(false);
+$output = new BufferedOutput();
+$code = $app->run(new ArrayInput([
+    'command' => 'doctrine:migrations:migrate',
+    '--no-interaction' => true,
+    '--allow-no-migration' => true,
+]), $output);
+
+http_response_code(0 === $code ? 200 : 500);
+header('Content-Type: text/plain; charset=utf-8');
+echo $output->fetch();
+PHP
+
+    # ponytail: upload non atomique (le site mélange ancienne et nouvelle version pendant
+    # quelques secondes) ; sans SSH on ne peut pas basculer un lien symbolique de release.
+    # Passer à des releases + symlink si l'hébergement offre un jour SSH.
+    remote "
+        mkdir -p -f $REMOTE_PATH/public/uploads
+        mirror --reverse --delete --parallel=4 --no-perms \
+            --exclude ^var/ --exclude ^node_modules/ --exclude ^public/uploads/ \
+            $BUILD $REMOTE_PATH
+        rm -r -f $REMOTE_PATH/var/cache/prod"
+    rm -f "$BUILD/$runner"
+
+    local status=0
+    curl -fsS "$SITE_URL/_migrate_$token.php" || status=$?
+    remote "rm -f $REMOTE_PATH/$runner"
+    return $status
+}
+
+case "${1:-deploy}" in
+    deploy) deploy ;;
+    build) build ;;
+    medias) remote "mirror --no-perms $REMOTE_PATH/public/uploads public/uploads" ;;
+    push-uploads) remote "mirror --reverse --no-perms public/uploads $REMOTE_PATH/public/uploads" ;;
+    *) echo "Usage: $0 [deploy|build|medias|push-uploads]" >&2; exit 1 ;;
+esac

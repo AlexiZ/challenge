@@ -59,8 +59,35 @@ source .spells
 php bin/console about
 composer require ...
 sf make:controller ...
-deployer ssh prod ...
 ```
+
+## Déploiement
+
+La prod est sur un hébergement mutualisé OVH (offre Perso) : MySQL, accès SFTP seulement, pas de SSH.
+`make deploy` construit le projet localement (`bin/deploy`, dans le conteneur PHP), l'envoie par SFTP
+(seuls les fichiers modifiés partent), vide le cache de prod puis lance les migrations via un script
+PHP temporaire au nom aléatoire, appelé en HTTP puis supprimé.
+
+Fichiers locaux à créer (non versionnés) :
+
+- `deploy.env` :
+  ```
+  SFTP_HOST=ftp.cluster130.hosting.ovh.net
+  SFTP_USER=...
+  SFTP_PASSWORD=...
+  REMOTE_PATH=www/challenge   # dossier dédié au projet, relatif à la racine SFTP
+  SITE_URL=https://...        # sans slash final
+  ```
+- `.env.prod.local` : variables de prod (`APP_SECRET`, `DATABASE_URL` vers la base MySQL OVH
+  avec `serverVersion=8.4.0&charset=utf8mb4`, `MAILER_DSN`...), figées dans `.env.local.php` au build.
+
+Côté OVH : dans « Multisite », faire pointer le domaine vers `www/challenge/public`. La version de PHP
+est fixée par `public/.ovhconfig`.
+
+Attention : l'upload n'est pas atomique, et `REMOTE_PATH` est synchronisé avec suppression
+(sauf `var/` et `public/uploads/`) : il doit être réservé au projet.
+
+`make medias` télécharge les uploads de prod, `make push-uploads` envoie les uploads locaux.
 
 ## Sécurité
 
