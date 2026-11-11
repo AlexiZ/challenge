@@ -17,10 +17,14 @@ cd "$(dirname "$0")/.."
 
 BUILD=var/deploy/build
 
-remote() {
+# Chargé avant tout appel à remote() : ses arguments utilisent déjà $REMOTE_PATH.
+load_env() {
     [[ -f deploy.env ]] || { echo "deploy.env manquant (voir README, section Déploiement)" >&2; exit 1; }
     # shellcheck source=/dev/null
     source deploy.env
+}
+
+remote() {
     LFTP_PASSWORD="$SFTP_PASSWORD" lftp -u "$SFTP_USER" --env-password "sftp://$SFTP_HOST" -e "
         set cmd:fail-exit yes
         set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=accept-new'
@@ -65,6 +69,7 @@ build() {
 }
 
 deploy() {
+    load_env
     build
 
     local token
@@ -116,7 +121,7 @@ PHP
 case "${1:-deploy}" in
     deploy) deploy ;;
     build) build ;;
-    medias) remote "mirror --no-perms $REMOTE_PATH/public/uploads public/uploads" ;;
-    push-uploads) remote "mirror --reverse --no-perms public/uploads $REMOTE_PATH/public/uploads" ;;
+    medias) load_env; remote "mirror --no-perms $REMOTE_PATH/public/uploads public/uploads" ;;
+    push-uploads) load_env; remote "mirror --reverse --no-perms public/uploads $REMOTE_PATH/public/uploads" ;;
     *) echo "Usage: $0 [deploy|build|medias|push-uploads]" >&2; exit 1 ;;
 esac
