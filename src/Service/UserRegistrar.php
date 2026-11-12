@@ -83,7 +83,7 @@ class UserRegistrar
     {
         $this->mailer->send(
             (new TemplatedEmail())
-                ->from(new Address($this->mailerFromAddress, 'Challenge Vélo'))
+                ->from(new Address($this->mailerFromAddress, 'Challenge à Pied et à Vélo'))
                 ->to($user->getEmail())
                 ->subject('Votre lien de connexion')
                 ->htmlTemplate('emails/magic_link.html.twig')
