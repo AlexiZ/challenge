@@ -29,19 +29,14 @@
         </div>
 
         <main>
-            {% if app.flashes|length > 0 %}
+            {# Read the bag once: app.flashes empties it, so a second call would find nothing. #}
+            {% set flashes = app.flashes %}
+            {% if flashes is not empty %}
                 <div class="container mt-4">
-                    {% for flash in app.flashes('success') %}
-                        <div class="alert alert-success alert-dismissible fade show">{{ flash }}</div>
-                    {% endfor %}
-                    {% for flash in app.flashes('warning') %}
-                        <div class="alert alert-warning alert-dismissible fade show">{{ flash }}</div>
-                    {% endfor %}
-                    {% for flash in app.flashes('danger') %}
-                        <div class="alert alert-danger alert-dismissible fade show">{{ flash }}</div>
-                    {% endfor %}
-                    {% for flash in app.flashes('info') %}
-                        <div class="alert alert-info alert-dismissible fade show">{{ flash }}</div>
+                    {% for type, messages in flashes %}
+                        {% for flash in messages %}
+                            <div class="alert alert-{{ type }} alert-dismissible fade show">{{ flash }}</div>
+                        {% endfor %}
                     {% endfor %}
                 </div>
             {% endif %}
