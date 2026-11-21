@@ -8,11 +8,13 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ColorType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\File;
 
 class CityType extends AbstractType
 {
@@ -35,6 +37,18 @@ class CityType extends AbstractType
                 'label' => 'Description de l\'organisme',
                 'required' => false,
                 'attr' => ['rows' => 4],
+            ])
+            ->add('organizationLogoFile', FileType::class, [
+                'label' => 'Logo de l\'organisme',
+                'mapped' => false,
+                'required' => false,
+                'constraints' => [
+                    new File([
+                        'maxSize' => '2M',
+                        'mimeTypes' => ['image/jpeg', 'image/png', 'image/webp'],
+                        'mimeTypesMessage' => 'Format accepté : JPG, PNG, WebP.',
+                    ]),
+                ],
             ])
             ->add('contactEmail', EmailType::class, ['label' => 'Email de contact', 'required' => false])
             ->add('socialLink1Type', EnumType::class, [

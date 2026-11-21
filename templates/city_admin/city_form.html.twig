@@ -42,6 +42,15 @@
                 {{ form_widget(form.organizationDescription, {attr: {class: 'form-control'}}) }}
                 {{ form_errors(form.organizationDescription) }}
             </div>
+            <div class="form-group">
+                {{ form_label(form.organizationLogoFile) }}
+                {% if city.organizationLogo %}
+                    <div class="mb-2"><img src="{{ asset('uploads/logos/' ~ city.organizationLogo) }}" alt="{{ city.organizationName }}" class="orga-logo"></div>
+                {% endif %}
+                {{ form_widget(form.organizationLogoFile, {attr: {class: 'form-control', accept: 'image/jpeg,image/png,image/webp'}}) }}
+                <span class="adm-hint-text">JPG, PNG ou WebP · max 2 Mo</span>
+                {{ form_errors(form.organizationLogoFile) }}
+            </div>
             <div class="form-group mb-0">
                 {{ form_label(form.contactEmail) }}
                 {{ form_widget(form.contactEmail, {attr: {class: 'form-control', placeholder: 'contact@exemple.fr'}}) }}

@@ -13,6 +13,7 @@ use App\Form\EditionType;
 use App\Repository\CityRepository;
 use App\Repository\EditionRepository;
 use App\Repository\UserRepository;
+use App\Service\FileUploader;
 use App\Service\SlugGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -44,12 +45,17 @@ class SuperAdminController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         SlugGenerator $slugGenerator,
+        FileUploader $fileUploader,
     ): Response {
         $city = new City();
         $form = $this->createForm(CityType::class, $city);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $logoFile = $form->get('organizationLogoFile')->getData();
+            if ($logoFile) {
+                $city->setOrganizationLogo($fileUploader->upload($logoFile, 'logos', $city->getOrganizationLogo()));
+            }
             if (empty($city->getSlug())) {
                 $city->setSlug($slugGenerator->generate($city->getName()));
             }
@@ -66,12 +72,16 @@ class SuperAdminController extends AbstractController
     }
 
     #[Route('/villes/{id}/modifier', name: 'app_super_admin_city_edit')]
-    public function editCity(City $city, Request $request, EntityManagerInterface $em): Response
+    public function editCity(City $city, Request $request, EntityManagerInterface $em, FileUploader $fileUploader): Response
     {
         $form = $this->createForm(CityType::class, $city);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $logoFile = $form->get('organizationLogoFile')->getData();
+            if ($logoFile) {
+                $city->setOrganizationLogo($fileUploader->upload($logoFile, 'logos', $city->getOrganizationLogo()));
+            }
             $em->flush();
             $this->addFlash('success', 'Ville mise à jour.');
             return $this->redirectToRoute('app_super_admin_dashboard');

@@ -16,6 +16,7 @@ use App\Repository\TripRepository;
 use App\Repository\UserRepository;
 use App\Security\Voter\ParticipantVoter;
 use App\Service\ActiveCityEditionResolver;
+use App\Service\FileUploader;
 use App\Service\StatsCalculator;
 use App\Service\TripPointsCalculator;
 use Doctrine\ORM\EntityManagerInterface;
@@ -226,6 +227,7 @@ class CityAdminController extends AbstractController
         string $citySlug,
         Request $request,
         EntityManagerInterface $em,
+        FileUploader $fileUploader,
     ): Response {
         $cityEdition = $this->resolveManagedCityEdition($citySlug);
         $city = $cityEdition->getCity();
@@ -234,6 +236,10 @@ class CityAdminController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $logoFile = $form->get('organizationLogoFile')->getData();
+            if ($logoFile) {
+                $city->setOrganizationLogo($fileUploader->upload($logoFile, 'logos', $city->getOrganizationLogo()));
+            }
             $em->flush();
             $this->addFlash('success', 'Informations de la ville mises à jour.');
             return $this->redirectToRoute('app_city_admin_city_edit', ['citySlug' => $citySlug]);

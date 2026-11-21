@@ -223,6 +223,12 @@ a:hover { color: var(--bs-primary-dark); }
 .orga-row > div { flex: 1; min-width: 0; margin-bottom: 0; }
 @media (max-width: 768px) { .orga-row { flex-direction: column; } }
 .orga-logo { width: 52px; height: 52px; object-fit: contain; border-radius: var(--radius-sm); flex-shrink: 0; }
+.orga-block--logo { position: relative; overflow: hidden; min-height: 140px; }
+.orga-block--logo > div { position: relative; z-index: 1; padding-left: 130px; }
+.orga-logo-bg {
+    position: absolute; top: 8px; left: 8px; width: 124px; height: calc(100% - 16px);
+    object-fit: contain; object-position: left center; pointer-events: none;
+}
 .orga-logo-placeholder {
     width: 52px; height: 52px; border-radius: var(--radius-sm);
     background: var(--bs-primary-light); color: var(--bs-primary);
