@@ -94,7 +94,17 @@
             </div>
         </section>
 
-        {# ── Organizer block ───────────────────────────────────────────────── #}
+        {# ── Organizer message + block ─────────────────────────────────────── #}
+        {% if cityEdition.organizerMessage or city.organizationName %}
+        <div class="orga-row">
+        {% if cityEdition.organizerMessage %}
+            <div class="mc-org-msg">
+                <div class="mc-section-label">
+                    <i class="fas fa-bullhorn me-1"></i>Message des organisateurs
+                </div>
+                <p class="mc-org-text">{{ cityEdition.organizerMessage }}</p>
+            </div>
+        {% endif %}
         {% if city.organizationName %}
             <div class="orga-block">
                 {% if city.organizationLogo %}
@@ -129,6 +139,8 @@
                     {% endif %}
                 </div>
             </div>
+        {% endif %}
+        </div>
         {% endif %}
 
         {# ── Comment ça marche ─────────────────────────────────────────────── #}

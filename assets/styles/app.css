@@ -219,6 +219,9 @@ a:hover { color: var(--bs-primary-dark); }
     display: flex; align-items: center; gap: 14px;
     margin-bottom: 36px;
 }
+.orga-row { display: flex; gap: 18px; margin-bottom: 36px; }
+.orga-row > div { flex: 1; min-width: 0; margin-bottom: 0; }
+@media (max-width: 768px) { .orga-row { flex-direction: column; } }
 .orga-logo { width: 52px; height: 52px; object-fit: contain; border-radius: var(--radius-sm); flex-shrink: 0; }
 .orga-logo-placeholder {
     width: 52px; height: 52px; border-radius: var(--radius-sm);
