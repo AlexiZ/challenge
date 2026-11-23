@@ -3,12 +3,10 @@ framework:
     secret: '%env(APP_SECRET)%'
 
     # Note that the session will be started ONLY if you read or write from it.
-    # Sessions stored in the project (not PHP's default dir) so the system/hosting GC
-    # (24 min by default on Debian/cPanel) doesn't wipe them. var/sessions is a Deployer
-    # shared dir so deploys don't log everyone out.
+    # Sessions stored in MySQL: OVH shared hosting ignores the session.save_path set
+    # through ini_set and runs several web nodes, so file sessions were lost between requests.
     session:
-        handler_id: null
-        save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
+        handler_id: Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler
         cookie_lifetime: 0
         gc_maxlifetime: 86400
 
