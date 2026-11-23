@@ -2,8 +2,8 @@
 
 namespace App\Entity;
 
+use App\Enum\ActivityLevelEnum;
 use App\Enum\BonusChallengeEnum;
-use App\Enum\CyclistProfileEnum;
 use App\Repository\CityEditionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -112,7 +112,7 @@ class CityEdition
     /** Novice cyclists earn NOVICE_BIKE_MULTIPLIER × the bike points per km. */
     public function getPointsPerKmBikeFor(?User $user): float
     {
-        return $this->getPointsPerKmBike() * ($user?->getCyclistProfile() === CyclistProfileEnum::Novice ? self::NOVICE_BIKE_MULTIPLIER : 1);
+        return $this->getPointsPerKmBike() * ($user?->getCyclistProfile() === ActivityLevelEnum::Novice ? self::NOVICE_BIKE_MULTIPLIER : 1);
     }
 
     public function getPointsPerKmWalk(): float { return $this->edition?->getPointsPerKmWalk() ?? 0.0; }

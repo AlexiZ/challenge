@@ -5,8 +5,7 @@ namespace App\Form;
 use App\Entity\City;
 use App\Entity\Team;
 use App\Entity\User;
-use App\Enum\BikeTypeEnum;
-use App\Enum\CyclistProfileEnum;
+use App\Enum\ActivityLevelEnum;
 use App\Enum\GenderEnum;
 use App\Enum\MainBarrierEnum;
 use App\Enum\PerceivedBenefitEnum;
@@ -60,19 +59,20 @@ class RegistrationFormType extends AbstractType
                 ],
             ])
             ->add('cyclistProfile', EnumType::class, [
-                'class' => CyclistProfileEnum::class,
+                'class' => ActivityLevelEnum::class,
                 'label' => 'Mon profil cycliste',
                 'required' => false,
                 'help' => 'À quelle fréquence utilisez-vous votre vélo ?',
                 'placeholder' => '',
-                'choice_label' => fn (CyclistProfileEnum $e) => $e->label(),
+                'choice_label' => fn (ActivityLevelEnum $e) => $e->label(),
             ])
-            ->add('bikeType', EnumType::class, [
-                'class' => BikeTypeEnum::class,
-                'label' => 'Type de vélo',
+            ->add('walkerProfile', EnumType::class, [
+                'class' => ActivityLevelEnum::class,
+                'label' => 'Mon profil marcheur',
                 'required' => false,
+                'help' => 'À quelle fréquence vous déplacez-vous à pied ?',
                 'placeholder' => '',
-                'choice_label' => fn (BikeTypeEnum $e) => $e->label(),
+                'choice_label' => fn (ActivityLevelEnum $e) => $e->label(),
             ])
             ->add('gender', EnumType::class, [
                 'class' => GenderEnum::class,

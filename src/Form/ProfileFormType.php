@@ -3,8 +3,8 @@
 namespace App\Form;
 
 use App\Entity\User;
+use App\Enum\ActivityLevelEnum;
 use App\Enum\BikeTypeEnum;
-use App\Enum\CyclistProfileEnum;
 use App\Enum\GenderEnum;
 use App\Enum\MainBarrierEnum;
 use App\Enum\PerceivedBenefitEnum;
@@ -43,11 +43,11 @@ class ProfileFormType extends AbstractType
             ->add('lastName', TextType::class, ['label' => 'Nom'])
             ->add('username', TextType::class, ['label' => 'Pseudo'])
             ->add('cyclistProfile', EnumType::class, [
-                'class' => CyclistProfileEnum::class,
+                'class' => ActivityLevelEnum::class,
                 'label' => 'Profil cycliste',
                 'required' => false,
                 'placeholder' => 'Non précisé',
-                'choice_label' => fn (CyclistProfileEnum $e) => $e->label(),
+                'choice_label' => fn (ActivityLevelEnum $e) => $e->label(),
                 // Affects bike points (novice bonus): frozen while an edition is running.
                 'disabled' => $options['lock_cyclist_profile'],
                 'help' => $options['lock_cyclist_profile'] ? 'Non modifiable pendant une édition en cours.' : null,
@@ -58,6 +58,13 @@ class ProfileFormType extends AbstractType
                 'required' => false,
                 'placeholder' => 'Non précisé',
                 'choice_label' => fn (BikeTypeEnum $e) => $e->label(),
+            ])
+            ->add('walkerProfile', EnumType::class, [
+                'class' => ActivityLevelEnum::class,
+                'label' => 'Profil marcheur',
+                'required' => false,
+                'placeholder' => 'Non précisé',
+                'choice_label' => fn (ActivityLevelEnum $e) => $e->label(),
             ])
             ->add('gender', EnumType::class, [
                 'class' => GenderEnum::class,

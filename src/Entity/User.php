@@ -2,8 +2,8 @@
 
 namespace App\Entity;
 
+use App\Enum\ActivityLevelEnum;
 use App\Enum\BikeTypeEnum;
-use App\Enum\CyclistProfileEnum;
 use App\Enum\GenderEnum;
 use App\Enum\MainBarrierEnum;
 use App\Enum\PerceivedBenefitEnum;
@@ -52,11 +52,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Regex(pattern: '/^[a-z0-9._-]+$/', message: 'Le pseudo ne peut contenir que des lettres minuscules, chiffres, points, tirets et underscores.')]
     private string $username = '';
 
-    #[ORM\Column(enumType: CyclistProfileEnum::class, nullable: true)]
-    private ?CyclistProfileEnum $cyclistProfile = null;
+    #[ORM\Column(enumType: ActivityLevelEnum::class, nullable: true)]
+    private ?ActivityLevelEnum $cyclistProfile = null;
 
     #[ORM\Column(enumType: BikeTypeEnum::class, nullable: true)]
     private ?BikeTypeEnum $bikeType = null;
+
+    #[ORM\Column(enumType: ActivityLevelEnum::class, nullable: true)]
+    private ?ActivityLevelEnum $walkerProfile = null;
 
     #[ORM\Column(enumType: PerceivedBenefitEnum::class, nullable: true)]
     private ?PerceivedBenefitEnum $perceivedBenefit = null;
@@ -156,11 +159,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getUsername(): string { return $this->username; }
     public function setUsername(string $username): static { $this->username = $username; return $this; }
 
-    public function getCyclistProfile(): ?CyclistProfileEnum { return $this->cyclistProfile; }
-    public function setCyclistProfile(?CyclistProfileEnum $cyclistProfile): static { $this->cyclistProfile = $cyclistProfile; return $this; }
+    public function getCyclistProfile(): ?ActivityLevelEnum { return $this->cyclistProfile; }
+    public function setCyclistProfile(?ActivityLevelEnum $cyclistProfile): static { $this->cyclistProfile = $cyclistProfile; return $this; }
 
     public function getBikeType(): ?BikeTypeEnum { return $this->bikeType; }
     public function setBikeType(?BikeTypeEnum $bikeType): static { $this->bikeType = $bikeType; return $this; }
+
+    public function getWalkerProfile(): ?ActivityLevelEnum { return $this->walkerProfile; }
+    public function setWalkerProfile(?ActivityLevelEnum $walkerProfile): static { $this->walkerProfile = $walkerProfile; return $this; }
 
     public function getPerceivedBenefit(): ?PerceivedBenefitEnum { return $this->perceivedBenefit; }
     public function setPerceivedBenefit(?PerceivedBenefitEnum $perceivedBenefit): static { $this->perceivedBenefit = $perceivedBenefit; return $this; }

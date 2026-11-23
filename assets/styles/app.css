@@ -990,7 +990,7 @@ select.form-control:not([multiple]):not([size]) {
     letter-spacing: .08em; color: var(--ink-3); margin-bottom: .85rem;
 }
 .edit-grid-2 {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.1rem;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem;
 }
 @media (max-width: 500px) { .edit-grid-2 { grid-template-columns: 1fr; } }
 .edit-check-group { display: flex; flex-direction: column; gap: .6rem; }

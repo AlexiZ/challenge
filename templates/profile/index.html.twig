@@ -48,13 +48,13 @@
                 {# ── Identité ──────────────────────────────────────────────────── #}
                 <div class="edit-section mb-3">
                     <div class="edit-section-label">Identité</div>
-                    <div class="edit-grid-2">
-                        <div class="form-group">
+                    <div class="edit-grid-2 mb-3">
+                        <div class="form-group mb-0">
                             {{ form_label(form.firstName) }}
                             {{ form_widget(form.firstName, {attr: {class: 'form-control'}}) }}
                             {{ form_errors(form.firstName) }}
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-0">
                             {{ form_label(form.lastName) }}
                             {{ form_widget(form.lastName, {attr: {class: 'form-control'}}) }}
                             {{ form_errors(form.lastName) }}
@@ -67,9 +67,9 @@
                     </div>
                 </div>
 
-                {# ── Profil cycliste ───────────────────────────────────────────── #}
+                {# ── Mobilité ──────────────────────────────────────────────────── #}
                 <div class="edit-section mb-3">
-                    <div class="edit-section-label">Profil cycliste</div>
+                    <div class="edit-section-label">Mobilité</div>
                     <div class="edit-grid-2">
                         <div class="form-group mb-0">
                             {{ form_label(form.cyclistProfile) }}
@@ -81,6 +81,11 @@
                             {{ form_label(form.bikeType) }}
                             {{ form_widget(form.bikeType, {attr: {class: 'form-control'}}) }}
                             {{ form_errors(form.bikeType) }}
+                        </div>
+                        <div class="form-group mb-0">
+                            {{ form_label(form.walkerProfile) }}
+                            {{ form_widget(form.walkerProfile, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.walkerProfile) }}
                         </div>
                     </div>
                 </div>

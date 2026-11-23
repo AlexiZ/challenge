@@ -2,7 +2,7 @@
 
 namespace App\Enum;
 
-enum CyclistProfileEnum: string
+enum ActivityLevelEnum: string
 {
     case Novice = 'novice';
     case Occasional = 'occasional';
