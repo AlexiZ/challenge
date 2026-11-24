@@ -70,12 +70,12 @@ class Trip
     public function getPointsGenerated(): float { return $this->pointsGenerated; }
     public function setPointsGenerated(float $pointsGenerated): static { $this->pointsGenerated = $pointsGenerated; return $this; }
 
-    // Past dates are fine as long as they fall within the edition; future ones never are.
+    // Past dates are fine as long as they fall within the current period (warm-up or edition); future ones never are.
     #[Assert\Callback]
     public function validateTripDate(ExecutionContextInterface $context): void
     {
         if ($this->tripDate > new \DateTime('today') || \in_array('out_of_period', $this->getSuspiciousReasons(), true)) {
-            $context->buildViolation('La date du trajet doit être comprise dans la période de l\'édition, et ne pas être dans le futur.')
+            $context->buildViolation('La date du trajet doit être comprise dans la période de saisie en cours (échauffement ou édition), et ne pas être dans le futur.')
                 ->atPath('tripDate')
                 ->addViolation();
         }
@@ -97,7 +97,7 @@ class Trip
         $reasons = [];
 
         $tripTs = $this->tripDate->getTimestamp();
-        if ($tripTs < $edition->getStartDate()->getTimestamp() || $tripTs > $edition->getEndDate()->getTimestamp()) {
+        if ($tripTs < $edition->getTripPeriodStart()->getTimestamp() || $tripTs > $edition->getTripPeriodEnd()->getTimestamp()) {
             $reasons[] = 'out_of_period';
         }
 

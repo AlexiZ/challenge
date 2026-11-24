@@ -25,13 +25,19 @@
         <div class="mc-main">
             {# Formulaire de saisie #}
             <div class="mc-section">
-                {% if not cityEdition.active %}
+                {% if not cityEdition.tripPeriod %}
                     <div class="edition-status-banner mb-0">
                         ⚠️ Cette édition n'est pas en cours
                         ({{ cityEdition.edition.startDate|date('d/m/Y') }} - {{ cityEdition.edition.endDate|date('d/m/Y') }})
                         &mdash; la saisie de trajets est désactivée.
                     </div>
                 {% else %}
+                    {% if cityEdition.warmup %}
+                        <div class="edition-status-banner">
+                            🔥 Période d'échauffement : testez la saisie ! Ces trajets ne compteront pas,
+                            les compteurs seront remis à 0 au démarrage officiel le {{ cityEdition.edition.startDate|date('d/m/Y') }}.
+                        </div>
+                    {% endif %}
                     <div class="mc-section-label">
                         <i class="fas fa-plus-circle fa-xs me-1"></i>Nouveau trajet
                     </div>

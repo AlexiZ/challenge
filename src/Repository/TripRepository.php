@@ -133,8 +133,8 @@ class TripRepository extends ServiceEntityRepository
             ->setParameter('walk', TripModeEnum::Walk->value)
             ->setParameter('maxBike', $cityEdition->getSuspiciousDistanceBike())
             ->setParameter('maxWalk', $cityEdition->getSuspiciousDistanceWalk())
-            ->setParameter('start', $edition?->getStartDate())
-            ->setParameter('end', $edition?->getEndDate())
+            ->setParameter('start', $edition?->getTripPeriodStart())
+            ->setParameter('end', $edition?->getTripPeriodEnd())
             ->orderBy('t.distanceKm', 'DESC')
             ->getQuery()
             ->getResult();

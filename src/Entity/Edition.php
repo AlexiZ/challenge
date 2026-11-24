@@ -119,8 +119,38 @@ class Edition
 
     public function isActive(): bool
     {
+        return self::isNowWithin($this->startDate, $this->endDate);
+    }
+
+    public function isStarted(): bool
+    {
+        return new \DateTime() >= $this->startDate;
+    }
+
+    /** Période de chauffe : saisie ouverte pour tester, compteurs remis à 0 au démarrage officiel. */
+    public function isWarmup(): bool
+    {
+        return $this->warmupStartDate !== null && $this->warmupEndDate !== null
+            && !$this->isStarted()
+            && self::isNowWithin($this->warmupStartDate, $this->warmupEndDate);
+    }
+
+    /** Dates acceptées pour un trajet : la chauffe avant le démarrage officiel, l'édition ensuite. */
+    public function getTripPeriodStart(): \DateTimeInterface
+    {
+        return $this->isStarted() ? $this->startDate : ($this->warmupStartDate ?? $this->startDate);
+    }
+
+    public function getTripPeriodEnd(): \DateTimeInterface
+    {
+        return $this->isStarted() ? $this->endDate : ($this->warmupEndDate ?? $this->endDate);
+    }
+
+    // Dates are stored at midnight: the end day counts until its last second.
+    private static function isNowWithin(\DateTimeInterface $start, \DateTimeInterface $end): bool
+    {
         $now = new \DateTime();
-        return $now >= $this->startDate && $now <= $this->endDate;
+        return $now >= $start && $now < \DateTime::createFromInterface($end)->modify('+1 day');
     }
 
     public function getDurationDays(): int

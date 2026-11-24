@@ -29,7 +29,7 @@ class CityRepository extends ServiceEntityRepository
             ->join('ce.edition', 'e')
             ->where('e.startDate <= :now')
             ->andWhere('e.endDate >= :now')
-            ->setParameter('now', new \DateTime())
+            ->setParameter('now', new \DateTime('today'))
             ->orderBy('c.name', 'ASC')
             ->getQuery()
             ->getResult();

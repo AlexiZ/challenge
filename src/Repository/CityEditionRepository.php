@@ -19,7 +19,7 @@ class CityEditionRepository extends ServiceEntityRepository
 
     public function findActiveByCitySlug(string $slug): ?CityEdition
     {
-        $now = new \DateTime();
+        $now = new \DateTime('today');
         return $this->createQueryBuilder('ce')
             ->join('ce.city', 'c')
             ->join('ce.edition', 'e')
@@ -49,7 +49,7 @@ class CityEditionRepository extends ServiceEntityRepository
 
     public function findActiveByCity(City $city): ?CityEdition
     {
-        $now = new \DateTime();
+        $now = new \DateTime('today');
         return $this->createQueryBuilder('ce')
             ->join('ce.edition', 'e')
             ->where('ce.city = :city')
@@ -106,7 +106,7 @@ class CityEditionRepository extends ServiceEntityRepository
     /** @return CityEdition[] */
     public function findAllActiveEditions(): array
     {
-        $now = new \DateTime();
+        $now = new \DateTime('today');
         return $this->createQueryBuilder('ce')
             ->join('ce.edition', 'e')
             ->where('e.startDate <= :now')

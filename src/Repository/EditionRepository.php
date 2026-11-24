@@ -18,7 +18,7 @@ class EditionRepository extends ServiceEntityRepository
 
     public function findActive(): ?Edition
     {
-        $now = new \DateTime();
+        $now = new \DateTime('today');
         return $this->createQueryBuilder('e')
             ->where('e.startDate <= :now')
             ->andWhere('e.endDate >= :now')

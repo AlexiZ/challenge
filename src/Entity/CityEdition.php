@@ -129,8 +129,15 @@ class CityEdition
     public function isTripsEntryOpen(): bool { return $this->tripsEntryOpen; }
     public function setTripsEntryOpen(bool $v): static { $this->tripsEntryOpen = $v; return $this; }
 
-    // Trips can only be added or deleted while entry is open AND the edition is running.
-    public function canEditTrips(): bool { return $this->tripsEntryOpen && $this->isActive(); }
+    // Trips can only be added or deleted while entry is open AND the edition (or its warm-up) is running.
+    public function canEditTrips(): bool { return $this->tripsEntryOpen && $this->isTripPeriod(); }
+
+    public function isTripPeriod(): bool
+    {
+        return $this->isActive() || ($this->edition?->isWarmup() ?? false);
+    }
+
+    public function isWarmup(): bool { return $this->edition?->isWarmup() ?? false; }
 
     public function isPhotoChallengesEnabled(): bool { return $this->photoChallengesEnabled; }
     public function setPhotoChallengesEnabled(bool $v): static { $this->photoChallengesEnabled = $v; return $this; }

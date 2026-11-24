@@ -139,7 +139,7 @@ class ChallengeController extends AbstractController
         }
 
         $form = $this->createForm(TripType::class, $trip);
-        if ($cityEdition->isActive()) {
+        if ($cityEdition->isTripPeriod()) {
             $form->handleRequest($request);
         }
 

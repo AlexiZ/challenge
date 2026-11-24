@@ -50,6 +50,56 @@ class SecurityFixesTest extends KernelTestCase
         yield 'after ended edition' => ['-30 days', '-20 days', '-5 days', false];
     }
 
+    #[DataProvider('warmupTripDates')]
+    public function testTripDateDuringWarmup(string $tripDate, bool $valid): void
+    {
+        $edition = (new Edition())
+            ->setWarmupStartDate(new \DateTime('-3 days'))->setWarmupEndDate(new \DateTime('+1 day'))
+            ->setStartDate(new \DateTime('+2 days'))->setEndDate(new \DateTime('+20 days'));
+        $trip = (new Trip())
+            ->setCityEdition((new CityEdition())->setEdition($edition))
+            ->setDistanceKm(5)
+            ->setTripDate(new \DateTime($tripDate));
+
+        $violations = static::getContainer()->get(ValidatorInterface::class)->validate($trip);
+
+        self::assertSame($valid, 0 === \count($violations), (string) $violations);
+    }
+
+    public static function warmupTripDates(): iterable
+    {
+        yield 'today, within warm-up' => ['today', true];
+        yield 'before warm-up' => ['-10 days', false];
+    }
+
+    public function testWarmupTripsAreRejectedOnceEditionStarted(): void
+    {
+        $edition = (new Edition())
+            ->setWarmupStartDate(new \DateTime('-10 days'))->setWarmupEndDate(new \DateTime('-3 days'))
+            ->setStartDate(new \DateTime('-2 days'))->setEndDate(new \DateTime('+20 days'));
+
+        self::assertFalse($edition->isWarmup());
+        self::assertEquals($edition->getStartDate(), $edition->getTripPeriodStart());
+    }
+
+    public function testTripsCanBeEditedDuringWarmup(): void
+    {
+        $edition = (new Edition())
+            ->setWarmupStartDate(new \DateTime('today'))->setWarmupEndDate(new \DateTime('today'))
+            ->setStartDate(new \DateTime('+2 days'))->setEndDate(new \DateTime('+20 days'));
+
+        self::assertTrue($edition->isWarmup());
+        self::assertFalse($edition->isActive());
+        self::assertTrue((new CityEdition())->setEdition($edition)->setTripsEntryOpen(true)->canEditTrips());
+    }
+
+    public function testEditionIsActiveUntilTheEndOfItsLastDay(): void
+    {
+        $edition = (new Edition())->setStartDate(new \DateTime('-10 days'))->setEndDate(new \DateTime('today'));
+
+        self::assertTrue($edition->isActive());
+    }
+
     public function testTripsCannotBeEditedOnceEditionIsOver(): void
     {
         $ended = (new Edition())->setStartDate(new \DateTime('-30 days'))->setEndDate(new \DateTime('-20 days'));
