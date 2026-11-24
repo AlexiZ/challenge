@@ -25,9 +25,12 @@ security:
             login_throttling:
                 max_attempts: 5
                 interval: '15 minutes'
+            # CSRF so only the POST form in the navbar logs out: a GET link got
+            # prefetched by Turbo on hover and logged users out.
             logout:
                 path: app_logout
                 target: /
+                enable_csrf: true
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 604800
