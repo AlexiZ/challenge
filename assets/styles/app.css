@@ -127,6 +127,7 @@ a:hover { color: var(--bs-primary-dark); }
     display: block; padding: .5rem 1rem; font-size: .88rem;
     color: var(--ink); transition: background .12s; text-decoration: none;
 }
+button.user-menu__item { width: 100%; border: 0; background: none; text-align: left; font: inherit; font-size: .88rem; cursor: pointer; }
 .user-menu__item:hover { background: var(--bs-primary-light); color: var(--bs-primary); text-decoration: none; }
 .user-menu__item--danger { color: #dc2626; }
 .user-menu__item--danger:hover { background: #fee2e2; color: #dc2626; text-decoration: none; }

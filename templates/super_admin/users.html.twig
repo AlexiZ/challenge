@@ -55,11 +55,14 @@
                                 <a href="{{ path('app_super_admin_user_edit', {id: u.id}) }}"
                                    class="btn btn--sm btn--outline">Modifier</a>
                                 {% if u.city %}
-                                    <a href="{{ path('app_city_home', {citySlug: u.city.slug}) }}?_switch_user={{ u.email }}"
-                                       class="btn btn--sm btn--outline"
-                                       title="Impersonifier {{ u.username }}">
-                                        <i class="fas fa-user-tag fa-xs"></i>
-                                    </a>
+                                    <form action="{{ path('app_city_home', {citySlug: u.city.slug}) }}" method="post" class="d-inline">
+                                        <input type="hidden" name="_switch_user" value="{{ u.email }}">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('switch_user') }}">
+                                        <button type="submit" class="btn btn--sm btn--outline"
+                                                title="Impersonifier {{ u.username }}">
+                                            <i class="fas fa-user-tag fa-xs"></i>
+                                        </button>
+                                    </form>
                                 {% endif %}
                                 {% if u.id != app.user.id %}
                                     <form action="{{ path('app_super_admin_user_delete', {id: u.id}) }}" method="post"

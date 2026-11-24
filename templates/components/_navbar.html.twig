@@ -82,9 +82,13 @@
                         </a>
 
                         {% if is_granted('IS_IMPERSONATOR') %}
-                            <a href="{{ impersonation_exit_path(path('app_super_admin_users')) }}" class="user-menu__item">
-                                <i class="fas fa-right-from-bracket fa-fw me-1"></i> Quitter la connexion en tant que
-                            </a>
+                            <form action="{{ path('app_super_admin_users') }}" method="post">
+                                <input type="hidden" name="_switch_user" value="_exit">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('switch_user') }}">
+                                <button type="submit" class="user-menu__item">
+                                    <i class="fas fa-right-from-bracket fa-fw me-1"></i> Quitter la connexion en tant que
+                                </button>
+                            </form>
                         {% endif %}
                     </div>
                 </div>
