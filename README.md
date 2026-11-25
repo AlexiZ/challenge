@@ -64,11 +64,25 @@ sf make:controller ...
 ## Déploiement
 
 La prod est sur un hébergement mutualisé OVH (offre Perso) : MySQL, accès SFTP seulement, pas de SSH.
-`make deploy` construit le projet localement (`bin/deploy`, dans le conteneur PHP), l'envoie par SFTP
-(seuls les fichiers modifiés partent), vide le cache de prod puis lance les migrations via un script
-PHP temporaire au nom aléatoire, appelé en HTTP puis supprimé.
 
-Fichiers locaux à créer (non versionnés) :
+Chaque push sur `main` lance le workflow GitHub `.github/workflows/deploy.yml` : tests, puis `bin/deploy`.
+Il peut aussi être relancé à la main depuis l'onglet Actions. `make deploy` fait la même chose depuis le
+poste local, dans le conteneur PHP.
+
+`bin/deploy` passe par des scripts PHP temporaires au nom aléatoire, appelés en HTTP puis supprimés :
+
+1. un premier script indique le format d'archive que le PHP de la prod sait extraire (zip, sinon tar.gz) ;
+2. le projet est construit, empaqueté dans une seule archive et envoyé par SFTP hors de `public/` ;
+3. un second script extrait l'archive, supprime les fichiers qui ne font plus partie de la release
+   (sauf `var/` et `public/uploads/`), vide le cache de prod, lance les migrations, puis efface
+   l'archive et lui-même. Il refuse de s'exécuter s'il a plus de 15 minutes.
+
+Secrets GitHub (Settings > Secrets and variables > Actions) :
+
+- `DEPLOY_ENV` : contenu complet de `deploy.env` ;
+- `ENV_PROD_LOCAL` : contenu complet de `.env.prod.local`.
+
+Fichiers locaux à créer pour `make deploy` (non versionnés) :
 
 - `deploy.env` :
   ```
@@ -84,8 +98,9 @@ Fichiers locaux à créer (non versionnés) :
 Côté OVH : dans « Multisite », faire pointer le domaine vers `www/challenge/public`. La version de PHP
 est fixée par `public/.ovhconfig`.
 
-Attention : l'upload n'est pas atomique, et `REMOTE_PATH` est synchronisé avec suppression
-(sauf `var/` et `public/uploads/`) : il doit être réservé au projet.
+Attention : l'extraction n'est pas atomique (quelques secondes pendant lesquelles ancienne et nouvelle
+version se mélangent), et tout fichier de `REMOTE_PATH` absent de la release est supprimé (sauf `var/`
+et `public/uploads/`) : ce dossier doit être réservé au projet.
 
 `make medias` télécharge les uploads de prod, `make push-uploads` envoie les uploads locaux.
 

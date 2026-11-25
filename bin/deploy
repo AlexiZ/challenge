@@ -1,21 +1,24 @@
 #!/usr/bin/env bash
 # Déploiement vers l'hébergement mutualisé OVH (offre Perso : SFTP seulement, pas de SSH).
-# Tout est construit localement, envoyé par SFTP, puis les migrations sont lancées via un
-# script PHP temporaire au nom aléatoire, appelé en HTTP puis supprimé.
+# Un script PHP temporaire détecte d'abord le format d'archive que la prod sait extraire (zip ou
+# tar.gz). Le projet est ensuite construit localement, empaqueté dans une seule archive envoyée
+# par SFTP, puis un second script PHP temporaire, appelé en HTTP, l'extrait, supprime les fichiers
+# qui ne font plus partie de la release, vide le cache et lance les migrations.
 #
-# Usage (dans le conteneur php, cf. Makefile) :
-#   bin/deploy              build + upload + migrations
+# Usage (dans le conteneur php, cf. Makefile, ou dans la CI GitHub) :
+#   bin/deploy              détection du format + build + envoi + extraction + migrations
 #   bin/deploy build        build seul, dans var/deploy/build
 #   bin/deploy medias       télécharge public/uploads depuis la prod
 #   bin/deploy push-uploads envoie public/uploads local vers la prod
 #
-# Fichiers locaux non versionnés requis :
+# Fichiers non versionnés requis :
 #   deploy.env       SFTP_HOST, SFTP_USER, SFTP_PASSWORD, REMOTE_PATH, SITE_URL
 #   .env.prod.local  APP_SECRET, DATABASE_URL, MAILER_DSN... de la prod
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-BUILD=var/deploy/build
+WORK=var/deploy
+BUILD=$WORK/build
 
 # Chargé avant tout appel à remote() : ses arguments utilisent déjà $REMOTE_PATH.
 load_env() {
@@ -32,20 +35,34 @@ remote() {
         bye"
 }
 
+# Affiche le format d'archive que le PHP de la prod sait extraire : zip, tar.gz ou none.
+probe() {
+    local token=$1
+    local script="$WORK/_probe_$token.php"
+    mkdir -p "$WORK"
+    cat > "$script" <<'PHP'
+<?php
+// Généré par bin/deploy : indique le format d'archive que la prod sait extraire, puis s'efface.
+unlink(__FILE__);
+header('Content-Type: text/plain; charset=utf-8');
+echo class_exists(ZipArchive::class) ? 'zip' : (class_exists(PharData::class) && extension_loaded('zlib') ? 'tar.gz' : 'none');
+PHP
+    remote "
+        mkdir -p -f $REMOTE_PATH/public
+        put $script -o $REMOTE_PATH/public/_probe_$token.php" >&2
+    rm -f "$script"
+
+    local status=0
+    curl -fsS --max-time 60 "$SITE_URL/_probe_$token.php" || status=$?
+    remote "rm -f $REMOTE_PATH/public/_probe_$token.php" >&2
+    return $status
+}
+
 build() {
     [[ -f .env.prod.local ]] || { echo ".env.prod.local manquant (secrets de prod)" >&2; exit 1; }
+    rm -rf "$BUILD"
     mkdir -p "$BUILD"
-
-    # Répertoire de build persistant : rsync --checksum ne réécrit que les fichiers modifiés,
-    # leurs dates restent stables et lftp mirror n'envoie ensuite que la différence.
-    local src
-    src=$(mktemp -d)
-    git archive HEAD | tar -x -C "$src"
-    rsync -a --checksum --delete \
-        --exclude /vendor/ --exclude /node_modules/ --exclude /var/ --exclude /assets/vendor/ \
-        --exclude /public/assets/ --exclude /public/bundles/ \
-        "$src"/ "$BUILD"/
-    rm -rf "$src"
+    git archive HEAD | tar -x -C "$BUILD"
 
     cp .env.prod.local "$BUILD"/
     git rev-parse --short HEAD > "$BUILD"/REVISION
@@ -62,30 +79,134 @@ build() {
         npm ci --no-audit --no-fund --cache var/npm-cache
         php bin/console importmap:install
         php bin/console assets:install public
-        # Le cache de compilation AssetMapper n'est jamais revalidé en prod : on repart de zéro.
-        rm -rf var/cache/prod
         php bin/console asset-map:compile
     )
 }
 
-deploy() {
-    load_env
-    build
+# Empaquette $BUILD (sans var/ ni node_modules/) dans $1, en .zip ou en .tar.gz selon son extension.
+pack() {
+    php -r '
+        [, $src, $dest] = $argv;
+        $files = [];
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($src, FilesystemIterator::SKIP_DOTS)) as $f) {
+            $rel = substr($f->getPathname(), strlen($src) + 1);
+            if (!preg_match("#^(var|node_modules)/#", $rel)) {
+                $files[$rel] = $f->getPathname();
+            }
+        }
+        if (str_ends_with($dest, ".zip")) {
+            $zip = new ZipArchive();
+            if (true !== $zip->open($dest, ZipArchive::CREATE | ZipArchive::OVERWRITE)) {
+                exit(1);
+            }
+            foreach ($files as $rel => $path) {
+                $zip->addFile($path, $rel);
+            }
+            $zip->close() || exit(1);
+        } else {
+            $tar = substr($dest, 0, -3);
+            (new PharData($tar))->buildFromIterator(new ArrayIterator($files));
+            (new PharData($tar))->compress(Phar::GZ);
+            unlink($tar);
+        }
+    ' "$BUILD" "$1"
+}
 
-    local token
-    token=$(php -r 'echo bin2hex(random_bytes(16));')
-    local runner="public/_migrate_$token.php"
-    cat > "$BUILD/$runner" <<'PHP'
+# Écrit dans $1 le script qui extrait la release, nettoie, vide le cache et migre.
+write_runner() {
+    cat > "$1" <<'PHP'
 <?php
-// Généré par bin/deploy, supprimé juste après son appel.
+// Généré par bin/deploy, efface lui-même l'archive et ce fichier en fin d'exécution.
 use App\Kernel;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Dotenv\Dotenv;
 
-require dirname(__DIR__).'/vendor/autoload.php';
-(new Dotenv())->bootEnv(dirname(__DIR__).'/.env');
+function fail(string $message): never
+{
+    http_response_code(500);
+    exit($message."\n");
+}
+
+function remove_tree(string $dir): void
+{
+    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $f) {
+        $f->isDir() && !$f->isLink() ? rmdir($f->getPathname()) : unlink($f->getPathname());
+    }
+    rmdir($dir);
+}
+
+$root = dirname(__DIR__);
+$token = substr(basename(__FILE__, '.php'), strlen('_deploy_'));
+$archive = null;
+foreach (['zip', 'tar.gz'] as $ext) {
+    if (is_file("$root/release_$token.$ext")) {
+        $archive = "$root/release_$token.$ext";
+    }
+}
+register_shutdown_function(static function () use ($archive): void {
+    @unlink(__FILE__);
+    null === $archive || @unlink($archive);
+});
+header('Content-Type: text/plain; charset=utf-8');
+
+// Script oublié sur le serveur (job interrompu avant son appel) : inutilisable passé 15 minutes.
+if (null === $archive || time() - filemtime(__FILE__) > 900) {
+    http_response_code(410);
+    exit("Release introuvable ou expirée\n");
+}
+@set_time_limit(0);
+ignore_user_abort(true);
+
+// Liste des fichiers de la release, puis extraction par-dessus la version en place.
+$keep = [];
+if (str_ends_with($archive, '.zip')) {
+    $zip = new ZipArchive();
+    true === $zip->open($archive) || fail('Archive zip illisible');
+    for ($i = 0; $i < $zip->numFiles; ++$i) {
+        $keep[$zip->getNameIndex($i)] = true;
+    }
+    isset($keep['vendor/autoload.php']) || fail('Archive incomplète, rien n\'a été modifié');
+    $zip->extractTo($root) || fail('Extraction zip échouée');
+    $zip->close();
+} else {
+    $tar = new PharData($archive);
+    $marker = basename($archive).'/';
+    foreach (new RecursiveIteratorIterator($tar) as $f) {
+        $keep[substr($f->getPathname(), strpos($f->getPathname(), $marker) + strlen($marker))] = true;
+    }
+    isset($keep['vendor/autoload.php']) || fail('Archive incomplète, rien n\'a été modifié');
+    $tar->extractTo($root, null, true) || fail('Extraction tar.gz échouée');
+}
+
+// Suppression des fichiers absents de la release (équivalent du --delete), sauf var/ et public/uploads/.
+$deleted = 0;
+$tree = new RecursiveCallbackFilterIterator(
+    new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
+    static fn (SplFileInfo $f): bool => !preg_match('#^(var|public/uploads)$#', substr($f->getPathname(), strlen($root) + 1)),
+);
+foreach (new RecursiveIteratorIterator($tree, RecursiveIteratorIterator::CHILD_FIRST) as $f) {
+    $path = $f->getPathname();
+    if ($f->isDir() && !$f->isLink()) {
+        @rmdir($path); // seulement s'il est vide
+    } elseif (!isset($keep[substr($path, strlen($root) + 1)]) && __FILE__ !== $path && $archive !== $path) {
+        unlink($path);
+        ++$deleted;
+    }
+}
+
+// Cache de prod : renommé d'abord (bascule immédiate), supprimé ensuite.
+if (is_dir("$root/var/cache/prod")) {
+    rename("$root/var/cache/prod", "$root/var/cache/prod_old_$token") || fail('Impossible de vider le cache');
+    remove_tree("$root/var/cache/prod_old_$token");
+}
+function_exists('opcache_reset') && opcache_reset();
+
+echo count($keep)." fichiers extraits, $deleted fichiers obsolètes supprimés\n";
+
+require $root.'/vendor/autoload.php';
+(new Dotenv())->bootEnv($root.'/.env');
 
 $app = new Application(new Kernel($_SERVER['APP_ENV'], (bool) $_SERVER['APP_DEBUG']));
 $app->setAutoExit(false);
@@ -97,24 +218,40 @@ $code = $app->run(new ArrayInput([
 ]), $output);
 
 http_response_code(0 === $code ? 200 : 500);
-header('Content-Type: text/plain; charset=utf-8');
 echo $output->fetch();
 PHP
+}
 
-    # ponytail: upload non atomique (le site mélange ancienne et nouvelle version pendant
-    # quelques secondes) ; sans SSH on ne peut pas basculer un lien symbolique de release.
-    # Passer à des releases + symlink si l'hébergement offre un jour SSH.
+deploy() {
+    load_env
+
+    local token format
+    token=$(php -r 'echo bin2hex(random_bytes(16));')
+    format=$(probe "$token")
+    [[ $format == zip || $format == tar.gz ]] || { echo "La prod ne sait extraire ni zip ni tar.gz (réponse : $format)" >&2; exit 1; }
+    echo "Format d'archive : $format"
+
+    build
+
+    local archive="$WORK/release_$token.$format"
+    local runner="$WORK/_deploy_$token.php"
+    pack "$archive"
+    write_runner "$runner"
+
+    # ponytail: pas atomique, le site mélange ancienne et nouvelle version pendant l'extraction
+    # (quelques secondes, sur le disque du serveur) ; sans SSH on ne peut pas basculer un lien
+    # symbolique de release. Extraire dans un dossier voisin puis échanger les dossiers par
+    # rename() si cette fenêtre devient gênante.
     remote "
-        mkdir -p -f $REMOTE_PATH/public/uploads
-        mirror --reverse --delete --parallel=4 --no-perms \
-            --exclude ^var/ --exclude ^node_modules/ --exclude ^public/uploads/ \
-            $BUILD $REMOTE_PATH
-        rm -r -f $REMOTE_PATH/var/cache/prod"
-    rm -f "$BUILD/$runner"
+        mkdir -p -f $REMOTE_PATH/public
+        put $archive -o $REMOTE_PATH/release_$token.$format
+        put $runner -o $REMOTE_PATH/public/_deploy_$token.php"
+    rm -f "$archive" "$runner"
 
     local status=0
-    curl -fsS "$SITE_URL/_migrate_$token.php" || status=$?
-    remote "rm -f $REMOTE_PATH/$runner"
+    curl -sS --fail-with-body --max-time 900 "$SITE_URL/_deploy_$token.php" || status=$?
+    # Filet de sécurité : le script efface déjà l'archive et lui-même.
+    remote "rm -f $REMOTE_PATH/release_$token.$format $REMOTE_PATH/public/_deploy_$token.php"
     return $status
 }
 

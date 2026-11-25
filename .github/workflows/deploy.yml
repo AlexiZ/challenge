@@ -1,0 +1,46 @@
+name: Déploiement prod
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: intl, zip, gd, pdo_mysql, apcu
+          tools: composer
+      - run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
+      - run: vendor/bin/phpunit --configuration phpunit.dist.xml
+
+  deploy:
+    needs: tests
+    runs-on: ubuntu-24.04
+    # Jamais deux déploiements en même temps : un push arrivé pendant un déploiement attend son tour.
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: intl, zip, gd, pdo_mysql, apcu
+          tools: composer
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends lftp
+      - name: Fichiers de secrets
+        env:
+          DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
+          ENV_PROD_LOCAL: ${{ secrets.ENV_PROD_LOCAL }}
+        run: |
+          printf '%s\n' "$DEPLOY_ENV" > deploy.env
+          printf '%s\n' "$ENV_PROD_LOCAL" > .env.prod.local
+      - run: bin/deploy
