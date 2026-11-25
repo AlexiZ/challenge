@@ -94,14 +94,14 @@
                                     {% if entry.lastDate %}
                                         {% set daysAgo = (("now"|date('U') - entry.lastDate|date('U')) / 86400)|round %}
                                         {% if daysAgo <= 0 %}
-                                            actif{{ isFemale ? 'e' : '' }} à l'instant
+                                            {{ isFemale ? 'active' : 'actif' }} à l'instant
                                         {% elseif daysAgo == 1 %}
-                                            actif{{ isFemale ? 'e' : '' }} il y a 1 jour
+                                            {{ isFemale ? 'active' : 'actif' }} il y a 1 jour
                                         {% else %}
-                                            actif{{ isFemale ? 'e' : '' }} il y a {{ daysAgo }} jours
+                                            {{ isFemale ? 'active' : 'actif' }} il y a {{ daysAgo }} jours
                                         {% endif %}
                                     {% else %}
-                                        pas encore actif{{ isFemale ? 'e' : '' }}
+                                        pas encore {{ isFemale ? 'active' : 'actif' }}
                                     {% endif %}
                                 </div>
                             </div>
