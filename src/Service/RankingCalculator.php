@@ -122,9 +122,10 @@ class RankingCalculator
 
     /**
      * Team ranking for every team in the city, ranked by points per active participant.
+     * `participants` counts every team member registered to the edition; `ptsPerParticipant` divides by active members only.
      *
      * @param array<int, array{user: User, km: float, tripPoints: float, dates: array<string, true>}> $userTripData
-     * @return array<int, array{team: Team, km: float, points: float, activeDays: int, participants: int, ptsPerParticipant: float}>
+     * @return array<int, array{team: Team, km: float, points: float, activeDays: int, participants: int, activeParticipants: int, ptsPerParticipant: float}>
      */
     public function buildTeamRanking(CityEdition $cityEdition, array $userTripData, int $minActiveMembers = 0): array
     {
@@ -137,7 +138,11 @@ class RankingCalculator
             $points = 0.0;
             $days = 0;
             $active = 0;
+            $registered = 0;
             foreach ($team->getMembers() as $member) {
+                if ($cityEdition->getParticipants()->contains($member)) {
+                    ++$registered;
+                }
                 $uid = $member->getId();
                 $bonus = (float) ($bonusPoints[$uid] ?? 0.0);
                 if (!isset($userTripData[$uid])) {
@@ -157,12 +162,13 @@ class RankingCalculator
                 continue;
             }
             $ranking[] = [
-                'team'              => $team,
-                'km'                => round($km, 2),
-                'points'            => round($points, 1),
-                'activeDays'        => $days,
-                'participants'      => $active,
-                'ptsPerParticipant' => $active > 0 ? round($points / $active, 1) : 0.0,
+                'team'               => $team,
+                'km'                 => round($km, 2),
+                'points'             => round($points, 1),
+                'activeDays'         => $days,
+                'participants'       => $registered,
+                'activeParticipants' => $active,
+                'ptsPerParticipant'  => $active > 0 ? round($points / $active, 1) : 0.0,
             ];
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Tests\Service;
 
+use App\Entity\City;
 use App\Entity\CityEdition;
 use App\Entity\Edition;
 use App\Entity\Team;
@@ -104,5 +105,42 @@ class RankingCalculatorTest extends TestCase
         // 10 trip points + 1 active day * 2.0 + 5.0 bonus = 17.0
         self::assertSame(17.0, $ranking[0]['points']);
         self::assertNotNull($ranking[0]['lastDate']);
+    }
+
+    public function testTeamRankingCountsAllRegisteredMembersButDividesByActiveOnes(): void
+    {
+        $cityEdition = (new CityEdition())->setCity(new City())->setEdition((new Edition())
+            ->setPointsPerDay(2.0)
+            ->setPointsPerKmBike(1.0)
+            ->setPointsPerKmWalk(1.0));
+
+        $active = $this->makeUser(1);
+        $inactive = $this->makeUser(2);
+        $notRegistered = $this->makeUser(3);
+        $cityEdition->addParticipant($active);
+        $cityEdition->addParticipant($inactive);
+
+        $team = new Team();
+        $team->addMember($active);
+        $team->addMember($inactive);
+        $team->addMember($notRegistered);
+
+        $tripRepository = $this->createMock(TripRepository::class);
+        $tripRepository->method('findByCityEditionWithUsers')->willReturn([
+            $this->makeTrip($active, $cityEdition, TripModeEnum::Bike, 10.0, '2026-01-01', 10.0),
+        ]);
+
+        $bonusPhotoRepository = $this->createMock(BonusPhotoRepository::class);
+        $bonusPhotoRepository->method('getBonusPointsPerUserByCityEdition')->willReturn([]);
+
+        $teamRepository = $this->createMock(TeamRepository::class);
+        $teamRepository->method('findWithMembersByCity')->willReturn([$team]);
+
+        $calculator = new RankingCalculator($tripRepository, $bonusPhotoRepository, $teamRepository);
+        $ranking = $calculator->buildTeamRanking($cityEdition, $calculator->buildUserTripData($cityEdition));
+
+        self::assertSame(2, $ranking[0]['participants']);
+        self::assertSame(1, $ranking[0]['activeParticipants']);
+        self::assertSame(12.0, $ranking[0]['ptsPerParticipant']);
     }
 }
