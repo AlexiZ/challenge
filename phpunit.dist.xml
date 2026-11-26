@@ -14,6 +14,8 @@
         <ini name="display_errors" value="1" />
         <ini name="error_reporting" value="-1" />
         <server name="APP_ENV" value="test" force="true" />
+        <!-- L'image Docker (variables_order=EGPCS) expose aussi APP_ENV=dev dans $_ENV, que KernelTestCase lit en premier. -->
+        <env name="APP_ENV" value="test" force="true" />
         <server name="SHELL_VERBOSITY" value="-1" />
     </php>
 
